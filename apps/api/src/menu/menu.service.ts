@@ -74,11 +74,14 @@ export class MenuService {
     defaultLocale: string,
   ): Promise<MenuCategoryView[]> {
     const categories = await tx.menuCategory.findMany({
-      where: { restaurantId, isActive: true },
+      // Wycofane pozycje znikają z karty gościa całkowicie; niedostępne
+      // zostają, wyszarzone — to dwie różne informacje.
+      where: { restaurantId, isActive: true, isArchived: false },
       orderBy: { sortOrder: 'asc' },
       include: {
         translations: true,
         items: {
+          where: { isArchived: false },
           orderBy: { sortOrder: 'asc' },
           include: {
             translations: true,

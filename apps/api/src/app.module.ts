@@ -19,6 +19,10 @@ import { StaffController } from './staff/staff.controller';
 import { StaffOrdersService } from './staff/staff-orders.service';
 import { StaffSessionsService } from './staff/staff-sessions.service';
 import { OrdersGateway } from './realtime/orders.gateway';
+import { ManagementController } from './management/management.controller';
+import { MenuAdminService } from './management/menu.admin.service';
+import { TablesAdminService } from './management/tables.admin.service';
+import { RestaurantAdminService } from './management/restaurant.admin.service';
 
 @Module({
   imports: [
@@ -38,6 +42,7 @@ import { OrdersGateway } from './realtime/orders.gateway';
     OrdersController,
     AuthController,
     StaffController,
+    ManagementController,
   ],
   providers: [
     TableService,
@@ -51,6 +56,9 @@ import { OrdersGateway } from './realtime/orders.gateway';
     StaffOrdersService,
     StaffSessionsService,
     OrdersGateway,
+    MenuAdminService,
+    TablesAdminService,
+    RestaurantAdminService,
   ],
 })
 export class AppModule {}

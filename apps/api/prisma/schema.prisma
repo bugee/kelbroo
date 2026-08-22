@@ -343,7 +343,11 @@ model MenuCategory {
   organizationId String  @map("organization_id") @db.Uuid
   restaurantId   String  @map("restaurant_id") @db.Uuid
   sortOrder      Int     @default(0) @map("sort_order")
+  /// Widoczna w menu gościa. Wyłączenie ukrywa całą kategorię (np. śniadania po 12).
   isActive       Boolean @default(true) @map("is_active")
+  /// Wycofana z karty na stałe. Nie kasujemy, bo zamówienia historyczne
+  /// odwołują się do pozycji — a snapshot nie zastąpi analityki per danie.
+  isArchived     Boolean @default(false) @map("is_archived")
   /// np. kategoria dostępna wyłącznie w godzinach śniadaniowych
   availableHours Json?   @map("available_hours")
   createdAt      DateTime @default(now()) @map("created_at")
@@ -383,7 +387,11 @@ model MenuItem {
   currency       String   @db.Char(3)
   vatRate        Decimal  @map("vat_rate") @db.Decimal(5, 4)
   imageUrl       String?  @map("image_url")
+  /// Dostępność na dziś — „skończyło się", pozycja zostaje w karcie wyszarzona.
   isAvailable    Boolean  @default(true) @map("is_available")
+  /// Wycofane z karty na stałe. To inna decyzja niż brak dostępności i gość
+  /// nie może zobaczyć jednego jako drugiego.
+  isArchived     Boolean  @default(false) @map("is_archived")
   sortOrder      Int      @default(0) @map("sort_order")
   allergens      String[] @default([])
   dietaryTags    String[] @default([]) @map("dietary_tags")
