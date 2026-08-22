@@ -12,6 +12,7 @@ import {
   type SessionOrders,
   type TableEntry,
 } from '@/lib/api';
+import { ThemeToggle } from '@kelbroo/ui/theme';
 import { DishSheet } from './DishSheet';
 
 type View = 'menu' | 'cart' | 'status';
@@ -124,7 +125,8 @@ export function GuestApp({ qrToken }: { qrToken: string }) {
             />
             {entry.participant.displayName}
           </span>
-          <div className="flex gap-1">
+          <div className="flex items-center gap-1">
+            <ThemeToggle />
             {entry.restaurant.supportedLocales.map((locale) => (
               <button
                 key={locale}

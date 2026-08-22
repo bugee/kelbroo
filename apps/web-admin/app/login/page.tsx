@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { ThemeToggle } from '@kelbroo/ui/theme';
 import { login } from '@/lib/api';
 
 export default function LoginPage() {
@@ -32,8 +33,13 @@ export default function LoginPage() {
         onSubmit={submit}
         className="w-full max-w-sm rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface)] p-6"
       >
-        <h1 className="text-xl text-[var(--teal)]">kelbroo</h1>
-        <p className="mt-1 text-sm text-[var(--muted)]">Panel obsługi</p>
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-xl text-[var(--teal)]">kelbroo</h1>
+            <p className="mt-1 text-sm text-[var(--muted)]">Panel obsługi</p>
+          </div>
+          <ThemeToggle />
+        </div>
 
         <label className="mt-6 block text-sm font-semibold">
           E-mail

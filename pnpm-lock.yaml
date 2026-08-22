@@ -117,6 +117,9 @@ importers:
       '@kelbroo/types':
         specifier: workspace:*
         version: link:../../packages/types
+      '@kelbroo/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       next:
         specifier: ^15.1.6
         version: 15.5.23(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -157,6 +160,9 @@ importers:
       '@kelbroo/types':
         specifier: workspace:*
         version: link:../../packages/types
+      '@kelbroo/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       next:
         specifier: ^15.1.6
         version: 15.5.23(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -202,6 +208,22 @@ importers:
       vitest:
         specifier: ^3.0.5
         version: 3.2.7(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.50.0)(tsx@4.23.12)
+
+  packages/ui:
+    dependencies:
+      react:
+        specifier: ^19.0.0
+        version: 19.2.8
+    devDependencies:
+      '@kelbroo/config':
+        specifier: workspace:*
+        version: link:../config
+      '@types/react':
+        specifier: ^19.0.8
+        version: 19.2.18
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
 
 packages:
 

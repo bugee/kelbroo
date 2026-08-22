@@ -72,6 +72,7 @@ apps/
   web-guest/           # System 3 — PWA gościa
 packages/
   config/              # wspólne tsconfig + tokeny motywu (Tailwind v4)
+  ui/                  # komponenty współdzielone (przełącznik palety)
   types/               # kontrakty domenowe i arytmetyka podziału rachunku
 docker/postgres/       # bootstrap roli aplikacyjnej dla RLS
 design/                # źródło prawdy dla palety i typografii

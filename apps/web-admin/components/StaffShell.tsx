@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
+import { ThemeToggle } from '@kelbroo/ui/theme';
 import { clearSession, me, readAccess, type Staff, type StaffRole } from '@/lib/api';
 
 const NAV: { href: string; label: string; roles: StaffRole[] }[] = [
@@ -66,6 +67,9 @@ export function StaffShell({ children }: { children: (staff: Staff) => React.Rea
           <span className="text-sm text-[var(--muted)]">
             {staff.name} · {staff.role}
           </span>
+          {/* Kuchnia często pracuje przy słabym świetle — wybór palety
+              zostaje na urządzeniu, nie na koncie pracownika. */}
+          <ThemeToggle />
           <button
             type="button"
             onClick={() => {
