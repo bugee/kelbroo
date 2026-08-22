@@ -14,6 +14,11 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "incremental": true
+
+    // Świadomie bez "incremental": współdzielony plik .tsbuildinfo sprawiał, że
+    // po `tsc --noEmit` (typecheck) kolejny build uznawał pliki za aktualne
+    // i nie emitował JS-a — aplikacja kompilowała się "pomyślnie" do samych
+    // deklaracji typów. Watch mode w Nest i Next ma własne cache.
+    "incremental": false
   }
 }
