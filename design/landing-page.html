@@ -1,0 +1,1050 @@
+<title>kelbroo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<style>
+/* ============ TOKENS ============ */
+:root{
+  --ground:#F1F5F4;
+  --surface:#FFFFFF;
+  --surface-2:#E8F0EF;
+  --ink:#0F2422;
+  --ink-2:#37504E;
+  --muted:#6B807E;
+  --line:#D8E4E2;
+  --line-strong:#BFD3D0;
+
+  --teal:#2A8F8C;
+  --teal-bright:#37AAA3;
+  --teal-soft:#5FC9BE;
+  --teal-wash:#E2F1EF;
+
+  --orange:#E8722F;
+  --orange-soft:#F7A85C;
+  --orange-wash:#FCEBDD;
+
+  --paper:#FFFDFA;
+  --paper-line:#E4DED2;
+
+  --shadow-sm:0 1px 2px rgba(15,36,34,.06);
+  --shadow-md:0 2px 6px rgba(15,36,34,.06), 0 14px 32px -14px rgba(15,36,34,.20);
+  --shadow-lg:0 4px 10px rgba(15,36,34,.05), 0 30px 60px -24px rgba(15,36,34,.28);
+
+  --fs-hero:clamp(2.5rem,6.2vw,4.35rem);
+  --fs-h2:clamp(1.85rem,3.5vw,2.7rem);
+  --fs-h3:1.2rem;
+  --fs-body:1.0625rem;
+  --fs-sm:.9375rem;
+  --fs-xs:.8125rem;
+
+  --maxw:1180px;
+  --radius:18px;
+  --radius-sm:11px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0A1716;
+    --surface:#122423;
+    --surface-2:#193230;
+    --ink:#E9F2F1;
+    --ink-2:#B6CAC8;
+    --muted:#88A19E;
+    --line:#1F3836;
+    --line-strong:#2C4B49;
+
+    --teal:#48BFB5;
+    --teal-bright:#5FCFC4;
+    --teal-soft:#7FE0D4;
+    --teal-wash:#123230;
+
+    --orange:#F58C4C;
+    --orange-soft:#F7A85C;
+    --orange-wash:#33221A;
+
+    --paper:#162927;
+    --paper-line:#294844;
+
+    --shadow-sm:0 1px 2px rgba(0,0,0,.4);
+    --shadow-md:0 2px 6px rgba(0,0,0,.4), 0 14px 32px -14px rgba(0,0,0,.7);
+    --shadow-lg:0 4px 10px rgba(0,0,0,.4), 0 30px 60px -24px rgba(0,0,0,.8);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0A1716;
+  --surface:#122423;
+  --surface-2:#193230;
+  --ink:#E9F2F1;
+  --ink-2:#B6CAC8;
+  --muted:#88A19E;
+  --line:#1F3836;
+  --line-strong:#2C4B49;
+
+  --teal:#48BFB5;
+  --teal-bright:#5FCFC4;
+  --teal-soft:#7FE0D4;
+  --teal-wash:#123230;
+
+  --orange:#F58C4C;
+  --orange-soft:#F7A85C;
+  --orange-wash:#33221A;
+
+  --paper:#162927;
+  --paper-line:#294844;
+
+  --shadow-sm:0 1px 2px rgba(0,0,0,.4);
+  --shadow-md:0 2px 6px rgba(0,0,0,.4), 0 14px 32px -14px rgba(0,0,0,.7);
+  --shadow-lg:0 4px 10px rgba(0,0,0,.4), 0 30px 60px -24px rgba(0,0,0,.8);
+}
+
+/* ============ BASE ============ */
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  background:var(--ground);
+  color:var(--ink);
+  font-family:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-size:var(--fs-body);
+  line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4{
+  font-family:"Outfit","IBM Plex Sans",sans-serif;
+  color:var(--ink);
+  text-wrap:balance;
+  margin:0;
+  line-height:1.08;
+  letter-spacing:-.022em;
+}
+p{margin:0;}
+a{color:inherit;text-decoration:none;}
+img,svg{max-width:100%;}
+:focus-visible{outline:2.5px solid var(--teal-bright);outline-offset:3px;border-radius:4px;}
+
+.wrap{width:100%;max-width:var(--maxw);margin:0 auto;padding:0 24px;}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;}
+
+.eyebrow{
+  font-family:"IBM Plex Mono",monospace;
+  font-size:var(--fs-xs);
+  letter-spacing:.13em;
+  text-transform:uppercase;
+  color:var(--teal);
+  font-weight:500;
+  margin:0 0 14px;
+}
+.lede{color:var(--ink-2);font-size:1.075rem;max-width:62ch;}
+.section{padding:clamp(64px,9vw,116px) 0;}
+.section-head{max-width:56ch;margin-bottom:clamp(34px,4.5vw,56px);}
+.section-head h2{font-size:var(--fs-h2);font-weight:700;margin-bottom:16px;}
+
+/* ============ BUTTONS ============ */
+.btn{
+  display:inline-flex;align-items:center;gap:9px;
+  font-family:"Outfit",sans-serif;font-weight:600;font-size:1rem;
+  padding:14px 24px;border-radius:12px;
+  border:1px solid transparent;cursor:pointer;
+  transition:transform .16s ease, box-shadow .16s ease, background .16s ease;
+  white-space:nowrap;
+}
+.btn-primary{
+  background:linear-gradient(135deg,var(--orange-soft),var(--orange));
+  color:#fff;
+  box-shadow:0 2px 4px rgba(232,114,47,.22), 0 12px 26px -10px rgba(232,114,47,.55);
+}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 4px 8px rgba(232,114,47,.26), 0 18px 34px -12px rgba(232,114,47,.6);}
+.btn-ghost{background:var(--surface);color:var(--ink);border-color:var(--line-strong);}
+.btn-ghost:hover{border-color:var(--teal);color:var(--teal);transform:translateY(-2px);}
+.btn-sm{padding:10px 18px;font-size:.9375rem;border-radius:10px;}
+
+/* ============ NAV ============ */
+.nav{
+  position:sticky;top:0;z-index:50;
+  background:color-mix(in srgb,var(--ground) 88%,transparent);
+  backdrop-filter:saturate(150%) blur(14px);
+  border-bottom:1px solid transparent;
+  transition:border-color .2s ease;
+}
+.nav.stuck{border-bottom-color:var(--line);}
+.nav-in{display:flex;align-items:center;gap:32px;height:72px;}
+.brand{display:flex;align-items:center;gap:10px;}
+.brand svg{width:26px;height:39px;display:block;}
+.brand span{
+  font-family:"Outfit",sans-serif;font-weight:700;font-size:1.42rem;
+  letter-spacing:-.03em;color:var(--teal);
+}
+.nav-links{display:flex;gap:28px;margin-left:auto;}
+.nav-links a{font-size:var(--fs-sm);color:var(--ink-2);font-weight:500;transition:color .15s;}
+.nav-links a:hover{color:var(--teal);}
+.nav-cta{display:flex;gap:10px;align-items:center;}
+@media(max-width:880px){.nav-links{display:none;} .nav-in{gap:16px;} .nav-cta .btn-ghost{display:none;}}
+
+/* ============ HERO ============ */
+.hero{padding:clamp(46px,7vw,86px) 0 clamp(56px,8vw,104px);position:relative;overflow:hidden;}
+.hero::before{
+  content:"";position:absolute;inset:-30% 45% 40% -20%;
+  background:radial-gradient(ellipse at center,var(--teal-wash),transparent 68%);
+  pointer-events:none;
+}
+.hero-grid{
+  position:relative;display:grid;gap:clamp(46px,6vw,72px);
+  grid-template-columns:minmax(0,1.02fr) minmax(0,1fr);align-items:center;
+}
+@media(max-width:960px){.hero-grid{grid-template-columns:1fr;}}
+.hero h1{font-size:var(--fs-hero);font-weight:800;letter-spacing:-.038em;max-width:15ch;}
+.hero h1 em{font-style:normal;color:var(--teal);}
+.hero .lede{margin:26px 0 34px;font-size:1.14rem;max-width:46ch;}
+.hero-cta{display:flex;gap:12px;flex-wrap:wrap;}
+.hero-note{
+  margin-top:20px;font-size:var(--fs-sm);color:var(--muted);
+  display:flex;align-items:center;gap:8px;
+}
+.hero-note b{color:var(--ink-2);font-weight:600;}
+
+/* ---- scene ---- */
+.scene{position:relative;display:flex;justify-content:center;align-items:flex-start;gap:clamp(10px,2.4vw,26px);}
+.phone{
+  width:min(258px,52vw);flex:0 0 auto;
+  background:var(--surface);border:1px solid var(--line);
+  border-radius:30px;padding:11px;box-shadow:var(--shadow-lg);
+  position:relative;z-index:2;
+}
+.phone-screen{background:var(--ground);border-radius:21px;overflow:hidden;}
+.phone-bar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:13px 15px 11px;background:var(--surface);border-bottom:1px solid var(--line);
+}
+.phone-bar strong{font-family:"Outfit",sans-serif;font-size:.9rem;font-weight:700;}
+.tablechip{
+  font-family:"IBM Plex Mono",monospace;font-size:.6875rem;font-weight:500;
+  background:var(--teal-wash);color:var(--teal);padding:3px 8px;border-radius:6px;
+}
+.dishes{padding:11px;display:flex;flex-direction:column;gap:8px;}
+.dish{
+  display:flex;align-items:center;gap:10px;
+  background:var(--surface);border:1px solid var(--line);
+  border-radius:12px;padding:9px 10px;transition:border-color .3s, box-shadow .3s, transform .3s;
+}
+.dish.hit{border-color:var(--orange);box-shadow:0 0 0 3px var(--orange-wash);transform:translateX(3px);}
+.dish-img{
+  width:34px;height:34px;border-radius:8px;flex:0 0 auto;
+  background:linear-gradient(140deg,var(--teal-soft),var(--teal));
+}
+.dish:nth-child(2) .dish-img{background:linear-gradient(140deg,var(--orange-soft),var(--orange));}
+.dish:nth-child(3) .dish-img{background:linear-gradient(140deg,#9BD9A0,var(--teal));}
+.dish-txt{min-width:0;flex:1;}
+.dish-txt b{display:block;font-size:.7875rem;font-weight:600;line-height:1.3;}
+.dish-txt span{font-size:.6875rem;color:var(--muted);}
+.dish-price{font-family:"IBM Plex Mono",monospace;font-size:.75rem;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums;}
+.phone-foot{
+  margin:3px 11px 11px;background:linear-gradient(135deg,var(--orange-soft),var(--orange));
+  color:#fff;border-radius:11px;padding:10px;text-align:center;
+  font-family:"Outfit",sans-serif;font-weight:600;font-size:.8125rem;
+}
+
+/* ---- kitchen ticket ---- */
+.ticket{
+  width:min(238px,46vw);flex:0 0 auto;margin-top:34px;
+  background:var(--paper);
+  border:1px solid var(--paper-line);
+  border-bottom:none;
+  border-radius:8px 8px 0 0;
+  padding:16px 16px 26px;
+  box-shadow:var(--shadow-md);
+  font-family:"IBM Plex Mono",monospace;font-size:.75rem;line-height:1.6;
+  color:var(--ink);
+  transform:rotate(1.4deg);
+  position:relative;z-index:1;
+  -webkit-mask:
+    linear-gradient(#000 0 0) top/100% calc(100% - 9px) no-repeat,
+    conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) bottom/16px 9px repeat-x;
+  mask:
+    linear-gradient(#000 0 0) top/100% calc(100% - 9px) no-repeat,
+    conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) bottom/16px 9px repeat-x;
+}
+.ticket-top{display:flex;justify-content:space-between;align-items:baseline;font-weight:600;font-size:.6875rem;letter-spacing:.04em;}
+.ticket-top span{color:var(--muted);font-weight:400;}
+.ticket h4{
+  font-family:"IBM Plex Mono",monospace;font-size:1.05rem;font-weight:600;
+  letter-spacing:-.01em;margin:7px 0 2px;
+}
+.rule{border-top:1.5px dashed var(--paper-line);margin:10px 0;}
+.ticket-lines{display:flex;flex-direction:column;gap:7px;min-height:104px;}
+.tline{
+  display:flex;gap:9px;align-items:flex-start;
+  opacity:0;transform:translateY(-5px);
+  transition:opacity .34s ease, transform .34s ease;
+}
+.tline.on{opacity:1;transform:none;}
+.tline b{font-weight:600;flex:0 0 auto;color:var(--teal);}
+.tline i{font-style:normal;display:block;font-size:.6875rem;color:var(--muted);}
+.ticket-stamp{
+  margin-top:12px;border:2px solid var(--orange);color:var(--orange);
+  border-radius:6px;padding:5px;text-align:center;font-weight:600;
+  font-size:.75rem;letter-spacing:.11em;
+  opacity:0;transform:scale(.94) rotate(-2deg);
+  transition:opacity .3s ease, transform .3s cubic-bezier(.34,1.6,.64,1);
+}
+.ticket-stamp.on{opacity:1;transform:scale(1) rotate(-2deg);}
+@media(max-width:520px){
+  .scene{flex-direction:column;align-items:center;}
+  .ticket{margin-top:-14px;width:min(258px,80vw);transform:rotate(-1deg);}
+}
+
+/* ============ TRUST STRIP ============ */
+.strip{border-block:1px solid var(--line);background:var(--surface);}
+.strip-in{
+  display:grid;grid-template-columns:repeat(4,1fr);
+}
+.strip-cell{padding:26px 22px;border-left:1px solid var(--line);}
+.strip-cell:first-child{border-left:none;}
+.strip-cell b{
+  display:block;font-family:"Outfit",sans-serif;font-weight:700;
+  font-size:1.32rem;color:var(--teal);letter-spacing:-.02em;margin-bottom:3px;
+}
+.strip-cell span{font-size:var(--fs-sm);color:var(--muted);line-height:1.45;display:block;}
+@media(max-width:760px){
+  .strip-in{grid-template-columns:1fr 1fr;}
+  .strip-cell:nth-child(3){border-left:none;}
+  .strip-cell:nth-child(n+3){border-top:1px solid var(--line);}
+}
+
+/* ============ FLOW (numbered — real sequence) ============ */
+.flow{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;}
+.step{background:var(--surface);padding:30px 26px 34px;position:relative;}
+.step-n{
+  font-family:"IBM Plex Mono",monospace;font-size:.75rem;font-weight:600;
+  color:var(--teal);letter-spacing:.1em;margin-bottom:22px;display:block;
+}
+.step h3{font-size:1.075rem;font-weight:700;margin-bottom:9px;}
+.step p{font-size:var(--fs-sm);color:var(--muted);line-height:1.58;}
+.step-ico{margin-bottom:18px;color:var(--teal);display:block;}
+.step-ico svg{width:26px;height:26px;display:block;}
+@media(max-width:860px){.flow{grid-template-columns:1fr 1fr;}}
+@media(max-width:520px){.flow{grid-template-columns:1fr;}}
+
+/* ============ MODES ============ */
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+@media(max-width:860px){.modes{grid-template-columns:1fr;}}
+.mode{
+  background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--radius);padding:32px;display:flex;flex-direction:column;gap:16px;
+}
+.mode.feature{border-color:var(--teal);box-shadow:0 0 0 4px var(--teal-wash);}
+.mode-tag{
+  align-self:flex-start;font-family:"IBM Plex Mono",monospace;
+  font-size:var(--fs-xs);letter-spacing:.08em;text-transform:uppercase;
+  padding:5px 10px;border-radius:7px;background:var(--surface-2);color:var(--ink-2);font-weight:500;
+}
+.mode.feature .mode-tag{background:var(--teal);color:#fff;}
+.mode h3{font-size:1.42rem;font-weight:700;}
+.mode p{color:var(--ink-2);font-size:var(--fs-sm);}
+.mode ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;}
+.mode li{display:flex;gap:10px;font-size:var(--fs-sm);color:var(--ink-2);align-items:flex-start;}
+.mode li svg{width:17px;height:17px;flex:0 0 auto;margin-top:3px;color:var(--teal);}
+.mode-foot{
+  margin-top:auto;padding-top:18px;border-top:1px dashed var(--line-strong);
+  font-family:"IBM Plex Mono",monospace;font-size:var(--fs-xs);color:var(--muted);
+}
+
+/* ============ FEATURES ============ */
+.feats{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+@media(max-width:900px){.feats{grid-template-columns:1fr 1fr;}}
+@media(max-width:600px){.feats{grid-template-columns:1fr;}}
+.feat{
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+  padding:26px;transition:border-color .18s ease, transform .18s ease;
+}
+.feat:hover{border-color:var(--teal);transform:translateY(-3px);}
+.feat-ico{
+  width:40px;height:40px;border-radius:11px;background:var(--teal-wash);color:var(--teal);
+  display:grid;place-items:center;margin-bottom:17px;
+}
+.feat-ico svg{width:21px;height:21px;}
+.feat h3{font-size:1.05rem;font-weight:700;margin-bottom:8px;}
+.feat p{font-size:var(--fs-sm);color:var(--muted);line-height:1.56;}
+
+/* ============ SPLIT DEMO ============ */
+.split-wrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,420px);gap:clamp(34px,5vw,64px);align-items:center;}
+@media(max-width:900px){.split-wrap{grid-template-columns:1fr;}}
+.split-card{
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+  padding:24px;box-shadow:var(--shadow-md);
+}
+.split-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:18px;}
+.split-head b{font-family:"Outfit",sans-serif;font-size:1.05rem;font-weight:700;}
+.split-head span{font-family:"IBM Plex Mono",monospace;font-size:var(--fs-xs);color:var(--muted);}
+.guest{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line);}
+.guest:first-of-type{border-top:none;}
+.av{
+  width:38px;height:38px;border-radius:11px;flex:0 0 auto;display:grid;place-items:center;
+  font-size:1.1rem;
+}
+.guest-txt{flex:1;min-width:0;}
+.guest-txt b{display:block;font-size:.9375rem;font-weight:600;}
+.guest-txt span{font-size:var(--fs-xs);color:var(--muted);}
+.guest-sum{font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:.9375rem;font-variant-numeric:tabular-nums;}
+.split-total{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-top:16px;padding-top:16px;border-top:1.5px dashed var(--line-strong);
+  font-family:"IBM Plex Mono",monospace;font-weight:600;
+}
+.split-total span:last-child{color:var(--teal);font-size:1.15rem;}
+
+/* ============ PRICING ============ */
+.toggle{
+  display:inline-flex;background:var(--surface-2);border-radius:11px;padding:4px;gap:3px;
+  border:1px solid var(--line);margin-bottom:12px;
+}
+.toggle button{
+  font-family:"Outfit",sans-serif;font-weight:600;font-size:.9rem;
+  padding:8px 17px;border-radius:8px;border:none;background:transparent;
+  color:var(--muted);cursor:pointer;transition:background .16s, color .16s;
+}
+.toggle button.on{background:var(--surface);color:var(--ink);box-shadow:var(--shadow-sm);}
+.save{font-family:"IBM Plex Mono",monospace;font-size:var(--fs-xs);color:var(--orange);font-weight:500;}
+
+.plans{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;align-items:start;}
+@media(max-width:1000px){.plans{grid-template-columns:1fr 1fr;}}
+@media(max-width:600px){.plans{grid-template-columns:1fr;}}
+.plan{
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+  padding:26px 22px;display:flex;flex-direction:column;gap:15px;height:100%;
+}
+.plan.best{border:1.5px solid var(--teal);box-shadow:0 0 0 4px var(--teal-wash);position:relative;}
+.plan-badge{
+  position:absolute;top:-11px;left:22px;background:var(--teal);color:#fff;
+  font-family:"IBM Plex Mono",monospace;font-size:.6875rem;font-weight:600;
+  letter-spacing:.07em;text-transform:uppercase;padding:4px 10px;border-radius:6px;
+}
+.plan h3{font-size:1.15rem;font-weight:700;}
+.plan-for{font-size:var(--fs-xs);color:var(--muted);margin-top:-9px;min-height:2.6em;line-height:1.4;}
+.price{display:flex;align-items:baseline;gap:5px;font-family:"Outfit",sans-serif;}
+.price b{font-size:2.35rem;font-weight:800;letter-spacing:-.04em;font-variant-numeric:tabular-nums;}
+.price i{font-style:normal;font-size:.875rem;color:var(--muted);font-family:"IBM Plex Sans",sans-serif;}
+.price-sub{font-size:var(--fs-xs);color:var(--muted);margin-top:-11px;font-family:"IBM Plex Mono",monospace;}
+.plan ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:9px;}
+.plan li{display:flex;gap:9px;font-size:var(--fs-sm);color:var(--ink-2);align-items:flex-start;line-height:1.45;}
+.plan li svg{width:16px;height:16px;flex:0 0 auto;margin-top:3px;color:var(--teal);}
+.plan .btn{width:100%;justify-content:center;margin-top:auto;}
+.pricing-note{
+  margin-top:26px;font-size:var(--fs-sm);color:var(--muted);
+  display:flex;gap:20px;flex-wrap:wrap;
+}
+.pricing-note b{color:var(--ink-2);font-weight:600;}
+
+/* ============ FAQ ============ */
+.faq{max-width:760px;}
+.faq details{border-bottom:1px solid var(--line);}
+.faq summary{
+  cursor:pointer;list-style:none;padding:20px 40px 20px 0;position:relative;
+  font-family:"Outfit",sans-serif;font-weight:600;font-size:1.075rem;color:var(--ink);
+}
+.faq summary::-webkit-details-marker{display:none;}
+.faq summary::after{
+  content:"";position:absolute;right:6px;top:27px;width:10px;height:10px;
+  border-right:2px solid var(--teal);border-bottom:2px solid var(--teal);
+  transform:rotate(45deg);transition:transform .2s ease;
+}
+.faq details[open] summary::after{transform:rotate(-135deg);}
+.faq p{padding:0 0 22px;color:var(--ink-2);font-size:var(--fs-sm);max-width:66ch;}
+
+/* ============ CTA ============ */
+.cta-band{
+  background:linear-gradient(135deg,var(--teal),var(--teal-bright) 62%,var(--teal-soft));
+  border-radius:24px;padding:clamp(40px,6vw,68px);text-align:center;position:relative;overflow:hidden;
+}
+.cta-band h2{color:#fff;font-size:var(--fs-h2);font-weight:800;letter-spacing:-.03em;max-width:19ch;margin:0 auto 16px;}
+.cta-band p{color:rgba(255,255,255,.9);max-width:48ch;margin:0 auto 30px;}
+.cta-band .btn-primary{box-shadow:0 4px 12px rgba(0,0,0,.2), 0 18px 40px -14px rgba(0,0,0,.4);}
+.cta-band .btn-ghost{background:rgba(255,255,255,.14);color:#fff;border-color:rgba(255,255,255,.4);}
+.cta-band .btn-ghost:hover{background:rgba(255,255,255,.24);color:#fff;border-color:#fff;}
+.cta-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
+.cta-fine{margin-top:20px;font-family:"IBM Plex Mono",monospace;font-size:var(--fs-xs);color:rgba(255,255,255,.78);}
+
+/* ============ FOOTER ============ */
+.foot{border-top:1px solid var(--line);padding:52px 0 40px;margin-top:clamp(64px,9vw,110px);}
+.foot-grid{display:grid;grid-template-columns:1.6fr repeat(3,1fr);gap:36px;}
+@media(max-width:760px){.foot-grid{grid-template-columns:1fr 1fr;}}
+.foot-brand p{font-size:var(--fs-sm);color:var(--muted);max-width:30ch;margin-top:14px;}
+.foot h4{font-family:"IBM Plex Mono",monospace;font-size:var(--fs-xs);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:500;margin-bottom:14px;}
+.foot ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:9px;}
+.foot li a{font-size:var(--fs-sm);color:var(--ink-2);transition:color .15s;}
+.foot li a:hover{color:var(--teal);}
+.foot-base{
+  margin-top:44px;padding-top:24px;border-top:1px solid var(--line);
+  display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;
+  font-size:var(--fs-xs);color:var(--muted);font-family:"IBM Plex Mono",monospace;
+}
+
+/* ============ REVEAL ============ */
+.rv{opacity:0;transform:translateY(16px);transition:opacity .6s ease, transform .6s cubic-bezier(.22,.9,.35,1);}
+.rv.in{opacity:1;transform:none;}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition-duration:.01ms!important;}
+  .rv{opacity:1;transform:none;}
+}
+</style>
+
+<!-- ============ NAV ============ -->
+<header class="nav" id="nav">
+  <div class="wrap nav-in">
+    <a class="brand" href="#top" aria-label="kelbroo — strona główna">
+      <svg viewBox="0 0 120 180" fill="none" aria-hidden="true">
+        <defs>
+          <linearGradient id="lg-t" x1="10" y1="10" x2="110" y2="170" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#5FC9BE"/><stop offset="1" stop-color="#2A8F8C"/>
+          </linearGradient>
+          <linearGradient id="lg-o" x1="26" y1="44" x2="96" y2="94" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#F7A85C"/><stop offset="1" stop-color="#E8722F"/>
+          </linearGradient>
+        </defs>
+        <rect x="10" y="10" width="100" height="160" rx="23" stroke="url(#lg-t)" stroke-width="9"/>
+        <path d="M48 12h24v5a5 5 0 0 1-5 5H53a5 5 0 0 1-5-5z" fill="url(#lg-t)"/>
+        <circle cx="60" cy="45" r="4.5" fill="url(#lg-o)"/>
+        <path d="M31 80a29 29 0 0 1 58 0z" fill="url(#lg-o)"/>
+        <rect x="24" y="84" width="72" height="9" rx="4.5" fill="url(#lg-o)"/>
+        <path d="M34 128c0-19 16-24 33-24" stroke="url(#lg-t)" stroke-width="9" stroke-linecap="round"/>
+        <path d="M62 116l6-18 14 12z" fill="url(#lg-t)"/>
+        <rect x="23" y="130" width="23" height="23" rx="4" stroke="url(#lg-t)" stroke-width="6"/>
+        <rect x="31" y="138" width="7" height="7" rx="1.5" fill="url(#lg-t)"/>
+        <g fill="url(#lg-t)">
+          <rect x="72" y="130" width="6" height="6" rx="1"/><rect x="82" y="130" width="6" height="6" rx="1"/>
+          <rect x="92" y="134" width="6" height="6" rx="1"/><rect x="72" y="140" width="6" height="6" rx="1"/>
+          <rect x="86" y="142" width="6" height="6" rx="1"/><rect x="76" y="148" width="6" height="6" rx="1"/>
+          <rect x="90" y="152" width="6" height="6" rx="1"/>
+        </g>
+      </svg>
+      <span>kelbroo</span>
+    </a>
+    <nav class="nav-links">
+      <a href="#jak">Jak to działa</a>
+      <a href="#modele">Płatności</a>
+      <a href="#funkcje">Funkcje</a>
+      <a href="#cennik">Cennik</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <div class="nav-cta">
+      <a class="btn btn-ghost btn-sm" href="#logowanie">Zaloguj się</a>
+      <a class="btn btn-primary btn-sm" href="#trial">Wypróbuj 14 dni</a>
+    </div>
+  </div>
+</header>
+
+<!-- ============ HERO ============ -->
+<main id="top">
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <p class="eyebrow">Self-service dining</p>
+      <h1>Goście zamawiają z telefonu. Kelnerzy wracają <em>do gości</em>.</h1>
+      <p class="lede">kelbroo zamienia kod QR na stoliku w pełne menu, zamówienie i rachunek. Bez aplikacji do pobrania, bez rejestracji gościa i bez zmiany Twojej kasy fiskalnej.</p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="#trial">Zacznij 14 dni za darmo</a>
+        <a class="btn btn-ghost" href="#demo">Zobacz demo menu</a>
+      </div>
+      <p class="hero-note"><b>Bez karty na start.</b> Wdrożenie w jeden dzień.</p>
+    </div>
+
+    <div class="scene" aria-label="Podgląd: zamówienie gościa trafia na bon kuchenny">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="phone-bar">
+            <strong>Bistro Nadwiślańskie</strong>
+            <span class="tablechip">Stolik 12</span>
+          </div>
+          <div class="dishes">
+            <div class="dish" data-dish="0">
+              <div class="dish-img"></div>
+              <div class="dish-txt"><b>Żurek na zakwasie</b><span>jajko, biała kiełbasa</span></div>
+              <div class="dish-price">24,00</div>
+            </div>
+            <div class="dish" data-dish="1">
+              <div class="dish-img"></div>
+              <div class="dish-txt"><b>Pierogi ruskie</b><span>8 szt., cebulka</span></div>
+              <div class="dish-price">32,00</div>
+            </div>
+            <div class="dish" data-dish="2">
+              <div class="dish-img"></div>
+              <div class="dish-txt"><b>Sernik wiedeński</b><span>sos malinowy</span></div>
+              <div class="dish-price">19,00</div>
+            </div>
+          </div>
+          <div class="phone-foot">Zamawiam &middot; <span id="cartsum">0,00</span> zł</div>
+        </div>
+      </div>
+
+      <div class="ticket" role="status" aria-live="polite">
+        <div class="ticket-top"><span>BON KUCHENNY</span><span>18:42</span></div>
+        <h4>STOLIK 12</h4>
+        <div class="rule"></div>
+        <div class="ticket-lines">
+          <div class="tline" data-line="0"><b>1&times;</b><span>Żurek na zakwasie</span></div>
+          <div class="tline" data-line="1"><b>1&times;</b><span>Pierogi ruskie<i>&rarr; bez cebulki</i></span></div>
+          <div class="tline" data-line="2"><b>1&times;</b><span>Sernik wiedeński</span></div>
+        </div>
+        <div class="rule"></div>
+        <div class="ticket-stamp" id="stamp">NA KUCHNIĘ</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ TRUST STRIP ============ -->
+<section class="strip">
+  <div class="wrap"><div class="strip-in">
+    <div class="strip-cell"><b>0 zł</b><span>prowizji od zamówień — płacisz tylko abonament</span></div>
+    <div class="strip-cell"><b>0 instalacji</b><span>gość skanuje kod i zamawia w przeglądarce</span></div>
+    <div class="strip-cell"><b>6 języków</b><span>menu tłumaczone dla gości zagranicznych</span></div>
+    <div class="strip-cell"><b>1 dzień</b><span>od rejestracji do pierwszego zamówienia</span></div>
+  </div></div>
+</section>
+
+<!-- ============ FLOW ============ -->
+<section class="section" id="jak">
+  <div class="wrap">
+    <div class="section-head rv">
+      <p class="eyebrow">Przy stoliku</p>
+      <h2>Cztery kroki, zero przepisywania zamówień</h2>
+      <p class="lede">Zamówienie idzie prosto z telefonu gościa na ekran kuchni. Nikt niczego nie notuje na kartce i nikt nie myli stolików.</p>
+    </div>
+    <div class="flow rv">
+      <div class="step">
+        <span class="step-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14v3M17 20h4"/></svg></span>
+        <span class="step-n">KROK 01</span>
+        <h3>Gość skanuje kod</h3>
+        <p>Kod QR na stoliku otwiera menu w przeglądarce. Bez pobierania aplikacji, bez zakładania konta.</p>
+      </div>
+      <div class="step">
+        <span class="step-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h2l2.6 10.4a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.5L21 9H6"/><circle cx="10" cy="21" r="1"/><circle cx="18" cy="21" r="1"/></svg></span>
+        <span class="step-n">KROK 02</span>
+        <h3>Składa zamówienie</h3>
+        <p>Wybiera dania, dodatki i uwagi. Widzi alergeny, zdjęcia i czas przygotowania — po polsku albo w swoim języku.</p>
+      </div>
+      <div class="step">
+        <span class="step-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V8a8 8 0 0 1 16 0v13z"/><path d="M2 21h20M8 12h8"/></svg></span>
+        <span class="step-n">KROK 03</span>
+        <h3>Kuchnia widzi bon</h3>
+        <p>Zamówienie pojawia się na ekranie kuchni z numerem stolika i licznikiem czasu. Kelner może je najpierw potwierdzić przy stoliku.</p>
+      </div>
+      <div class="step">
+        <span class="step-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17h18M5 17a7 7 0 0 1 14 0"/><path d="M12 6.5V4M10.5 4h3"/><path d="M2 20.5h20"/></svg></span>
+        <span class="step-n">KROK 04</span>
+        <h3>Kelner podaje</h3>
+        <p>Gotowe dania trafiają na listę „do wydania". Kelner zanosi je do stolika i zamyka rachunek.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PAYMENT MODES ============ -->
+<section class="section" id="modele" style="background:var(--surface);border-block:1px solid var(--line);">
+  <div class="wrap">
+    <div class="section-head rv">
+      <p class="eyebrow">Ty decydujesz</p>
+      <h2>Płatność w aplikacji albo u kelnera — jak dotąd</h2>
+      <p class="lede">Najczęstsza obawa restauratorów brzmi: „nie chcę zmieniać sposobu płacenia ani kasy fiskalnej". Nie musisz. kelbroo działa w obu modelach, a przełączasz je jednym ustawieniem.</p>
+    </div>
+    <div class="modes rv">
+      <div class="mode feature">
+        <span class="mode-tag">Bez opłat transakcyjnych</span>
+        <h3>Płatność u kelnera</h3>
+        <p>Goście tylko zamawiają z telefonu. Wszystko z wizyty sumuje się w jeden rachunek, który kelner rozlicza po posiłku — na Twojej kasie, Twoim terminalem.</p>
+        <ul>
+          <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5l4 4 8-9"/></svg>Paragon wystawiasz jak dotychczas — bez integracji z kasą</li>
+          <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5l4 4 8-9"/></svg>Zero prowizji operatora płatności</li>
+          <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5l4 4 8-9"/></svg>Kelner może potwierdzać każde zamówienie przy stoliku</li>
+          <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5l4 4 8-9"/></svg>Raport rozliczenia zmiany dla każdego kelnera</li>
+        </ul>
+        <p class="mode-foot">Dla restauracji z pełną obsługą kelnerską</p>
+      </div>
+      <div class="mode">
+        <span class="mode-tag">Szybsza rotacja stolików</span>
+        <h3>Płatność w aplikacji</h3>
+        <p>Gość płaci od razu przy zamawianiu — BLIK, karta, Apple Pay lub Google Pay. Zamówienie trafia do kuchni dopiero po potwierdzeniu płatności.</p>
+        <ul>
+          <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5l4 4 8-9"/></svg>Koniec z czekaniem na terminal i wydawaniem reszty</li>
+          <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5l4 4 8-9"/></svg>Napiwek proponowany przy płatności</li>
+          <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5l4 4 8-9"/></svg>Każdy przy stoliku płaci za siebie, bez dzielenia po fakcie</li>
+          <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5l4 4 8-9"/></svg>Brak nieopłaconych rachunków</li>
+        </ul>
+        <p class="mode-foot">Dla barów, food courtów i ogródków</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SPLIT BILL ============ -->
+<section class="section">
+  <div class="wrap split-wrap">
+    <div class="rv">
+      <p class="eyebrow">Koniec sporów o rachunek</p>
+      <h2 style="font-size:var(--fs-h2);font-weight:700;margin-bottom:16px;">Każdy skanuje ten sam kod i płaci za siebie</h2>
+      <p class="lede" style="margin-bottom:22px;">Goście przy jednym stoliku dołączają do wspólnej wizyty — każdy wybiera lub losuje nick i awatar, bez zakładania konta. Potem rozliczają się osobno, w grupach albo po równo.</p>
+      <p class="lede" style="margin-bottom:26px;">Gdy płaci jedna osoba, każdy może wysłać sobie na e-mail zestawienie „kto co zamówił" — gotowe do rozliczenia delegacji.</p>
+      <a class="btn btn-ghost" href="#funkcje">Zobacz wszystkie funkcje</a>
+    </div>
+    <div class="split-card rv">
+      <div class="split-head"><b>Rachunek stolika</b><span>STOLIK 12 &middot; 4 osoby</span></div>
+      <div class="guest">
+        <div class="av" style="background:var(--teal-wash);">🦡</div>
+        <div class="guest-txt"><b>Wesoły Borsuk</b><span>Żurek, pierogi ruskie</span></div>
+        <div class="guest-sum">56,00 zł</div>
+      </div>
+      <div class="guest">
+        <div class="av" style="background:var(--orange-wash);">🦔</div>
+        <div class="guest-txt"><b>Szybki Jeż</b><span>Schabowy, kompot</span></div>
+        <div class="guest-sum">62,00 zł</div>
+      </div>
+      <div class="guest">
+        <div class="av" style="background:var(--teal-wash);">🦉</div>
+        <div class="guest-txt"><b>Nocna Sowa</b><span>Sernik, espresso</span></div>
+        <div class="guest-sum">31,00 zł</div>
+      </div>
+      <div class="guest">
+        <div class="av" style="background:var(--surface-2);">🍷</div>
+        <div class="guest-txt"><b>Dzielone na 3</b><span>Wino domowe, karafka</span></div>
+        <div class="guest-sum">69,00 zł</div>
+      </div>
+      <div class="split-total"><span>RAZEM</span><span>218,00 zł</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FEATURES ============ -->
+<section class="section" id="funkcje" style="background:var(--surface);border-block:1px solid var(--line);">
+  <div class="wrap">
+    <div class="section-head rv">
+      <p class="eyebrow">W każdym planie</p>
+      <h2>Wszystko, czego potrzebuje sala i kuchnia</h2>
+    </div>
+    <div class="feats rv">
+      <div class="feat">
+        <div class="feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg></div>
+        <h3>Menu w wielu językach</h3>
+        <p>Gość dostaje kartę w swoim języku automatycznie. Brakujące tłumaczenie zawsze zastępuje wersja polska — nigdy pusty ekran.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M7 8h4M7 12h6M17 8v6"/></svg></div>
+        <h3>Ekran kuchni (KDS)</h3>
+        <p>Kolumny „nowe / w przygotowaniu / gotowe", licznik czasu i alarm dźwiękowy. Zamówienie czerwienieje, gdy czeka za długo.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h7v7h-7z"/></svg></div>
+        <h3>Kody QR na stoliki</h3>
+        <p>Generujesz je w panelu z własnym logo i pobierasz gotowy arkusz A4 do wydruku — naklejki, stojaki albo karty.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.9 6.4.6-4.8 4.3 1.4 6.3L12 16.8 6.4 20.1l1.4-6.3L3 9.5l6.4-.6z"/></svg></div>
+        <h3>Oceny dań i feedback</h3>
+        <p>Gość ocenia każde danie po posiłku. Uwaga krytyczna trafia prosto do managera — zanim wyląduje w publicznej recenzji.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18M6 20V10M11 20V4M16 20v-7M21 20v-4"/></svg></div>
+        <h3>Raporty i analityka</h3>
+        <p>Które dania sprzedają się najlepiej, które nikt nie zamawia, o której masz szczyt i ile czasu zajmuje wydanie zamówienia.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3.1a4 4 0 0 1 0 7.7M22 21v-2a4 4 0 0 0-3-3.8"/><circle cx="9" cy="7" r="4"/><path d="M2 21v-2a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v2"/></svg></div>
+        <h3>Kelner zamawia i poprawia</h3>
+        <p>Obsługa może złożyć zamówienie za gościa i je skorygować. W historii zawsze widać, co dodał gość, a co kelner.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PRICING ============ -->
+<section class="section" id="cennik">
+  <div class="wrap">
+    <div class="section-head rv" style="max-width:60ch;">
+      <p class="eyebrow">Cennik</p>
+      <h2>Stały abonament. Zero prowizji od zamówień.</h2>
+      <p class="lede" style="margin-bottom:22px;">Ceny netto za jeden lokal. Bez umowy na czas określony — rezygnujesz, kiedy chcesz.</p>
+      <div class="toggle" role="group" aria-label="Okres rozliczeniowy">
+        <button type="button" data-bill="m" class="on">Miesięcznie</button>
+        <button type="button" data-bill="y">Rocznie</button>
+      </div>
+      <p class="save" id="saveline">Przy płatności rocznej oszczędzasz 17% — dwa miesiące gratis.</p>
+    </div>
+
+    <div class="plans rv">
+      <div class="plan">
+        <h3>Menu</h3>
+        <p class="plan-for">Cyfrowa karta z kodem QR, bez zamawiania</p>
+        <div class="price"><b data-m="0" data-y="0">0</b><i>zł / mies.</i></div>
+        <p class="price-sub">na zawsze za darmo</p>
+        <ul>
+          <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5l4 4 8-9"/></svg>Kody QR bez limitu</li>
+          <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5l4 4 8-9"/></svg>1 język, do 50 pozycji</li>
+          <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5l4 4 8-9"/></svg>Aktualizacja karty w minutę</li>
+        </ul>
+        <a class="btn btn-ghost" href="#trial">Załóż konto</a>
+      </div>
+
+      <div class="plan">
+        <h3>Starter</h3>
+        <p class="plan-for">Kawiarnia, mały lokal, food truck</p>
+        <div class="price"><b data-m="159" data-y="132">159</b><i>zł / mies.</i></div>
+        <p class="price-sub" data-sub-m="rozliczenie miesięczne" data-sub-y="1 590 zł rocznie">rozliczenie miesięczne</p>
+        <ul>
+          <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5l4 4 8-9"/></svg>Do 12 stolików, 2 języki</li>
+          <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5l4 4 8-9"/></svg>Zamawianie + oba modele płatności</li>
+          <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5l4 4 8-9"/></svg>Ekran kuchni i panel kelnera</li>
+          <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5l4 4 8-9"/></svg>Podział „każdy za siebie"</li>
+          <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5l4 4 8-9"/></svg>3 konta personelu</li>
+        </ul>
+        <a class="btn btn-ghost" href="#trial">Wybierz Starter</a>
+      </div>
+
+      <div class="plan best">
+        <span class="plan-badge">Najpopularniejszy</span>
+        <h3>Pro</h3>
+        <p class="plan-for">Restauracja z pełną obsługą kelnerską</p>
+        <div class="price"><b data-m="349" data-y="291">349</b><i>zł / mies.</i></div>
+        <p class="price-sub" data-sub-m="rozliczenie miesięczne" data-sub-y="3 490 zł rocznie">rozliczenie miesięczne</p>
+        <ul>
+          <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5l4 4 8-9"/></svg>Do 40 stolików, 6 języków</li>
+          <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5l4 4 8-9"/></svg>Pełny podział rachunku i grupy</li>
+          <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5l4 4 8-9"/></svg>Oceny dań i feedback do managera</li>
+          <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5l4 4 8-9"/></svg>Analityka i eksport raportów</li>
+          <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5l4 4 8-9"/></svg>Konta personelu bez limitu</li>
+          <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5l4 4 8-9"/></svg>Wsparcie w 4 godziny</li>
+        </ul>
+        <a class="btn btn-primary" href="#trial">Testuj 14 dni</a>
+      </div>
+
+      <div class="plan">
+        <h3>Enterprise</h3>
+        <p class="plan-for">Sieć restauracji, hotel, food court</p>
+        <div class="price"><b data-m="899" data-y="749">899</b><i>zł / mies.</i></div>
+        <p class="price-sub">wycena indywidualna</p>
+        <ul>
+          <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5l4 4 8-9"/></svg>Wiele lokali, bez limitów</li>
+          <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5l4 4 8-9"/></svg>Integracja z kasą fiskalną i POS</li>
+          <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5l4 4 8-9"/></svg>Własna domena i branding</li>
+          <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5l4 4 8-9"/></svg>Opiekun klienta i SLA 99,9%</li>
+        </ul>
+        <a class="btn btn-ghost" href="#kontakt">Porozmawiajmy</a>
+      </div>
+    </div>
+
+    <div class="pricing-note rv">
+      <span><b>Rabaty dla sieci:</b> 3–9 lokali −15%, 10+ lokali −25%</span>
+      <span><b>Dodatki:</b> +10 stolików 49 zł &middot; dodatkowy język 39 zł</span>
+      <span><b>Do wszystkich cen</b> doliczamy VAT</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FAQ ============ -->
+<section class="section" id="faq" style="background:var(--surface);border-block:1px solid var(--line);">
+  <div class="wrap">
+    <div class="section-head rv">
+      <p class="eyebrow">Pytania restauratorów</p>
+      <h2>Zanim zapytasz</h2>
+    </div>
+    <div class="faq rv">
+      <details open><summary>Czy goście muszą instalować aplikację?</summary>
+        <p>Nie. Zeskanowanie kodu QR otwiera menu w przeglądarce telefonu — tak samo jak zwykłą stronę. Gość nie zakłada konta, nie podaje maila ani numeru telefonu.</p></details>
+      <details><summary>Czy muszę przyjmować płatności online?</summary>
+        <p>Nie. Możesz włączyć tryb, w którym goście wyłącznie zamawiają, a płacą kelnerowi po posiłku — dokładnie jak dotychczas. Wtedy nie ponosisz żadnych opłat transakcyjnych i nic nie zmienia się w Twoim obiegu płatności.</p></details>
+      <details><summary>A co z paragonami i kasą fiskalną?</summary>
+        <p>W trybie płatności u kelnera paragon wystawiasz na swojej kasie, tak jak zawsze — kelbroo w ogóle nie wchodzi w fiskalizację. Przy płatnościach online dostępna jest integracja z Twoją kasą lub drukarką fiskalną.</p></details>
+      <details><summary>Czy to zastąpi kelnerów?</summary>
+        <p>Nie. Zdejmuje z nich przyjmowanie zamówień i bieganie po terminal, więc mają czas na to, za co goście naprawdę doceniają obsługę: doradzanie, dopilnowanie stolika, rozmowę. Kelner może też sam składać zamówienia w aplikacji, gdy gość woli zamówić ustnie.</p></details>
+      <details><summary>Czy kelner może poprawić zamówienie gościa?</summary>
+        <p>Tak. Może dodać pozycję, zmienić ilość albo przepisać danie na inną osobę przy stoliku. Każda zmiana zapisuje się w historii zamówienia, więc zawsze widać, co dodał gość, a co obsługa.</p></details>
+      <details><summary>Potrzebuję nowego sprzętu?</summary>
+        <p>Wystarczy dowolny tablet, laptop lub komputer z przeglądarką. Panel kuchni i panel kelnera działają na iPadzie i na tablecie z Androidem — instalujesz je jako ikonę na ekranie głównym.</p></details>
+      <details><summary>Co się stanie, gdy padnie internet?</summary>
+        <p>Panel obsługi działa dalej: akcje personelu zapisują się na urządzeniu i synchronizują automatycznie po powrocie sieci. Gość zobaczy menu, ale złożenie zamówienia wymaga połączenia — z czytelnym komunikatem, a nie pustym ekranem.</p></details>
+      <details><summary>Ile trwa wdrożenie?</summary>
+        <p>Konfiguracja lokalu, wprowadzenie menu i wydruk kodów QR to zwykle jeden dzień. Możemy też wprowadzić menu za Ciebie w ramach wdrożenia „pod klucz".</p></details>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CTA ============ -->
+<section class="section" id="trial">
+  <div class="wrap">
+    <div class="cta-band rv">
+      <h2>Pierwsze zamówienie ze stolika jeszcze dziś</h2>
+      <p>Załóż konto, dodaj stoliki i menu, wydrukuj kody QR. 14 dni planu Pro bez opłat i bez podawania karty.</p>
+      <div class="cta-actions">
+        <a class="btn btn-primary" href="#rejestracja">Zacznij za darmo</a>
+        <a class="btn btn-ghost" href="#kontakt">Umów prezentację</a>
+      </div>
+      <p class="cta-fine">Bez karty &middot; bez umowy na czas określony &middot; bez prowizji od zamówień</p>
+    </div>
+  </div>
+</section>
+</main>
+
+<!-- ============ FOOTER ============ -->
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <a class="brand" href="#top">
+          <svg viewBox="0 0 120 180" fill="none" aria-hidden="true">
+            <defs>
+              <linearGradient id="lg-t2" x1="10" y1="10" x2="110" y2="170" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#5FC9BE"/><stop offset="1" stop-color="#2A8F8C"/>
+              </linearGradient>
+              <linearGradient id="lg-o2" x1="26" y1="44" x2="96" y2="94" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#F7A85C"/><stop offset="1" stop-color="#E8722F"/>
+              </linearGradient>
+            </defs>
+            <rect x="10" y="10" width="100" height="160" rx="23" stroke="url(#lg-t2)" stroke-width="9"/>
+            <path d="M48 12h24v5a5 5 0 0 1-5 5H53a5 5 0 0 1-5-5z" fill="url(#lg-t2)"/>
+            <circle cx="60" cy="45" r="4.5" fill="url(#lg-o2)"/>
+            <path d="M31 80a29 29 0 0 1 58 0z" fill="url(#lg-o2)"/>
+            <rect x="24" y="84" width="72" height="9" rx="4.5" fill="url(#lg-o2)"/>
+            <path d="M34 128c0-19 16-24 33-24" stroke="url(#lg-t2)" stroke-width="9" stroke-linecap="round"/>
+            <path d="M62 116l6-18 14 12z" fill="url(#lg-t2)"/>
+            <rect x="23" y="130" width="23" height="23" rx="4" stroke="url(#lg-t2)" stroke-width="6"/>
+            <rect x="31" y="138" width="7" height="7" rx="1.5" fill="url(#lg-t2)"/>
+          </svg>
+          <span>kelbroo</span>
+        </a>
+        <p>Zamawianie przy stoliku dla restauracji, kawiarni i barów w Polsce.</p>
+      </div>
+      <div>
+        <h4>Produkt</h4>
+        <ul>
+          <li><a href="#jak">Jak to działa</a></li>
+          <li><a href="#modele">Modele płatności</a></li>
+          <li><a href="#funkcje">Funkcje</a></li>
+          <li><a href="#cennik">Cennik</a></li>
+          <li><a href="#demo">Demo menu</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Dla kogo</h4>
+        <ul>
+          <li><a href="#restauracje">Restauracje</a></li>
+          <li><a href="#kawiarnie">Kawiarnie</a></li>
+          <li><a href="#bary">Bary i puby</a></li>
+          <li><a href="#hotele">Hotele</a></li>
+          <li><a href="#sieci">Sieci i food courty</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Pomoc</h4>
+        <ul>
+          <li><a href="#pomoc">Baza wiedzy</a></li>
+          <li><a href="#kontakt">Kontakt</a></li>
+          <li><a href="#regulamin">Regulamin</a></li>
+          <li><a href="#prywatnosc">Prywatność</a></li>
+          <li><a href="#rodo">RODO</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-base">
+      <span>© 2026 kelbroo</span>
+      <span>Self-service dining &middot; Made in Poland</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* --- sticky nav border --- */
+  var nav = document.getElementById("nav");
+  var onScroll = function(){ nav.classList.toggle("stuck", window.scrollY > 8); };
+  onScroll();
+  window.addEventListener("scroll", onScroll, {passive:true});
+
+  /* --- reveal --- */
+  var rvs = document.querySelectorAll(".rv");
+  if (reduce || !("IntersectionObserver" in window)) {
+    rvs.forEach(function(el){ el.classList.add("in"); });
+  } else {
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if (e.isIntersecting){ e.target.classList.add("in"); io.unobserve(e.target); }
+      });
+    }, {rootMargin:"0px 0px -8% 0px", threshold:0.08});
+    rvs.forEach(function(el){ io.observe(el); });
+  }
+
+  /* --- hero scene loop --- */
+  var dishes = Array.prototype.slice.call(document.querySelectorAll(".dish"));
+  var lines  = Array.prototype.slice.call(document.querySelectorAll(".tline"));
+  var stamp  = document.getElementById("stamp");
+  var sum    = document.getElementById("cartsum");
+  var prices = [24, 32, 19];
+
+  function fmt(n){ return n.toFixed(2).replace(".", ","); }
+
+  function showAll(){
+    dishes.forEach(function(d){ d.classList.remove("hit"); });
+    lines.forEach(function(l){ l.classList.add("on"); });
+    stamp.classList.add("on");
+    sum.textContent = fmt(prices.reduce(function(a,b){ return a+b; }, 0));
+  }
+
+  if (reduce){
+    showAll();
+  } else {
+    var step = 0, total = 0, timer;
+    function reset(){
+      step = 0; total = 0;
+      dishes.forEach(function(d){ d.classList.remove("hit"); });
+      lines.forEach(function(l){ l.classList.remove("on"); });
+      stamp.classList.remove("on");
+      sum.textContent = "0,00";
+    }
+    function tick(){
+      if (step < 3){
+        var i = step;
+        dishes[i].classList.add("hit");
+        total += prices[i];
+        sum.textContent = fmt(total);
+        setTimeout(function(){
+          lines[i].classList.add("on");
+          setTimeout(function(){ dishes[i].classList.remove("hit"); }, 700);
+        }, 420);
+        step++;
+        timer = setTimeout(tick, 1500);
+      } else if (step === 3){
+        stamp.classList.add("on");
+        step++;
+        timer = setTimeout(tick, 3200);
+      } else {
+        reset();
+        timer = setTimeout(tick, 900);
+      }
+    }
+    reset();
+    timer = setTimeout(tick, 900);
+
+    document.addEventListener("visibilitychange", function(){
+      if (document.hidden){ clearTimeout(timer); }
+      else { clearTimeout(timer); timer = setTimeout(tick, 600); }
+    });
+  }
+
+  /* --- pricing toggle --- */
+  var btns = document.querySelectorAll(".toggle button");
+  var saveline = document.getElementById("saveline");
+  btns.forEach(function(btn){
+    btn.addEventListener("click", function(){
+      var mode = btn.getAttribute("data-bill");
+      btns.forEach(function(b){ b.classList.toggle("on", b === btn); });
+      document.querySelectorAll(".price b").forEach(function(el){
+        el.textContent = el.getAttribute(mode === "y" ? "data-y" : "data-m");
+      });
+      document.querySelectorAll(".price-sub[data-sub-m]").forEach(function(el){
+        el.textContent = el.getAttribute(mode === "y" ? "data-sub-y" : "data-sub-m");
+      });
+      saveline.textContent = mode === "y"
+        ? "Rozliczenie roczne — dwa miesiące gratis w cenie."
+        : "Przy płatności rocznej oszczędzasz 17% — dwa miesiące gratis.";
+    });
+  });
+})();
+</script>
