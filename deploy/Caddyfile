@@ -1,0 +1,57 @@
+# Reverse proxy produkcyjny.
+#
+# Kluczowa decyzja: /api i /socket.io są serwowane z TEGO SAMEGO originu co
+# aplikacja. Dzięki temu przeglądarka nigdy nie wychodzi poza jedną domenę —
+# nie ma CORS-u, nie ma adresu API wkompilowanego w bundle i nie trzeba
+# przebudowywać frontendu, żeby zmienić adres backendu.
+#
+# Caddy sam wystawia i odnawia certyfikaty Let's Encrypt — wymaga tylko
+# poprawnych rekordów DNS i otwartych portów 80 i 443.
+
+{
+	email {$ACME_EMAIL}
+}
+
+# --- aplikacja gościa ------------------------------------------------------
+{$GUEST_DOMAIN} {
+	handle /api/* {
+		reverse_proxy api:4000
+	}
+
+	handle {
+		reverse_proxy web-guest:3000
+	}
+
+	encode zstd gzip
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+}
+
+# --- panel obsługi ---------------------------------------------------------
+{$ADMIN_DOMAIN} {
+	handle /api/* {
+		reverse_proxy api:4000
+	}
+
+	# Socket.IO nawiązuje połączenie pod /socket.io/ — bez tego KDS traci
+	# realtime i schodzi na polling.
+	handle /socket.io/* {
+		reverse_proxy api:4000
+	}
+
+	handle {
+		reverse_proxy web-admin:3000
+	}
+
+	encode zstd gzip
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		# Panel obsługi nie ma powodu pojawiać się w wynikach wyszukiwania.
+		X-Robots-Tag "noindex, nofollow"
+		-Server
+	}
+}

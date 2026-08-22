@@ -1,4 +1,12 @@
-# Lokalne środowisko deweloperskie (docs/architecture.md §9).
+# Środowisko DEWELOPERSKIE (docs/architecture.md §9, środowisko `local`).
+#
+# Porty są związane z 127.0.0.1 celowo: publikowanie ich na 0.0.0.0 wystawia
+# bazę i Redisa do internetu, jeśli plik trafi na VPS. Aplikacje łączą się
+# po sieci dockerowej i nie potrzebują tych mapowań — są tu wyłącznie po to,
+# żeby dało się podpiąć psql, Studio i testy z hosta.
+#
+# Produkcja: docker-compose.prod.yml
+#
 # Uruchomienie: pnpm infra:up
 
 services:
@@ -11,7 +19,7 @@ services:
       POSTGRES_PASSWORD: kelbroo
       POSTGRES_DB: kelbroo
     ports:
-      - '5432:5432'
+      - '127.0.0.1:5432:5432'
     volumes:
       - postgres-data:/var/lib/postgresql/data
       - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/10-roles.sql:ro
@@ -25,15 +33,21 @@ services:
     image: redis:7-alpine
     container_name: kelbroo-redis
     restart: unless-stopped
+    # Redis bez hasła jest przejmowany w minutach od wystawienia na publiczny
+    # adres. Hasło jest wymagane także lokalnie, żeby konfiguracja nie
+    # rozjeżdżała się z produkcyjną.
+    command: ['redis-server', '--requirepass', '${REDIS_PASSWORD:-kelbroo}']
     ports:
-      - '6379:6379'
+      - '127.0.0.1:6379:6379'
     volumes:
       - redis-data:/data
     healthcheck:
-      test: ['CMD', 'redis-cli', 'ping']
+      test: ['CMD-SHELL', 'redis-cli -a "$$REDIS_PASSWORD" ping | grep -q PONG']
       interval: 5s
       timeout: 5s
       retries: 10
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-kelbroo}
 
 volumes:
   postgres-data:

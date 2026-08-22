@@ -5,7 +5,18 @@
  * urządzenie może odwiedzić kilka lokali, a wizyta przy stoliku jest osobna
  * dla każdego z nich.
  */
-const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api';
+/**
+ * Adres API.
+ *
+ * Domyślnie ŚCIEŻKA WZGLĘDNA: przeglądarka woła własny origin, a reverse proxy
+ * kieruje /api do backendu. Dzięki temu nie ma CORS-u i nie ma adresu
+ * wkompilowanego w bundle — NEXT_PUBLIC_* jest wstrzykiwane w momencie
+ * budowania, więc zaszyty tam `localhost` oznaczałby telefon gościa, nie serwer.
+ *
+ * Zmienna przydaje się tylko wtedy, gdy API stoi pod innym originem —
+ * na przykład lokalnie, gdzie aplikacja jest na 3001, a API na 4000.
+ */
+const API = process.env.NEXT_PUBLIC_API_URL ?? '/api';
 
 export interface Modifier {
   id: string;
