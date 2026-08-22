@@ -55,6 +55,10 @@ zobaczy ani jednego wiersza**. Każdy dostęp do danych klienta prowadzi przez
 `PrismaService.withTenant(organizationId, …)`. `DIRECT_DATABASE_URL` to
 superuser wyłącznie do migracji i seeda.
 
+**Testy `@kelbroo/api` wymagają działającej bazy.** Zestaw RLS w
+`apps/api/test/rls.spec.ts` sprawdza izolację tenantów na prawdziwym Postgresie
+— bez `pnpm infra:up && pnpm db:migrate` po prostu się nie uruchomi.
+
 **Kwoty tylko w groszach.** Nigdy `float`, nigdy dzielenie kwoty poza
 `packages/types/src/money.ts`. Podział rachunku, który nie sumuje się do kwoty
 całkowitej, jest błędem krytycznym — niezmiennik jest pokryty testem.

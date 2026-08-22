@@ -107,5 +107,18 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public
 REVOKE UPDATE, DELETE ON public.order_event FROM kelbroo_app;
 
 -- Tabela migracji Prismy nie jest danymi klienta — rola aplikacyjna jej nie
--- potrzebuje.
-REVOKE ALL ON public."_prisma_migrations" FROM kelbroo_app;
+-- potrzebuje. Objął ją GRANT ... ON ALL TABLES powyżej, więc odbieramy jawnie.
+--
+-- Warunek jest konieczny: w shadow database, na której Prisma weryfikuje
+-- migracje, ta tabela jeszcze nie istnieje i bezwarunkowy REVOKE wywraca
+-- `prisma migrate dev` błędem P3006.
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM pg_tables
+    WHERE schemaname = 'public' AND tablename = '_prisma_migrations'
+  ) THEN
+    EXECUTE 'REVOKE ALL ON public."_prisma_migrations" FROM kelbroo_app';
+  END IF;
+END
+$$;
