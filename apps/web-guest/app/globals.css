@@ -1,0 +1,32 @@
+@import 'tailwindcss';
+@import '@kelbroo/config/tailwind/theme.css';
+
+/* Aplikacja gościa żyje na telefonie trzymanym w jednej ręce, często przy
+   złym świetle i słabym wi-fi. Stąd duże cele dotykowe i brak animacji,
+   które kosztują klatki na starszych urządzeniach. */
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    /* Bezpieczne marginesy na iPhonie z wcięciem. */
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+}
+
+@utility mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}

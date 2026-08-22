@@ -35,3 +35,7 @@ playwright-report/
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# next
+.next/
+next-env.d.ts

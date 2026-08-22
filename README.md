@@ -31,6 +31,26 @@ curl http://localhost:4000/api/health
 ```
 
 `pnpm db:seed` wypisuje dane logowania do panelu i tokeny QR stolików.
+Aplikacja gościa stoi na `http://localhost:3001/t/{qrToken}`:
+
+```bash
+pnpm --filter @kelbroo/web-guest dev
+```
+
+### Testowanie z telefonu w sieci lokalnej
+
+`localhost` z telefonu nie prowadzi do Twojego Maca, więc sam adres nie
+wystarczy — trzeba przestawić dwie rzeczy na adres LAN (`ipconfig getifaddr en0`):
+
+```bash
+# .env — API musi wpuścić origin, z którego przyjdzie żądanie
+CORS_ORIGINS="http://localhost:3001,http://192.168.0.10:3001"
+
+# aplikacja gościa musi wołać API po tym samym adresie
+NEXT_PUBLIC_API_URL="http://192.168.0.10:4000/api" pnpm --filter @kelbroo/web-guest dev
+```
+
+Potem otwórz na telefonie `http://192.168.0.10:3001/t/{qrToken}`.
 
 ## Struktura
 
