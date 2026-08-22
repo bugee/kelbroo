@@ -12,10 +12,9 @@ export const viewport: Viewport = {
   // Gość skanuje kod i od razu czyta menu — pasek adresu ma zniknąć,
   // ale zoom zostaje dostępny (WCAG 2.1 AA).
   maximumScale: 5,
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#F1F5F4' },
-    { media: '(prefers-color-scheme: dark)', color: '#0A1716' },
-  ],
+  // Interfejs jest jasny niezależnie od ustawienia systemu, więc pasek
+  // przeglądarki też — inaczej rozjeżdża się z tłem strony.
+  themeColor: '#F1F5F4',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
