@@ -2,6 +2,8 @@ import 'reflect-metadata';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { RedisIoAdapter } from './realtime/redis-io.adapter';
+import { DomainExceptionFilter } from './common/domain-exception.filter';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
@@ -19,9 +21,14 @@ async function bootstrap(): Promise<void> {
     allowedHeaders: ['content-type', 'authorization', 'x-guest-token'],
     credentials: true,
   });
+  app.useGlobalFilters(new DomainExceptionFilter());
   app.useGlobalPipes(
     new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }),
   );
+  const realtime = new RedisIoAdapter(app);
+  await realtime.connect();
+  app.useWebSocketAdapter(realtime);
+
   app.enableShutdownHooks();
 
   const port = Number(process.env.API_PORT ?? 4000);

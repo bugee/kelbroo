@@ -1,0 +1,32 @@
+@import 'tailwindcss';
+@import '@kelbroo/config/tailwind/theme.css';
+
+/* Panel działa na tablecie stojącym w kuchni przez całą zmianę: duże cele
+   dotykowe, wysoki kontrast, zero elementów wymagających precyzji. Liczby
+   i numery zamówień monospace — to język operacyjny lokalu, nie ozdobnik. */
+@layer base {
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    /* Kelner ma czyste ręce od jedzenia, nie od zaznaczania tekstu. */
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 700;
+  }
+
+  input {
+    user-select: text;
+  }
+}
+
+@utility mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}

@@ -52,14 +52,24 @@ NEXT_PUBLIC_API_URL="http://192.168.0.10:4000/api" pnpm --filter @kelbroo/web-gu
 
 Potem otwórz na telefonie `http://192.168.0.10:3001/t/{qrToken}`.
 
+### Panel obsługi
+
+```bash
+pnpm --filter @kelbroo/web-admin dev   # http://localhost:3002
+```
+
+Konta z seeda mają hasło `kelbroo123`: `owner@`, `manager@`, `kelner@`
+i `kuchnia@demo.kelbroo.pl`. Rola decyduje o widocznych ekranach — kuchnia
+nie widzi kolejki potwierdzeń ani rachunków.
+
 ## Struktura
 
 ```
 apps/
   api/                 # NestJS + Prisma + PostgreSQL (backend wszystkich systemów)
   web-marketing/       # System 1 — landing i zakup abonamentu       [do zbudowania]
-  web-admin/           # System 2 — panel restauracji, KDS, kelner   [do zbudowania]
-  web-guest/           # System 3 — PWA gościa                        [do zbudowania]
+  web-admin/           # System 2 — kolejka kelnera, KDS, widok sali
+  web-guest/           # System 3 — PWA gościa
 packages/
   config/              # wspólne tsconfig + tokeny motywu (Tailwind v4)
   types/               # kontrakty domenowe i arytmetyka podziału rachunku
