@@ -115,6 +115,11 @@ services:
     build:
       context: .
       dockerfile: apps/web-guest/Dockerfile
+      args:
+        # Jawnie, mimo że kod ma tę samą wartość domyślną: niepodany ARG to
+        # w Dockerze PUSTY łańcuch, więc obraz nie może polegać na tym, że
+        # zmienna „nie istnieje".
+        NEXT_PUBLIC_API_URL: /api
     restart: unless-stopped
     depends_on:
       - api
@@ -124,6 +129,8 @@ services:
       context: .
       dockerfile: apps/web-admin/Dockerfile
       args:
+        # Patrz komentarz przy web-guest.
+        NEXT_PUBLIC_API_URL: /api
         # Adres trafia do kodów QR drukowanych na stoliki, więc musi być
         # bezwzględny i znany w momencie budowania.
         NEXT_PUBLIC_GUEST_URL: https://${GUEST_DOMAIN}

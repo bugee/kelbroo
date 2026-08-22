@@ -13,7 +13,10 @@ import { io, type Socket } from 'socket.io-client';
  * Zmienna przydaje się tylko wtedy, gdy API stoi pod innym originem —
  * na przykład lokalnie, gdzie aplikacja jest na 3001, a API na 4000.
  */
-const API = process.env.NEXT_PUBLIC_API_URL ?? '/api';
+// `||`, nie `??`: Docker ustawia niepodany ARG na PUSTY łańcuch, a nie na brak
+// zmiennej. Przy `??` bundle dostawał wtedy adres bazowy '' i przeglądarka pytała
+// o /auth/login zamiast /api/auth/login — czyli o stronę 404 aplikacji Next.
+const API = process.env.NEXT_PUBLIC_API_URL || '/api';
 const WS = API.replace(/\/api\/?$/, '');
 
 export type StaffRole = 'owner' | 'manager' | 'waiter' | 'kitchen';
@@ -387,4 +390,4 @@ export const updateRestaurant = (payload: Partial<RestaurantSettings>) =>
 
 /** Adres, który koduje kod QR na stoliku. */
 export const guestUrlFor = (qrToken: string): string =>
-  `${process.env.NEXT_PUBLIC_GUEST_URL ?? 'http://localhost:3001'}/t/${qrToken}`;
+  `${process.env.NEXT_PUBLIC_GUEST_URL || 'http://localhost:3001'}/t/${qrToken}`;
