@@ -18,6 +18,12 @@ export default function LoginPage() {
     setError(null);
     try {
       const staff = await login(email, password);
+      // Hasło tymczasowe (konto założone ręcznie w bazie) prowadzi najpierw
+      // przez jego zmianę — inaczej zostałoby na koncie na zawsze.
+      if (staff.mustChangePassword) {
+        router.replace('/password');
+        return;
+      }
       // Kuchnia nie ma po co oglądać kolejki potwierdzeń ani rachunków.
       router.replace(staff.role === 'kitchen' ? '/kds' : '/queue');
     } catch (cause) {

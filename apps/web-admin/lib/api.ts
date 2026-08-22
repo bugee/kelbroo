@@ -69,6 +69,9 @@ export interface StaffSession {
 
 const ACCESS = 'kelbroo.staff.access';
 const REFRESH = 'kelbroo.staff.refresh';
+// Flaga wymuszonej zmiany hasła przychodzi tylko przy logowaniu — `me()` czyta
+// kontekst z tokenu, a tokenu nie chcemy rozdymać o stan, który zmienia się raz.
+const MUST_CHANGE = 'kelbroo.staff.must-change-password';
 
 export const readAccess = (): string | null => {
   try {
@@ -91,8 +94,26 @@ export function clearSession(): void {
   try {
     localStorage.removeItem(ACCESS);
     localStorage.removeItem(REFRESH);
+    localStorage.removeItem(MUST_CHANGE);
   } catch {
     /* nic do posprzątania */
+  }
+}
+
+export function readMustChangePassword(): boolean {
+  try {
+    return localStorage.getItem(MUST_CHANGE) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function rememberMustChangePassword(required: boolean): void {
+  try {
+    if (required) localStorage.setItem(MUST_CHANGE, '1');
+    else localStorage.removeItem(MUST_CHANGE);
+  } catch {
+    /* bez pamięci wymuszenie po prostu nie przetrwa przeładowania */
   }
 }
 
@@ -155,18 +176,41 @@ async function refreshTokens(): Promise<boolean> {
   }
 }
 
-export async function login(email: string, password: string): Promise<Staff> {
+/** Logowanie zwraca dodatkowo flagę wymuszonej zmiany hasła — `me()` już nie,
+ *  bo ta pochodzi z bazy, a nie z tokenu. */
+export interface LoggedInStaff extends Staff {
+  mustChangePassword: boolean;
+}
+
+export async function login(email: string, password: string): Promise<LoggedInStaff> {
   const response = await fetch(`${API}/auth/login`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ email, password }),
   });
-  const result = await parse<{ accessToken: string; refreshToken: string; staff: Staff }>(response);
+  const result = await parse<{
+    accessToken: string;
+    refreshToken: string;
+    staff: LoggedInStaff;
+  }>(response);
   store(result.accessToken, result.refreshToken);
+  rememberMustChangePassword(result.staff.mustChangePassword);
   return result.staff;
 }
 
 export const me = () => authorized<Staff>('/auth/me');
+
+/** Aktualne hasło jest wymagane mimo ważnej sesji — patrz komentarz w auth.service.ts. */
+export const changePassword = async (
+  currentPassword: string,
+  newPassword: string,
+): Promise<void> => {
+  await authorized<void>('/auth/password', {
+    method: 'POST',
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+  rememberMustChangePassword(false);
+};
 export const fetchQueue = () => authorized<StaffOrder[]>('/staff/orders/queue');
 export const fetchKitchen = () => authorized<StaffOrder[]>('/staff/orders/kitchen');
 export const fetchSessions = () => authorized<StaffSession[]>('/staff/sessions');

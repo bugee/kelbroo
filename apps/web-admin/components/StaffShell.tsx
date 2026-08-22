@@ -67,9 +67,15 @@ export function StaffShell({ children }: { children: (staff: Staff) => React.Rea
             ))}
           </nav>
 
-          <span className="text-sm text-[var(--muted)]">
+          {/* Konto, nie sekcja operacyjna — stąd przy nazwisku, a nie w nawigacji. */}
+          <Link
+            href="/password"
+            className={`text-sm ${
+              pathname === '/password' ? 'text-[var(--teal)]' : 'text-[var(--muted)]'
+            }`}
+          >
             {staff.name} · {staff.role}
-          </span>
+          </Link>
           {/* Kuchnia często pracuje przy słabym świetle — wybór palety
               zostaje na urządzeniu, nie na koncie pracownika. */}
           <ThemeToggle />

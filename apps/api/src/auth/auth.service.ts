@@ -1,10 +1,13 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import bcrypt from 'bcryptjs';
 import { PrismaClient } from '@prisma/client';
 import type { SignOptions } from 'jsonwebtoken';
 import type { StaffRole } from '@kelbroo/types';
 import type { AccessTokenPayload, StaffContext } from './auth.types';
+
+/** Ten sam koszt co w seedzie — hasła z obu źródeł muszą być wymienne. */
+const PASSWORD_ROUNDS = 10;
 
 export interface LoginResult {
   accessToken: string;
@@ -58,6 +61,36 @@ export class AuthService {
       ...(await this.issueTokens(context)),
       staff: { ...context, mustChangePassword: staff.mustChangePassword },
     };
+  }
+
+  /**
+   * Zmiana własnego hasła. Wymaga podania aktualnego, nawet gdy pracownik ma
+   * ważną sesję — token dostępu leży w pamięci przeglądarki na wspólnym tablecie
+   * i sam w sobie nie jest dowodem, że przy urządzeniu stoi właściciel konta.
+   */
+  async changePassword(staffId: string, currentPassword: string, newPassword: string) {
+    const staff = await this.directory.staffMember.findUnique({ where: { id: staffId } });
+    if (!staff || !staff.isActive) {
+      throw new UnauthorizedException('Konto jest nieaktywne.');
+    }
+
+    if (!(await bcrypt.compare(currentPassword, staff.passwordHash))) {
+      throw new UnauthorizedException('Nieprawidłowe aktualne hasło.');
+    }
+
+    if (await bcrypt.compare(newPassword, staff.passwordHash)) {
+      throw new BadRequestException('Nowe hasło musi różnić się od aktualnego.');
+    }
+
+    await this.directory.staffMember.update({
+      where: { id: staff.id },
+      data: {
+        passwordHash: await bcrypt.hash(newPassword, PASSWORD_ROUNDS),
+        // Flaga wymuszająca zmianę gaśnie dopiero tutaj — konto założone
+        // ręcznie w bazie startuje z `mustChangePassword = true`.
+        mustChangePassword: false,
+      },
+    });
   }
 
   async refresh(refreshToken: string): Promise<{ accessToken: string; refreshToken: string }> {
