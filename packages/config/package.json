@@ -1,0 +1,15 @@
+{
+  "name": "@kelbroo/config",
+  "version": "0.0.0",
+  "private": true,
+  "files": [
+    "tsconfig",
+    "tailwind"
+  ],
+  "exports": {
+    "./tsconfig/base.json": "./tsconfig/base.json",
+    "./tsconfig/nextjs.json": "./tsconfig/nextjs.json",
+    "./tsconfig/nestjs.json": "./tsconfig/nestjs.json",
+    "./tailwind/theme.css": "./tailwind/theme.css"
+  }
+}

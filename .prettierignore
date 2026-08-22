@@ -1,0 +1,11 @@
+# Dokumentacja i projekt są pisane ręcznie — Prettier przeformatowałby tabele
+# i łamanie wierszy, zamieniając każdą drobną zmianę w wielki diff.
+docs/
+design/
+CLAUDE.md
+README.md
+
+# Generowane
+apps/api/prisma/migrations/
+**/dist/
+**/.next/

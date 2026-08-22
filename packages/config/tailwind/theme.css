@@ -1,0 +1,145 @@
+/**
+ * kelbroo — wspólne tokeny motywu (Tailwind v4).
+ *
+ * Źródło prawdy: design/landing-page.html. Zmiana palety zaczyna się TUTAJ,
+ * nie w poszczególnych aplikacjach.
+ *
+ * Dyscyplina koloru: pomarańcz wyłącznie na główne CTA i pojedyncze akcenty.
+ * Wszystko pozostałe jest teal i neutralne, a neutralne nigdy nie są czystą
+ * szarością — zawsze mają domieszkę teal.
+ *
+ * Użycie w aplikacji:
+ *   @import "tailwindcss";
+ *   @import "@kelbroo/config/tailwind/theme.css";
+ */
+
+:root {
+  --ground: #f1f5f4;
+  --surface: #ffffff;
+  --surface-2: #e8f0ef;
+  --ink: #0f2422;
+  --ink-2: #37504e;
+  --muted: #6b807e;
+  --line: #d8e4e2;
+  --line-strong: #bfd3d0;
+
+  --teal: #2a8f8c;
+  --teal-bright: #37aaa3;
+  --teal-soft: #5fc9be;
+  --teal-wash: #e2f1ef;
+
+  --orange: #e8722f;
+  --orange-soft: #f7a85c;
+  --orange-wash: #fcebdd;
+
+  /* Powierzchnia bonu kuchennego — papier, nie ekran. */
+  --paper: #fffdfa;
+  --paper-line: #e4ded2;
+
+  --shadow-sm: 0 1px 2px rgba(15, 36, 34, 0.06);
+  --shadow-md: 0 2px 6px rgba(15, 36, 34, 0.06), 0 14px 32px -14px rgba(15, 36, 34, 0.2);
+  --shadow-lg: 0 4px 10px rgba(15, 36, 34, 0.05), 0 30px 60px -24px rgba(15, 36, 34, 0.28);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --ground: #0a1716;
+    --surface: #122423;
+    --surface-2: #193230;
+    --ink: #e9f2f1;
+    --ink-2: #b6cac8;
+    --muted: #88a19e;
+    --line: #1f3836;
+    --line-strong: #2c4b49;
+
+    --teal: #48bfb5;
+    --teal-bright: #5fcfc4;
+    --teal-soft: #7fe0d4;
+    --teal-wash: #123230;
+
+    --orange: #f58c4c;
+    --orange-soft: #f7a85c;
+    --orange-wash: #33221a;
+
+    --paper: #162927;
+    --paper-line: #294844;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 2px 6px rgba(0, 0, 0, 0.4), 0 14px 32px -14px rgba(0, 0, 0, 0.7);
+    --shadow-lg: 0 4px 10px rgba(0, 0, 0, 0.4), 0 30px 60px -24px rgba(0, 0, 0, 0.8);
+  }
+}
+
+:root[data-theme='dark'] {
+  --ground: #0a1716;
+  --surface: #122423;
+  --surface-2: #193230;
+  --ink: #e9f2f1;
+  --ink-2: #b6cac8;
+  --muted: #88a19e;
+  --line: #1f3836;
+  --line-strong: #2c4b49;
+
+  --teal: #48bfb5;
+  --teal-bright: #5fcfc4;
+  --teal-soft: #7fe0d4;
+  --teal-wash: #123230;
+
+  --orange: #f58c4c;
+  --orange-soft: #f7a85c;
+  --orange-wash: #33221a;
+
+  --paper: #162927;
+  --paper-line: #294844;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 2px 6px rgba(0, 0, 0, 0.4), 0 14px 32px -14px rgba(0, 0, 0, 0.7);
+  --shadow-lg: 0 4px 10px rgba(0, 0, 0, 0.4), 0 30px 60px -24px rgba(0, 0, 0, 0.8);
+}
+
+/* `inline` sprawia, że klasy Tailwinda odwołują się do zmiennych powyżej,
+   więc przełączenie motywu działa bez przebudowy. */
+@theme inline {
+  --color-ground: var(--ground);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+
+  --color-teal: var(--teal);
+  --color-teal-bright: var(--teal-bright);
+  --color-teal-soft: var(--teal-soft);
+  --color-teal-wash: var(--teal-wash);
+
+  --color-orange: var(--orange);
+  --color-orange-soft: var(--orange-soft);
+  --color-orange-wash: var(--orange-wash);
+
+  --color-paper: var(--paper);
+  --color-paper-line: var(--paper-line);
+
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+}
+
+@theme {
+  /* Outfit — nagłówki. IBM Plex Sans — tekst. IBM Plex Mono — język operacyjny
+     restauracji: bony kuchenne, numery stolików, kwoty, etykiety. */
+  --font-display: 'Outfit', 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
+
+  --text-hero: clamp(2.5rem, 6.2vw, 4.35rem);
+  --text-h2: clamp(1.85rem, 3.5vw, 2.7rem);
+  --text-h3: 1.2rem;
+  --text-body: 1.0625rem;
+
+  --radius-card: 18px;
+  --radius-control: 11px;
+
+  --container-page: 1180px;
+}

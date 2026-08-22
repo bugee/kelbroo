@@ -1,0 +1,40 @@
+# Lokalne środowisko deweloperskie (docs/architecture.md §9).
+# Uruchomienie: pnpm infra:up
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: kelbroo-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: kelbroo
+      POSTGRES_PASSWORD: kelbroo
+      POSTGRES_DB: kelbroo
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/10-roles.sql:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U kelbroo -d kelbroo']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: kelbroo-redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres-data:
+  redis-data:

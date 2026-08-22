@@ -1,0 +1,889 @@
+// kelbroo — model danych.
+//
+// Zakres: MVP etap 1 (tryb pay_at_table, bez płatności online i bez
+// fiskalizacji). Encje etapu 2 są zamodelowane, ale nieużywane w kodzie —
+// oznaczono je komentarzem.
+//
+// Źródło prawdy: docs/architecture.md §4.
+//
+// Konwencje:
+//  - kwoty wyłącznie jako `*Cents` (Int), nigdy Float; zawsze z `currency`,
+//  - kolumny i tabele w snake_case (@map / @@map), model w PascalCase,
+//  - każda tabela z danymi klienta ma `organizationId` — na tym opiera się RLS.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_DATABASE_URL")
+}
+
+// ---------------------------------------------------------------- enumeracje
+
+enum OrderingMode {
+  prepaid
+  pay_at_table
+  guest_choice
+}
+
+enum FiscalizationMode {
+  none
+  pos_bridge
+  cloud_register
+}
+
+enum SubscriptionPlan {
+  menu
+  starter
+  pro
+  enterprise
+}
+
+enum SubscriptionStatus {
+  trialing
+  active
+  past_due
+  canceled
+}
+
+enum StaffRole {
+  owner
+  manager
+  waiter
+  kitchen
+}
+
+enum TableSessionStatus {
+  open
+  awaiting_settlement
+  settled
+  closed
+  abandoned
+}
+
+enum SplitMode {
+  none
+  per_person
+  per_item
+  equal
+  groups
+}
+
+enum SettlementGroupStatus {
+  open
+  awaiting_payment
+  paid
+  settled
+}
+
+/// Realizacja zamówienia. Bramka do kuchni: `confirmed`.
+enum OrderStatus {
+  submitted
+  awaiting_confirmation
+  confirmed
+  preparing
+  ready
+  served
+  closed
+  rejected
+  canceled
+}
+
+/// Rozliczenie zamówienia — cykl życia niezależny od OrderStatus.
+enum PaymentStatus {
+  not_required
+  awaiting_payment
+  paid
+  awaiting_settlement
+  settled
+  failed
+  refunded
+}
+
+enum OrderItemStatus {
+  queued
+  preparing
+  ready
+  served
+  canceled
+}
+
+enum ActorType {
+  guest
+  staff
+  system
+}
+
+enum OrderEventType {
+  created
+  item_added
+  item_removed
+  quantity_changed
+  modifier_changed
+  note_changed
+  item_reassigned
+  confirmed
+  rejected
+  status_changed
+  discount_applied
+  canceled
+}
+
+enum PaymentProvider {
+  stripe
+  przelewy24
+  offline
+}
+
+enum PaymentMethod {
+  blik
+  card
+  apple_pay
+  google_pay
+  cash
+  card_terminal
+  voucher
+}
+
+enum PaymentState {
+  pending
+  succeeded
+  failed
+  refunded
+}
+
+enum ReviewTarget {
+  dish
+  kitchen
+  service
+  manager
+}
+
+enum WaiterCallReason {
+  help
+  bill
+  water
+  other
+}
+
+enum WaiterCallStatus {
+  open
+  acknowledged
+  resolved
+}
+
+// ------------------------------------------------------------------- tenant
+
+/// Klient SaaS i płatnik abonamentu. Korzeń izolacji danych.
+model Organization {
+  id             String   @id @default(uuid()) @db.Uuid
+  name           String
+  nip            String?
+  billingEmail   String   @map("billing_email")
+  stripeCustomerId String? @unique @map("stripe_customer_id")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  subscription Subscription?
+  restaurants  Restaurant[]
+  staff        StaffMember[]
+  auditLogs    AuditLog[]
+
+  @@map("organization")
+}
+
+model Subscription {
+  id                   String             @id @default(uuid()) @db.Uuid
+  organizationId       String             @unique @map("organization_id") @db.Uuid
+  plan                 SubscriptionPlan
+  status               SubscriptionStatus
+  stripeSubscriptionId String?            @unique @map("stripe_subscription_id")
+  currentPeriodEnd     DateTime?          @map("current_period_end")
+  /// Limity planu. Wygaśnięcie abonamentu wyłącza zamawianie, ale nigdy nie
+  /// kasuje danych restauracji.
+  tableLimit           Int                @map("table_limit")
+  languageLimit        Int                @map("language_limit")
+  createdAt            DateTime           @default(now()) @map("created_at")
+  updatedAt            DateTime           @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("subscription")
+}
+
+model Restaurant {
+  id             String @id @default(uuid()) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  name           String
+  slug           String @unique
+  address        String?
+  timezone       String @default("Europe/Warsaw")
+  currency       String @default("PLN") @db.Char(3)
+
+  /// Fallback treści menu: brak tłumaczenia → defaultLocale, nigdy pusty ekran.
+  defaultLocale    String   @default("pl") @map("default_locale")
+  supportedLocales String[] @default(["pl"]) @map("supported_locales")
+
+  logoUrl     String? @map("logo_url")
+  theme       Json?
+  openingHours Json?  @map("opening_hours")
+
+  orderingMode             OrderingMode @default(pay_at_table) @map("ordering_mode")
+  /// W trybie pay_at_table domyślnie włączone (docs/architecture.md §6.4).
+  requireStaffConfirmation Boolean      @default(true) @map("require_staff_confirmation")
+  /// Gość nie może zamawiać, dopóki obsługa nie otworzy wizyty przy stoliku.
+  tableActivationRequired  Boolean      @default(false) @map("table_activation_required")
+
+  tippingEnabled Boolean @default(false) @map("tipping_enabled")
+  tipPresets     Int[]   @default([]) @map("tip_presets")
+  minOrderCents  Int     @default(0) @map("min_order_cents")
+  /// Próg rachunku bez płatności → wymusza potwierdzenie kolejnych zamówień.
+  openBillLimitCents Int? @map("open_bill_limit_cents")
+
+  fiscalizationMode FiscalizationMode @default(none) @map("fiscalization_mode")
+  settings          Json?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  organization    Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  staff           StaffMember[]
+  tables          Table[]
+  menuCategories  MenuCategory[]
+  menuItems       MenuItem[]
+  tableSessions   TableSession[]
+  guestSessions   GuestSession[]
+  orders          Order[]
+  reviews         Review[]
+  waiterCalls     WaiterCall[]
+
+  @@index([organizationId])
+  @@map("restaurant")
+}
+
+model StaffMember {
+  id             String    @id @default(uuid()) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  restaurantId   String?   @map("restaurant_id") @db.Uuid
+  email          String
+  passwordHash   String    @map("password_hash")
+  role           StaffRole
+  name           String
+  isActive       Boolean   @default(true) @map("is_active")
+  mustChangePassword Boolean @default(true) @map("must_change_password")
+  lastLoginAt    DateTime? @map("last_login_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  restaurant   Restaurant?  @relation(fields: [restaurantId], references: [id], onDelete: SetNull)
+
+  openedSessions     TableSession[] @relation("session_opened_by")
+  closedSessions     TableSession[] @relation("session_closed_by")
+  createdParticipants TableParticipant[] @relation("participant_created_by")
+  createdOrders      Order[]        @relation("order_created_by")
+  confirmedOrders    Order[]        @relation("order_confirmed_by")
+  addedItems         OrderItem[]    @relation("item_added_by")
+  editedItems        OrderItem[]    @relation("item_last_edited_by")
+  orderEvents        OrderEvent[]
+  collectedPayments  Payment[]
+  acknowledgedCalls  WaiterCall[]
+  auditLogs          AuditLog[]
+
+  @@unique([organizationId, email])
+  @@index([restaurantId])
+  @@map("staff_member")
+}
+
+// --------------------------------------------------------------------- menu
+
+model Table {
+  id             String  @id @default(uuid()) @db.Uuid
+  organizationId String  @map("organization_id") @db.Uuid
+  restaurantId   String  @map("restaurant_id") @db.Uuid
+  label          String
+  zone           String?
+  seats          Int?
+  /// Losowy, niezgadywalny (min. 128-bit) — nigdy sekwencyjne ID stolika.
+  qrToken        String  @unique @map("qr_token")
+  /// Inkrementacja unieważnia stary wydruk QR.
+  qrVersion      Int     @default(1) @map("qr_version")
+  isActive       Boolean @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  restaurant    Restaurant     @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  tableSessions TableSession[]
+  guestSessions GuestSession[]
+  orders        Order[]
+  waiterCalls   WaiterCall[]
+
+  @@unique([restaurantId, label])
+  @@index([organizationId])
+  @@map("restaurant_table")
+}
+
+model MenuCategory {
+  id             String  @id @default(uuid()) @db.Uuid
+  organizationId String  @map("organization_id") @db.Uuid
+  restaurantId   String  @map("restaurant_id") @db.Uuid
+  sortOrder      Int     @default(0) @map("sort_order")
+  isActive       Boolean @default(true) @map("is_active")
+  /// np. kategoria dostępna wyłącznie w godzinach śniadaniowych
+  availableHours Json?   @map("available_hours")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  restaurant   Restaurant                @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  translations MenuCategoryTranslation[]
+  items        MenuItem[]
+
+  @@index([restaurantId, sortOrder])
+  @@index([organizationId])
+  @@map("menu_category")
+}
+
+model MenuCategoryTranslation {
+  id             String  @id @default(uuid()) @db.Uuid
+  organizationId String  @map("organization_id") @db.Uuid
+  categoryId     String  @map("category_id") @db.Uuid
+  locale         String
+  name           String
+  description    String?
+
+  category MenuCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([categoryId, locale])
+  @@index([organizationId])
+  @@map("menu_category_translation")
+}
+
+model MenuItem {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  restaurantId   String   @map("restaurant_id") @db.Uuid
+  categoryId     String   @map("category_id") @db.Uuid
+  sku            String?
+  priceCents     Int      @map("price_cents")
+  currency       String   @db.Char(3)
+  vatRate        Decimal  @map("vat_rate") @db.Decimal(5, 4)
+  imageUrl       String?  @map("image_url")
+  isAvailable    Boolean  @default(true) @map("is_available")
+  sortOrder      Int      @default(0) @map("sort_order")
+  allergens      String[] @default([])
+  dietaryTags    String[] @default([]) @map("dietary_tags")
+  calories       Int?
+  prepTimeMinutes Int?    @map("prep_time_minutes")
+  isFeatured     Boolean  @default(false) @map("is_featured")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  restaurant     Restaurant              @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  category       MenuCategory            @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  translations   MenuItemTranslation[]
+  modifierGroups MenuItemModifierGroup[]
+  orderItems     OrderItem[]
+  reviews        Review[]
+
+  @@index([restaurantId, categoryId, sortOrder])
+  @@index([organizationId])
+  @@map("menu_item")
+}
+
+model MenuItemTranslation {
+  id             String  @id @default(uuid()) @db.Uuid
+  organizationId String  @map("organization_id") @db.Uuid
+  menuItemId     String  @map("menu_item_id") @db.Uuid
+  locale         String
+  name           String
+  description    String?
+
+  menuItem MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+
+  @@unique([menuItemId, locale])
+  @@index([organizationId])
+  @@map("menu_item_translation")
+}
+
+model MenuItemModifierGroup {
+  id             String  @id @default(uuid()) @db.Uuid
+  organizationId String  @map("organization_id") @db.Uuid
+  menuItemId     String  @map("menu_item_id") @db.Uuid
+  minSelect      Int     @default(0) @map("min_select")
+  maxSelect      Int     @default(1) @map("max_select")
+  isRequired     Boolean @default(false) @map("is_required")
+  sortOrder      Int     @default(0) @map("sort_order")
+
+  menuItem     MenuItem                           @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  translations MenuItemModifierGroupTranslation[]
+  modifiers    MenuItemModifier[]
+
+  @@index([menuItemId, sortOrder])
+  @@index([organizationId])
+  @@map("menu_item_modifier_group")
+}
+
+model MenuItemModifierGroupTranslation {
+  id             String @id @default(uuid()) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  groupId        String @map("group_id") @db.Uuid
+  locale         String
+  name           String
+
+  group MenuItemModifierGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, locale])
+  @@index([organizationId])
+  @@map("menu_item_modifier_group_translation")
+}
+
+model MenuItemModifier {
+  id              String  @id @default(uuid()) @db.Uuid
+  organizationId  String  @map("organization_id") @db.Uuid
+  groupId         String  @map("group_id") @db.Uuid
+  priceDeltaCents Int     @default(0) @map("price_delta_cents")
+  isAvailable     Boolean @default(true) @map("is_available")
+  sortOrder       Int     @default(0) @map("sort_order")
+
+  group        MenuItemModifierGroup            @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  translations MenuItemModifierTranslation[]
+
+  @@index([groupId, sortOrder])
+  @@index([organizationId])
+  @@map("menu_item_modifier")
+}
+
+model MenuItemModifierTranslation {
+  id             String @id @default(uuid()) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  modifierId     String @map("modifier_id") @db.Uuid
+  locale         String
+  name           String
+
+  modifier MenuItemModifier @relation(fields: [modifierId], references: [id], onDelete: Cascade)
+
+  @@unique([modifierId, locale])
+  @@index([organizationId])
+  @@map("menu_item_modifier_translation")
+}
+
+// ------------------------------------------------------- wizyta przy stoliku
+
+/// Wizyta przy stoliku = jednostka rachunku. Wiele zamówień i wiele urządzeń
+/// gości należy do jednej wizyty (docs/architecture.md §4).
+model TableSession {
+  id             String             @id @default(uuid()) @db.Uuid
+  organizationId String             @map("organization_id") @db.Uuid
+  restaurantId   String             @map("restaurant_id") @db.Uuid
+  tableId        String             @map("table_id") @db.Uuid
+  /// Numer dzienny, czytelny dla obsługi: "Stolik 12 / #3".
+  sessionNumber  Int                @map("session_number")
+  status         TableSessionStatus @default(open)
+
+  openedAt        DateTime  @default(now()) @map("opened_at")
+  openedBy        ActorType @map("opened_by")
+  openedByStaffId String?   @map("opened_by_staff_id") @db.Uuid
+  closedAt        DateTime? @map("closed_at")
+  closedByStaffId String?   @map("closed_by_staff_id") @db.Uuid
+
+  splitMode SplitMode @default(none) @map("split_mode")
+
+  subtotalCents Int    @default(0) @map("subtotal_cents")
+  tipCents      Int    @default(0) @map("tip_cents")
+  vatCents      Int    @default(0) @map("vat_cents")
+  totalCents    Int    @default(0) @map("total_cents")
+  /// Suma udanych płatności. Wizyta przechodzi w `settled` dopiero gdy
+  /// paidCents >= totalCents.
+  paidCents     Int    @default(0) @map("paid_cents")
+  currency      String @db.Char(3)
+
+  guestCount Int?     @map("guest_count")
+  lastSeenAt DateTime @default(now()) @map("last_seen_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  restaurant   Restaurant   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  table        Table        @relation(fields: [tableId], references: [id], onDelete: Restrict)
+  openedByStaff StaffMember? @relation("session_opened_by", fields: [openedByStaffId], references: [id], onDelete: SetNull)
+  closedByStaff StaffMember? @relation("session_closed_by", fields: [closedByStaffId], references: [id], onDelete: SetNull)
+
+  participants     TableParticipant[]
+  settlementGroups SettlementGroup[]
+  guestSessions    GuestSession[]
+  orders           Order[]
+  payments         Payment[]
+  reviews          Review[]
+  waiterCalls      WaiterCall[]
+
+  @@index([restaurantId, status])
+  @@index([tableId, status])
+  @@index([organizationId])
+  @@map("table_session")
+}
+
+/// Jedno urządzenie gościa w ramach wizyty. Anonimowa, krótkotrwała.
+model GuestSession {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  restaurantId   String   @map("restaurant_id") @db.Uuid
+  tableId        String   @map("table_id") @db.Uuid
+  tableSessionId String   @map("table_session_id") @db.Uuid
+  participantId  String?  @unique @map("participant_id") @db.Uuid
+  tokenHash      String   @unique @map("token_hash")
+  locale         String
+  createdAt      DateTime @default(now()) @map("created_at")
+  expiresAt      DateTime @map("expires_at")
+  lastSeenAt     DateTime @default(now()) @map("last_seen_at")
+
+  restaurant   Restaurant        @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  table        Table             @relation(fields: [tableId], references: [id], onDelete: Cascade)
+  tableSession TableSession      @relation(fields: [tableSessionId], references: [id], onDelete: Cascade)
+  participant  TableParticipant? @relation(fields: [participantId], references: [id], onDelete: SetNull)
+  orders       Order[]
+  waiterCalls  WaiterCall[]
+
+  @@index([tableSessionId])
+  @@index([organizationId])
+  @@map("guest_session")
+}
+
+/// Tożsamość na czas wizyty, nie konto. Nick + awatar z zamkniętego zestawu,
+/// bez uploadu i bez danych osobowych (docs/architecture.md §14.1).
+model TableParticipant {
+  id             String @id @default(uuid()) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  tableSessionId String @map("table_session_id") @db.Uuid
+
+  /// Nick wpisany przez gościa albo wylosowany, np. "Wesoły Borsuk".
+  displayName String @map("display_name")
+  avatarKey   String @map("avatar_key")
+  color       String
+
+  /// Pierwszy skanujący. Domyślny płatnik; do niego trafiają nierozdzielone
+  /// grosze przy podziale rachunku.
+  isHost Boolean @default(false) @map("is_host")
+
+  /// Kelner może dodać uczestnika bez telefonu.
+  createdBy        ActorType @map("created_by")
+  createdByStaffId String?   @map("created_by_staff_id") @db.Uuid
+
+  settlementGroupId String? @map("settlement_group_id") @db.Uuid
+
+  joinedAt DateTime  @default(now()) @map("joined_at")
+  leftAt   DateTime? @map("left_at")
+
+  tableSession    TableSession     @relation(fields: [tableSessionId], references: [id], onDelete: Cascade)
+  createdByStaff  StaffMember?     @relation("participant_created_by", fields: [createdByStaffId], references: [id], onDelete: SetNull)
+  settlementGroup SettlementGroup? @relation(fields: [settlementGroupId], references: [id], onDelete: SetNull)
+
+  guestSession    GuestSession?
+  createdOrders   Order[]         @relation("order_created_by_participant")
+  itemsFor        OrderItem[]     @relation("item_for_participant")
+  itemsAdded      OrderItem[]     @relation("item_added_by_participant")
+  itemShares      OrderItemShare[]
+  payingGroups    SettlementGroup[] @relation("group_payer")
+  orderEvents     OrderEvent[]
+
+  @@index([tableSessionId])
+  @@index([organizationId])
+  @@map("table_participant")
+}
+
+/// Jednostka rozliczeniowa w ramach wizyty: "Anna + Marek", "Stół firmowy".
+model SettlementGroup {
+  id             String                @id @default(uuid()) @db.Uuid
+  organizationId String                @map("organization_id") @db.Uuid
+  tableSessionId String                @map("table_session_id") @db.Uuid
+  label          String?
+  status         SettlementGroupStatus @default(open)
+
+  subtotalCents Int @default(0) @map("subtotal_cents")
+  tipCents      Int @default(0) @map("tip_cents")
+  totalCents    Int @default(0) @map("total_cents")
+
+  payerParticipantId String?   @map("payer_participant_id") @db.Uuid
+  createdBy          ActorType @map("created_by")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  tableSession TableSession      @relation(fields: [tableSessionId], references: [id], onDelete: Cascade)
+  payer        TableParticipant? @relation("group_payer", fields: [payerParticipantId], references: [id], onDelete: SetNull)
+  participants TableParticipant[]
+  payments     Payment[]
+
+  @@index([tableSessionId])
+  @@index([organizationId])
+  @@map("settlement_group")
+}
+
+// ---------------------------------------------------------------- zamówienia
+
+model Order {
+  id             String @id @default(uuid()) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  restaurantId   String @map("restaurant_id") @db.Uuid
+  tableId        String @map("table_id") @db.Uuid
+  tableSessionId String @map("table_session_id") @db.Uuid
+  guestSessionId String? @map("guest_session_id") @db.Uuid
+
+  /// Numer dzienny, czytelny dla obsługi i kuchni.
+  orderNumber Int @map("order_number")
+
+  /// Kto złożył zamówienie: gość ze swojego telefonu czy kelner w jego imieniu.
+  source                 ActorType
+  createdByParticipantId String? @map("created_by_participant_id") @db.Uuid
+  createdByStaffId       String? @map("created_by_staff_id") @db.Uuid
+
+  /// Realizacja i rozliczenie to dwa niezależne cykle życia — sklejenie ich
+  /// w jedno pole było błędem pierwszej wersji modelu.
+  status        OrderStatus
+  paymentStatus PaymentStatus @map("payment_status")
+
+  subtotalCents Int    @default(0) @map("subtotal_cents")
+  tipCents      Int    @default(0) @map("tip_cents")
+  vatCents      Int    @default(0) @map("vat_cents")
+  totalCents    Int    @default(0) @map("total_cents")
+  currency      String @db.Char(3)
+
+  guestNote String? @map("guest_note")
+
+  createdAt          DateTime  @default(now()) @map("created_at")
+  confirmedAt        DateTime? @map("confirmed_at")
+  confirmedByStaffId String?   @map("confirmed_by_staff_id") @db.Uuid
+  readyAt            DateTime? @map("ready_at")
+  servedAt           DateTime? @map("served_at")
+  rejectedReason     String?   @map("rejected_reason")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  restaurant         Restaurant        @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  table              Table             @relation(fields: [tableId], references: [id], onDelete: Restrict)
+  tableSession       TableSession      @relation(fields: [tableSessionId], references: [id], onDelete: Cascade)
+  guestSession       GuestSession?     @relation(fields: [guestSessionId], references: [id], onDelete: SetNull)
+  createdByParticipant TableParticipant? @relation("order_created_by_participant", fields: [createdByParticipantId], references: [id], onDelete: SetNull)
+  createdByStaff     StaffMember?      @relation("order_created_by", fields: [createdByStaffId], references: [id], onDelete: SetNull)
+  confirmedByStaff   StaffMember?      @relation("order_confirmed_by", fields: [confirmedByStaffId], references: [id], onDelete: SetNull)
+
+  items    OrderItem[]
+  events   OrderEvent[]
+  payments Payment[]
+  reviews  Review[]
+
+  @@unique([restaurantId, orderNumber, createdAt])
+  @@index([restaurantId, status])
+  @@index([tableSessionId])
+  @@index([organizationId])
+  @@map("order")
+}
+
+/// Snapshot nazwy, ceny i modyfikatorów — zmiana cennika nie może zmienić
+/// historycznego rachunku.
+model OrderItem {
+  id             String @id @default(uuid()) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  orderId        String @map("order_id") @db.Uuid
+  menuItemId     String? @map("menu_item_id") @db.Uuid
+
+  nameSnapshot      String @map("name_snapshot")
+  quantity          Int
+  unitPriceCents    Int    @map("unit_price_cents")
+  modifiersSnapshot Json   @default("[]") @map("modifiers_snapshot")
+  itemNote          String? @map("item_note")
+
+  status OrderItemStatus @default(queued)
+
+  /// Trzy niezależne atrybucje (docs/architecture.md §13.1):
+  /// dla kogo jest pozycja — podstawa podziału rachunku,
+  forParticipantId String? @map("for_participant_id") @db.Uuid
+  /// dzielona między uczestników → rozbicie w OrderItemShare,
+  isShared         Boolean @default(false) @map("is_shared")
+  /// kto ją wprowadził,
+  addedBy               ActorType @map("added_by")
+  addedByParticipantId  String?   @map("added_by_participant_id") @db.Uuid
+  addedByStaffId        String?   @map("added_by_staff_id") @db.Uuid
+  /// i kto ostatnio zmienił. To zwykle trzy różne osoby.
+  ///
+  /// Pola lastEditedBy* to wyłącznie denormalizacja pod listę — źródłem prawdy
+  /// o historii jest append-only OrderEvent.
+  lastEditedBy        ActorType? @map("last_edited_by")
+  lastEditedByStaffId String?    @map("last_edited_by_staff_id") @db.Uuid
+  lastEditedAt        DateTime?  @map("last_edited_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  order               Order             @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItem            MenuItem?         @relation(fields: [menuItemId], references: [id], onDelete: SetNull)
+  forParticipant      TableParticipant? @relation("item_for_participant", fields: [forParticipantId], references: [id], onDelete: SetNull)
+  addedByParticipant  TableParticipant? @relation("item_added_by_participant", fields: [addedByParticipantId], references: [id], onDelete: SetNull)
+  addedByStaff        StaffMember?      @relation("item_added_by", fields: [addedByStaffId], references: [id], onDelete: SetNull)
+  lastEditedByStaff   StaffMember?      @relation("item_last_edited_by", fields: [lastEditedByStaffId], references: [id], onDelete: SetNull)
+
+  shares OrderItemShare[]
+  events OrderEvent[]
+
+  @@index([orderId])
+  @@index([forParticipantId])
+  @@index([organizationId])
+  @@map("order_item")
+}
+
+/// Podział pojedynczej pozycji między uczestników (split_mode = per_item).
+/// Etap 2 — zamodelowane, ale nieużywane w etapie 1 (docs/product.md §6).
+model OrderItemShare {
+  id             String @id @default(uuid()) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  orderItemId    String @map("order_item_id") @db.Uuid
+  participantId  String @map("participant_id") @db.Uuid
+  /// Udział w częściach, np. 1 z 3 przy dzielonej butelce.
+  shareUnits     Int    @map("share_units")
+  /// Kwota po podziale metodą największych reszt. Niezmiennik: suma
+  /// amountCents dla pozycji == quantity * unitPriceCents.
+  amountCents    Int    @map("amount_cents")
+
+  orderItem   OrderItem        @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  participant TableParticipant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+
+  @@unique([orderItemId, participantId])
+  @@index([organizationId])
+  @@map("order_item_share")
+}
+
+/// Append-only historia zamówienia. Źródło prawdy — nigdy nie nadpisywane.
+model OrderEvent {
+  id             String  @id @default(uuid()) @db.Uuid
+  organizationId String  @map("organization_id") @db.Uuid
+  orderId        String  @map("order_id") @db.Uuid
+  orderItemId    String? @map("order_item_id") @db.Uuid
+
+  type OrderEventType
+
+  actorType          ActorType @map("actor_type")
+  actorParticipantId String?   @map("actor_participant_id") @db.Uuid
+  actorGuestSessionId String?  @map("actor_guest_session_id") @db.Uuid
+  actorStaffId       String?   @map("actor_staff_id") @db.Uuid
+
+  before Json?
+  after  Json?
+  reason String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  order            Order             @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderItem        OrderItem?        @relation(fields: [orderItemId], references: [id], onDelete: SetNull)
+  actorParticipant TableParticipant? @relation(fields: [actorParticipantId], references: [id], onDelete: SetNull)
+  actorStaff       StaffMember?      @relation(fields: [actorStaffId], references: [id], onDelete: SetNull)
+
+  @@index([orderId, createdAt])
+  @@index([organizationId])
+  @@map("order_event")
+}
+
+// ------------------------------------------------- płatności, oceny, obsługa
+
+/// W etapie 1 wyłącznie provider = offline: zapis ewidencyjny płatności
+/// przyjętej przez kelnera, do raportów i rozliczenia zmiany.
+model Payment {
+  id                String  @id @default(uuid()) @db.Uuid
+  organizationId    String  @map("organization_id") @db.Uuid
+  tableSessionId    String  @map("table_session_id") @db.Uuid
+  settlementGroupId String? @map("settlement_group_id") @db.Uuid
+  orderId           String? @map("order_id") @db.Uuid
+
+  provider          PaymentProvider
+  providerPaymentId String?         @map("provider_payment_id")
+  method            PaymentMethod
+  status            PaymentState    @default(pending)
+
+  amountCents Int    @map("amount_cents")
+  currency    String @db.Char(3)
+  paidAt      DateTime? @map("paid_at")
+
+  /// Kto przyjął płatność offline — podstawa rozliczenia kelnera.
+  collectedByStaffId String? @map("collected_by_staff_id") @db.Uuid
+
+  receiptUrl      String? @map("receipt_url")
+  fiscalReceiptId String? @map("fiscal_receipt_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  tableSession     TableSession     @relation(fields: [tableSessionId], references: [id], onDelete: Restrict)
+  settlementGroup  SettlementGroup? @relation(fields: [settlementGroupId], references: [id], onDelete: SetNull)
+  order            Order?           @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  collectedByStaff StaffMember?     @relation(fields: [collectedByStaffId], references: [id], onDelete: SetNull)
+
+  @@index([tableSessionId])
+  @@index([organizationId])
+  @@map("payment")
+}
+
+model Review {
+  id             String @id @default(uuid()) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  restaurantId   String @map("restaurant_id") @db.Uuid
+  tableSessionId String? @map("table_session_id") @db.Uuid
+  orderId        String? @map("order_id") @db.Uuid
+  /// null = ocena ogólna wizyty, nie konkretnego dania
+  menuItemId     String? @map("menu_item_id") @db.Uuid
+
+  rating  Int
+  comment String?
+  target  ReviewTarget
+  isRead  Boolean @default(false) @map("is_read")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  restaurant   Restaurant    @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  tableSession TableSession? @relation(fields: [tableSessionId], references: [id], onDelete: SetNull)
+  order        Order?        @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  menuItem     MenuItem?     @relation(fields: [menuItemId], references: [id], onDelete: SetNull)
+
+  @@index([restaurantId, createdAt])
+  @@index([organizationId])
+  @@map("review")
+}
+
+model WaiterCall {
+  id             String @id @default(uuid()) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  restaurantId   String @map("restaurant_id") @db.Uuid
+  tableId        String @map("table_id") @db.Uuid
+  tableSessionId String? @map("table_session_id") @db.Uuid
+  guestSessionId String? @map("guest_session_id") @db.Uuid
+
+  reason WaiterCallReason
+  status WaiterCallStatus @default(open)
+
+  createdAt             DateTime  @default(now()) @map("created_at")
+  acknowledgedByStaffId String?   @map("acknowledged_by_staff_id") @db.Uuid
+  acknowledgedAt        DateTime? @map("acknowledged_at")
+  resolvedAt            DateTime? @map("resolved_at")
+
+  restaurant         Restaurant    @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  table              Table         @relation(fields: [tableId], references: [id], onDelete: Cascade)
+  tableSession       TableSession? @relation(fields: [tableSessionId], references: [id], onDelete: SetNull)
+  guestSession       GuestSession? @relation(fields: [guestSessionId], references: [id], onDelete: SetNull)
+  acknowledgedByStaff StaffMember? @relation(fields: [acknowledgedByStaffId], references: [id], onDelete: SetNull)
+
+  @@index([restaurantId, status])
+  @@index([organizationId])
+  @@map("waiter_call")
+}
+
+model AuditLog {
+  id             String @id @default(uuid()) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  actorStaffId   String? @map("actor_staff_id") @db.Uuid
+  action         String
+  entity         String
+  entityId       String? @map("entity_id") @db.Uuid
+  payload        Json?
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  actorStaff   StaffMember? @relation(fields: [actorStaffId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, createdAt])
+  @@map("audit_log")
+}
