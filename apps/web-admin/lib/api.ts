@@ -199,3 +199,181 @@ export const money = (cents: number, currency: string) =>
 
 export const minutesSince = (iso: string): number =>
   Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+
+// ---------------------------------------------------------------- konfiguracja
+
+export interface Translation {
+  locale: string;
+  name: string;
+  description?: string | null;
+}
+
+export interface AdminModifier {
+  id?: string;
+  priceDeltaCents: number;
+  isAvailable?: boolean;
+  translations: Translation[];
+}
+
+export interface AdminModifierGroup {
+  id?: string;
+  minSelect: number;
+  maxSelect: number;
+  isRequired?: boolean;
+  translations: Translation[];
+  modifiers: AdminModifier[];
+}
+
+export interface AdminItem {
+  id: string;
+  priceCents: number;
+  vatPercent: number;
+  sortOrder: number;
+  isAvailable: boolean;
+  isArchived: boolean;
+  isFeatured: boolean;
+  allergens: string[];
+  dietaryTags: string[];
+  prepTimeMinutes: number | null;
+  translations: Translation[];
+  modifierGroups: AdminModifierGroup[];
+}
+
+export interface AdminCategory {
+  id: string;
+  sortOrder: number;
+  isActive: boolean;
+  isArchived: boolean;
+  translations: Translation[];
+  items: AdminItem[];
+}
+
+export interface AdminMenu {
+  defaultLocale: string;
+  supportedLocales: string[];
+  currency: string;
+  categories: AdminCategory[];
+}
+
+export interface AdminTable {
+  id: string;
+  label: string;
+  zone: string | null;
+  seats: number | null;
+  isActive: boolean;
+  qrToken: string;
+  qrVersion: number;
+}
+
+export interface AdminTables {
+  tableLimit: number;
+  activeCount: number;
+  tables: AdminTable[];
+}
+
+export interface RestaurantSettings {
+  id: string;
+  name: string;
+  slug: string;
+  address: string | null;
+  currency: string;
+  timezone: string;
+  defaultLocale: string;
+  supportedLocales: string[];
+  orderingMode: string;
+  requireStaffConfirmation: boolean;
+  tableActivationRequired: boolean;
+  minOrderCents: number;
+  openBillLimitCents: number | null;
+  businessDayStartHour: number;
+  fiscalizationMode: string;
+  subscription: {
+    plan: string;
+    status: string;
+    tableLimit: number;
+    languageLimit: number;
+    currentPeriodEnd: string | null;
+  } | null;
+}
+
+export interface ItemPayload {
+  categoryId: string;
+  priceCents: number;
+  vatPercent: number;
+  translations: Translation[];
+  isAvailable?: boolean;
+  isFeatured?: boolean;
+  allergens?: string[];
+  dietaryTags?: string[];
+  prepTimeMinutes?: number;
+  modifierGroups?: AdminModifierGroup[];
+}
+
+export const fetchAdminMenu = () => authorized<AdminMenu>('/management/menu');
+
+export const createCategory = (translations: Translation[]) =>
+  authorized<{ id: string }>('/management/menu/categories', {
+    method: 'POST',
+    body: JSON.stringify({ translations }),
+  });
+
+export const archiveCategory = (id: string, isArchived: boolean) =>
+  authorized(`/management/menu/categories/${id}/archived`, {
+    method: 'PATCH',
+    body: JSON.stringify({ isArchived }),
+  });
+
+export const createItem = (payload: ItemPayload) =>
+  authorized<{ id: string }>('/management/menu/items', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+
+export const updateItem = (id: string, payload: ItemPayload) =>
+  authorized<{ id: string }>(`/management/menu/items/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
+
+export const setItemAvailability = (id: string, isAvailable: boolean) =>
+  authorized(`/management/menu/items/${id}/availability`, {
+    method: 'PATCH',
+    body: JSON.stringify({ isAvailable }),
+  });
+
+export const archiveItem = (id: string, isArchived: boolean) =>
+  authorized(`/management/menu/items/${id}/archived`, {
+    method: 'PATCH',
+    body: JSON.stringify({ isArchived }),
+  });
+
+export const fetchTables = () => authorized<AdminTables>('/management/tables');
+
+export const createTable = (payload: { label: string; zone?: string; seats?: number }) =>
+  authorized<{ id: string; qrToken: string }>('/management/tables', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+
+export const regenerateQr = (id: string) =>
+  authorized<{ qrToken: string; qrVersion: number }>(`/management/tables/${id}/regenerate-qr`, {
+    method: 'POST',
+  });
+
+export const setTableActive = (id: string, isActive: boolean) =>
+  authorized(`/management/tables/${id}/active`, {
+    method: 'PATCH',
+    body: JSON.stringify({ isActive }),
+  });
+
+export const fetchRestaurant = () => authorized<RestaurantSettings>('/management/restaurant');
+
+export const updateRestaurant = (payload: Partial<RestaurantSettings>) =>
+  authorized<{ removedLocales: string[] }>('/management/restaurant', {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
+
+/** Adres, który koduje kod QR na stoliku. */
+export const guestUrlFor = (qrToken: string): string =>
+  `${process.env.NEXT_PUBLIC_GUEST_URL ?? 'http://localhost:3001'}/t/${qrToken}`;

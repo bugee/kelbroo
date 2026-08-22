@@ -10,6 +10,9 @@ const NAV: { href: string; label: string; roles: StaffRole[] }[] = [
   { href: '/queue', label: 'Do potwierdzenia', roles: ['owner', 'manager', 'waiter'] },
   { href: '/kds', label: 'Kuchnia', roles: ['owner', 'manager', 'waiter', 'kitchen'] },
   { href: '/tables', label: 'Sala', roles: ['owner', 'manager', 'waiter'] },
+  { href: '/menu', label: 'Menu', roles: ['owner', 'manager'] },
+  { href: '/qr', label: 'Stoliki i QR', roles: ['owner', 'manager'] },
+  { href: '/settings', label: 'Ustawienia', roles: ['owner', 'manager'] },
 ];
 
 export function StaffShell({ children }: { children: (staff: Staff) => React.ReactNode }) {
@@ -42,7 +45,7 @@ export function StaffShell({ children }: { children: (staff: Staff) => React.Rea
 
   return (
     <div className="min-h-dvh">
-      <header className="sticky top-0 z-20 border-b border-[var(--line)] bg-[var(--surface)] px-4 py-2">
+      <header className="sticky top-0 z-20 border-b border-[var(--line)] bg-[var(--surface)] px-4 py-2 print:hidden">
         <div className="mx-auto flex max-w-6xl items-center gap-3">
           <span className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--teal)]">
             kelbroo

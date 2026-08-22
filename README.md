@@ -60,7 +60,19 @@ pnpm --filter @kelbroo/web-admin dev   # http://localhost:3002
 
 Konta z seeda mają hasło `kelbroo123`: `owner@`, `manager@`, `kelner@`
 i `kuchnia@demo.kelbroo.pl`. Rola decyduje o widocznych ekranach — kuchnia
-nie widzi kolejki potwierdzeń ani rachunków.
+nie widzi kolejki potwierdzeń, rachunków ani konfiguracji.
+
+| Ekran | Dla kogo | Co robi |
+|---|---|---|
+| `/queue` | kelner i wyżej | kolejka „Do potwierdzenia" |
+| `/kds` | wszyscy | tablica kuchni: Nowe / W przygotowaniu / Do wydania |
+| `/tables` | kelner i wyżej | otwarte rachunki, rozliczenie gotówką lub terminalem |
+| `/menu` | manager i owner | menu z tłumaczeniami, modyfikatory, dostępność |
+| `/qr` | manager i owner | stoliki, kody QR, arkusz do druku |
+| `/settings` | manager i owner | tryb zamawiania, języki, limity, abonament |
+
+Kody QR generują się w przeglądarce i drukują z `/qr` — na wydruku panel
+przełącza się na białe tło, bo czytnik telefonu potrzebuje kontrastu.
 
 ## Struktura
 

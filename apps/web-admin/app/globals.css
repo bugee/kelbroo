@@ -30,3 +30,25 @@
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
+
+/* Arkusz kodów QR idzie na papier: motyw ciemny na wydruku to zmarnowany
+   toner i kod, którego czytnik nie odczyta. */
+@media print {
+  :root {
+    --ground: #ffffff;
+    --surface: #ffffff;
+    --ink: #000000;
+    --muted: #555555;
+    --line: #cccccc;
+  }
+
+  body {
+    background: #ffffff;
+    color: #000000;
+  }
+
+  main {
+    max-width: none;
+    padding: 0;
+  }
+}
