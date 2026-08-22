@@ -49,6 +49,7 @@ async function createTenant(label: string): Promise<Fixture> {
       organizationId: organization.id,
       restaurantId: restaurant.id,
       tableId: table.id,
+      businessDate: new Date('2026-08-22'),
       sessionNumber: 1,
       openedBy: 'guest',
       currency: 'PLN',
@@ -60,6 +61,7 @@ async function createTenant(label: string): Promise<Fixture> {
       restaurantId: restaurant.id,
       tableId: table.id,
       tableSessionId: session.id,
+      businessDate: new Date('2026-08-22'),
       orderNumber: 1,
       source: 'guest',
       status: 'submitted',
@@ -164,6 +166,61 @@ describe('izolacja tenantów (RLS)', () => {
     await expect(
       app.withTenant("' OR '1'='1", async (tx) => tx.restaurant.count()),
     ).rejects.toThrow(/UUID/);
+  });
+});
+
+describe('kompletność ochrony', () => {
+  it('każda tabela z organization_id ma włączony RLS', async () => {
+    // Prisma generuje wyłącznie DDL schematu — polityki bezpieczeństwa trzeba
+    // dopisać ręcznie w migracji. Ten test wyłapuje moment, w którym ktoś
+    // doda nową tabelę tenanta i o tym zapomni.
+    const unprotected = await direct.$queryRaw<{ relname: string }[]>`
+      SELECT c.relname
+      FROM pg_class c
+      JOIN pg_namespace n ON n.oid = c.relnamespace
+      JOIN pg_attribute a ON a.attrelid = c.oid
+       AND a.attname = 'organization_id'
+       AND a.attnum > 0
+       AND NOT a.attisdropped
+      WHERE n.nspname = 'public'
+        AND c.relkind = 'r'
+        AND NOT c.relrowsecurity
+      ORDER BY c.relname
+    `;
+
+    expect(unprotected.map((row) => row.relname)).toEqual([]);
+  });
+
+  it('każda tabela z włączonym RLS ma politykę izolacji', async () => {
+    // Sam ENABLE ROW LEVEL SECURITY bez polityki blokuje wszystko — to też
+    // jest błąd, tyle że objawia się pustymi ekranami zamiast wyciekiem.
+    const withoutPolicy = await direct.$queryRaw<{ relname: string }[]>`
+      SELECT c.relname
+      FROM pg_class c
+      JOIN pg_namespace n ON n.oid = c.relnamespace
+      WHERE n.nspname = 'public'
+        AND c.relkind = 'r'
+        AND c.relrowsecurity
+        AND NOT EXISTS (
+          SELECT 1 FROM pg_policies p
+          WHERE p.schemaname = 'public'
+            AND p.tablename = c.relname
+            AND p.policyname = 'tenant_isolation'
+        )
+      ORDER BY c.relname
+    `;
+
+    expect(withoutPolicy.map((row) => row.relname)).toEqual([]);
+  });
+
+  it('tabela organization też jest objęta izolacją', async () => {
+    const rows = await direct.$queryRaw<{ relrowsecurity: boolean }[]>`
+      SELECT c.relrowsecurity
+      FROM pg_class c
+      JOIN pg_namespace n ON n.oid = c.relnamespace
+      WHERE n.nspname = 'public' AND c.relname = 'organization'
+    `;
+    expect(rows[0]?.relrowsecurity).toBe(true);
   });
 });
 

@@ -111,6 +111,11 @@ enum OrderItemStatus {
   canceled
 }
 
+enum CounterScope {
+  order
+  table_session
+}
+
 enum ActorType {
   guest
   staff
@@ -244,7 +249,13 @@ model Restaurant {
   openBillLimitCents Int? @map("open_bill_limit_cents")
 
   fiscalizationMode FiscalizationMode @default(none) @map("fiscalization_mode")
-  settings          Json?
+
+  /// Godzina (w strefie lokalu), o której zaczyna się nowa doba biznesowa.
+  /// Serwis przechodzi przez północ — zamówienie z 00:30 należy do zmiany
+  /// z poprzedniego dnia, więc numeracja dzienna nie może iść za kalendarzem.
+  businessDayStartHour Int @default(4) @map("business_day_start_hour")
+
+  settings Json?
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -259,6 +270,7 @@ model Restaurant {
   orders          Order[]
   reviews         Review[]
   waiterCalls     WaiterCall[]
+  dailyCounters   DailyCounter[]
 
   @@index([organizationId])
   @@map("restaurant")
@@ -479,6 +491,8 @@ model TableSession {
   organizationId String             @map("organization_id") @db.Uuid
   restaurantId   String             @map("restaurant_id") @db.Uuid
   tableId        String             @map("table_id") @db.Uuid
+  /// Doba biznesowa, do której należy wizyta — podstawa numeracji dziennej.
+  businessDate   DateTime           @map("business_date") @db.Date
   /// Numer dzienny, czytelny dla obsługi: "Stolik 12 / #3".
   sessionNumber  Int                @map("session_number")
   status         TableSessionStatus @default(open)
@@ -517,6 +531,7 @@ model TableSession {
   reviews          Review[]
   waiterCalls      WaiterCall[]
 
+  @@unique([restaurantId, businessDate, sessionNumber])
   @@index([restaurantId, status])
   @@index([tableId, status])
   @@index([organizationId])
@@ -628,8 +643,10 @@ model Order {
   tableSessionId String @map("table_session_id") @db.Uuid
   guestSessionId String? @map("guest_session_id") @db.Uuid
 
+  /// Doba biznesowa, do której należy zamówienie.
+  businessDate DateTime @map("business_date") @db.Date
   /// Numer dzienny, czytelny dla obsługi i kuchni.
-  orderNumber Int @map("order_number")
+  orderNumber  Int      @map("order_number")
 
   /// Kto złożył zamówienie: gość ze swojego telefonu czy kelner w jego imieniu.
   source                 ActorType
@@ -670,7 +687,7 @@ model Order {
   payments Payment[]
   reviews  Review[]
 
-  @@unique([restaurantId, orderNumber, createdAt])
+  @@unique([restaurantId, businessDate, orderNumber])
   @@index([restaurantId, status])
   @@index([tableSessionId])
   @@index([organizationId])
@@ -869,6 +886,27 @@ model WaiterCall {
   @@index([restaurantId, status])
   @@index([organizationId])
   @@map("waiter_call")
+}
+
+/// Atomowy licznik numerów dziennych.
+///
+/// Numery zamówień i wizyt muszą być czytelne dla obsługi ("Stolik 12 / #3"),
+/// więc nie mogą być UUID-ami ani globalną sekwencją. Przydzielanie przez
+/// `SELECT max(...) + 1` gubi się przy równoczesnych zamówieniach w szczycie —
+/// stąd upsert `ON CONFLICT DO UPDATE ... RETURNING`, który jest atomowy.
+model DailyCounter {
+  id             String       @id @default(uuid()) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  restaurantId   String       @map("restaurant_id") @db.Uuid
+  businessDate   DateTime     @map("business_date") @db.Date
+  scope          CounterScope
+  lastValue      Int          @default(0) @map("last_value")
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@unique([restaurantId, businessDate, scope])
+  @@index([organizationId])
+  @@map("daily_counter")
 }
 
 model AuditLog {
