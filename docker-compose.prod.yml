@@ -30,13 +30,12 @@ services:
       ACME_EMAIL: ${ACME_EMAIL}
     volumes:
       - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
-      # Strona produktowa jest statyczna — nie potrzebuje własnego kontenera.
-      - ./design/landing-page.html:/srv/landing/index.html:ro
       - caddy-data:/data
       - caddy-config:/config
     depends_on:
       - web-guest
       - web-admin
+      - web-marketing
       - api
 
   postgres:
@@ -129,6 +128,12 @@ services:
     restart: unless-stopped
     depends_on:
       - api
+
+  web-marketing:
+    build:
+      context: .
+      dockerfile: apps/web-marketing/Dockerfile
+    restart: unless-stopped
 
   web-admin:
     build:

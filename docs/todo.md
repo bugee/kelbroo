@@ -80,8 +80,8 @@ Modele są w schemacie od pierwszej migracji i nie mają ani jednego odwołania 
 
 ## 5. System 1 — strona produktowa i sprzedaż
 
-Pod `kelbroo.com` stoi statyczny [design/landing-page.html](../design/landing-page.html)
-serwowany przez Caddy. Strona wygląda na gotową, ale **12 z 20 odnośników nie ma celu** —
+Pod `kelbroo.com` stoi `apps/web-marketing`. Strona wygląda na gotową, ale
+**12 z 20 odnośników nie ma celu** —
 klikając cokolwiek poza nawigacją i logowaniem, użytkownik zostaje na miejscu.
 Poniższe zadania to dokładnie ta lista braków.
 
@@ -145,9 +145,8 @@ rejestracje jest niezgodna z prawem** — to blokuje uruchomienie 5a, nie tylko 
 - [x] **`apps/web-marketing`** — Next.js, strona renderowana statycznie. Znaczniki i style
       przeniesione z pliku projektowego 1:1; cennik przepisany na dane (przełącznik okresu
       jest jedynym stanem), ruch strony w osobnym komponencie klienckim.
-- [ ] **Przełączyć Caddy na `apps/web-marketing`** — dopóki tego nie ma, produkcja serwuje
-      nadal statyczny `design/landing-page.html`. Wymaga usługi w `docker-compose.prod.yml`
-      i zmiany bloku `{$LANDING_DOMAIN}` z `file_server` na `reverse_proxy`.
+- [x] **Caddy przełączony na `apps/web-marketing`** — własna usługa w compose, blok
+      `{$LANDING_DOMAIN}` przepięty z `file_server` na `reverse_proxy`, mount pliku zdjęty.
 
       > Plik projektowy **nie ma `<!DOCTYPE html>`**, więc przeglądarki renderują go
       > w trybie zgodności wstecznej. Nowa strona ma doctype i tryb standardowy — stąd

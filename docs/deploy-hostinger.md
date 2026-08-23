@@ -359,9 +359,10 @@ Wszystko poniżej robisz już klikając w panelu:
 
 ## Strona produktowa na kelbroo.com
 
-Pod apeksem stoi **statyczny plik** [design/landing-page.html](../design/landing-page.html),
-podmontowany do Caddy'ego jako `index.html`. Nie ma osobnego kontenera ani procesu
-budowania — Caddy serwuje plik prosto z dysku.
+Pod apeksem stoi aplikacja **`apps/web-marketing`** — Next.js renderujący strony
+statycznie, w osobnym kontenerze, za `reverse_proxy` w Caddym. Zastąpiła podmontowany
+plik `design/landing-page.html`; ten został w repozytorium jako referencja wizualna,
+ale nie jest już serwowany.
 
 ### Gdy wdrożenie już istniało
 

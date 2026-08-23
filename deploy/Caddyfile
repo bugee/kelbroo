@@ -13,12 +13,11 @@
 }
 
 # --- strona produktowa -----------------------------------------------------
-# Na razie jeden statyczny plik z `design/landing-page.html`, podmontowany jako
-# index.html. Gdy powstanie `apps/web-marketing`, wystarczy podmienić ten blok
-# na reverse_proxy — DNS i certyfikat zostają bez zmian.
+# `apps/web-marketing` — Next.js renderujący strony statycznie. Zastąpił
+# podmontowany plik `design/landing-page.html`; ten plik zostaje w repozytorium
+# jako referencja wizualna, ale nie jest już niczemu serwowany.
 {$LANDING_DOMAIN} {
-	root * /srv/landing
-	file_server
+	reverse_proxy web-marketing:3000
 
 	encode zstd gzip
 	header {

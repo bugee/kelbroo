@@ -36,7 +36,7 @@ Przed implementacją czegokolwiek przeczytaj odpowiedni dokument:
 | [docs/02-admin-panel.md](docs/02-admin-panel.md) | System 2 — panel restauracji, stoliki/QR, menu, realizacja zamówień, KDS |
 | [docs/03-customer-ordering.md](docs/03-customer-ordering.md) | System 3 — PWA gościa, zamawianie, płatności, oceny |
 
-**Projekt strony głównej** (referencja wizualna dla Systemu 1): [design/landing-page.html](design/landing-page.html) — samodzielny plik HTML, otwierany bezpośrednio w przeglądarce. Wersja opublikowana: https://claude.ai/code/artifact/e5cfa001-f874-412d-bc9d-847c606328c4
+**Projekt strony głównej** (referencja wizualna dla Systemu 1): [design/landing-page.html](design/landing-page.html) — samodzielny plik HTML, otwierany bezpośrednio w przeglądarce. **Nie jest już serwowany** — treść i style żyją w `apps/web-marketing`, a ten plik zostaje jako punkt odniesienia. Wersja opublikowana: https://claude.ai/code/artifact/e5cfa001-f874-412d-bc9d-847c606328c4
 
 Ten plik jest **źródłem prawdy dla palety, typografii i tonu** przy budowie `apps/web-marketing` — przenieś z niego tokeny CSS i komponenty do Next.js zamiast projektować od nowa.
 
@@ -54,7 +54,7 @@ Domena produktowa: **`kelbroo.com`**.
 
 | Adres | Co serwuje | Skąd |
 |---|---|---|
-| `kelbroo.com` | Strona produktowa (System 1) | `design/landing-page.html` przez Caddy; docelowo `apps/web-marketing` |
+| `kelbroo.com` | Strona produktowa (System 1) | `apps/web-marketing` |
 | `www.kelbroo.com` | Przekierowanie 301 na apex | Caddy |
 | `panel.kelbroo.com` | Panel obsługi (System 2) | `apps/web-admin` |
 | `menu.kelbroo.com` | PWA gościa (System 3) | `apps/web-guest` |
