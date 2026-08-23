@@ -547,6 +547,33 @@ export const changePassword = async (
 };
 export const fetchQueue = () => authorized<StaffOrder[]>('/staff/orders/queue');
 export const fetchKitchen = () => authorized<StaffOrder[]>('/staff/orders/kitchen');
+export interface SessionItem {
+  id: string;
+  orderNumber: number;
+  name: string;
+  quantity: number;
+  unitPriceCents: number;
+  /** Status widziany przez gościa — po bramce do kuchni własny status pozycji. */
+  status: string;
+  addedByStaff: boolean;
+  forParticipant: { id: string; displayName: string; symbol: string; color: string } | null;
+  categoryId: string | null;
+  categoryName: string | null;
+  categorySortOrder: number;
+}
+
+export interface SessionItems {
+  sessionId: string;
+  tableLabel: string;
+  number: number;
+  currency: string;
+  items: SessionItem[];
+}
+
+/** Podgląd zamówień stolika — pozycja po pozycji. */
+export const fetchSessionItems = (sessionId: string) =>
+  authorized<SessionItems>(`/staff/sessions/${sessionId}/items`);
+
 export const fetchSessions = () => authorized<StaffFloorTable[]>('/staff/sessions');
 
 export const confirmOrder = (id: string) =>

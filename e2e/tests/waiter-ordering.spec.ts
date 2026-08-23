@@ -17,13 +17,16 @@ test.describe('zamawianie przez kelnera', () => {
     try {
       await logInAsOwner(page);
 
+      // `exact`, bo domyślne dopasowanie szuka fragmentu, a „Podgląd zamówienia"
+      // też zawiera „zamów".
+      //
       // 1. Zamawianie zaczyna się na Sali, przy konkretnym stoliku — „Zamów"
       // nie ma już własnej pozycji w menu. Stolik bez wizyty też da się obsłużyć:
       // zamówienie samo ją otwiera.
       await page.goto('/tables');
       const karta = page.locator('article').filter({ hasText: fixture.tableLabel });
       await expect(karta).toContainText('wolny');
-      await karta.getByRole('link', { name: 'Zamów' }).click();
+      await karta.getByRole('link', { name: 'Zamów', exact: true }).click();
 
       // Stolik jest już wybrany — kelner nie wskazuje go drugi raz.
       await expect(page.getByRole('heading', { name: fixture.tableLabel })).toBeVisible();
@@ -66,7 +69,7 @@ test.describe('zamawianie przez kelnera', () => {
       await page
         .locator('article')
         .filter({ hasText: fixture.tableLabel })
-        .getByRole('link', { name: 'Zamów' })
+        .getByRole('link', { name: 'Zamów', exact: true })
         .click();
 
       // Lista rozwijana zniknęła — kelner szuka wzrokiem znaku, który gość nazwał.

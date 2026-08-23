@@ -9,6 +9,13 @@ import { PrismaService } from '../prisma/prisma.service';
 import { TableLifecycleService } from './table-lifecycle.service';
 import type { StaffContext } from '../auth/auth.types';
 
+/**
+ * Zamówienie przed bramką do kuchni: pozycje nie mają jeszcze własnego biegu,
+ * więc dziedziczą status zamówienia. Bramką jest `confirmed`.
+ */
+const isBeforeKitchen = (status: string): boolean =>
+  status === 'submitted' || status === 'awaiting_confirmation' || status === 'rejected';
+
 export type OfflineMethod = 'cash' | 'card_terminal';
 
 @Injectable()
@@ -97,6 +104,93 @@ export class StaffSessionsService {
             : null,
         };
       });
+    });
+  }
+
+  /**
+   * Wszystko, co zamówiono przy stoliku — pozycja po pozycji.
+   *
+   * Kelner dostaje pytanie „co u nas z zupą?" i musi odpowiedzieć, nie wracając
+   * do kuchni. Zwracamy płaską listę; grupowanie po gościu albo po kategorii
+   * robi panel, bo to sposób patrzenia, a nie inny zbiór danych.
+   */
+  async items(staff: StaffContext, sessionId: string) {
+    return this.prisma.withTenant(staff.organizationId, async (tx) => {
+      const session = await tx.tableSession.findFirst({
+        where: { id: sessionId, restaurantId: this.restaurantOf(staff) },
+        include: { table: { select: { label: true } } },
+      });
+      if (!session) {
+        throw new NotFoundException('Wizyta nie istnieje.');
+      }
+
+      const restaurant = await tx.restaurant.findUniqueOrThrow({
+        where: { id: session.restaurantId },
+        select: { defaultLocale: true },
+      });
+
+      const orders = await tx.order.findMany({
+        where: { tableSessionId: session.id },
+        orderBy: { createdAt: 'asc' },
+        include: {
+          items: {
+            orderBy: { createdAt: 'asc' },
+            include: {
+              forParticipant: {
+                select: { id: true, displayName: true, symbol: true, color: true },
+              },
+              menuItem: {
+                select: {
+                  category: {
+                    select: {
+                      id: true,
+                      sortOrder: true,
+                      translations: { select: { locale: true, name: true } },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
+
+      return {
+        sessionId: session.id,
+        tableLabel: session.table.label,
+        number: session.sessionNumber,
+        currency: session.currency,
+        items: orders.flatMap((order) =>
+          order.items.map((item) => {
+            const category = item.menuItem?.category;
+            const nazwa =
+              category?.translations.find((t) => t.locale === restaurant.defaultLocale)?.name ??
+              category?.translations[0]?.name ??
+              null;
+
+            return {
+              id: item.id,
+              orderNumber: order.orderNumber,
+              name: item.nameSnapshot,
+              quantity: item.quantity,
+              unitPriceCents: item.unitPriceCents,
+              /**
+               * Zamówienie przed bramką do kuchni nie ma jeszcze bonu, więc
+               * pozycja niesie wtedy status zamówienia — dokładnie ten, który
+               * gość widzi u siebie. Po bramce liczy się już własny status
+               * pozycji, bo kuchnia wydaje danie po daniu.
+               */
+              status: isBeforeKitchen(order.status) ? order.status : item.status,
+              addedByStaff: item.addedBy === 'staff',
+              forParticipant: item.forParticipant,
+              /// `null` dla dania usuniętego z karty — snapshot nie trzyma kategorii.
+              categoryId: category?.id ?? null,
+              categoryName: nazwa,
+              categorySortOrder: category?.sortOrder ?? Number.MAX_SAFE_INTEGER,
+            };
+          }),
+        ),
+      };
     });
   }
 

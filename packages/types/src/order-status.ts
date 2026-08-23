@@ -105,3 +105,32 @@ export function statusAfterSubmission(context: SubmissionContext): OrderStatus {
 
   return 'confirmed';
 }
+
+/**
+ * Statusy po polsku — to, co widzi gość na telefonie.
+ *
+ * Ten sam zestaw czyta panel, bo kelner rozmawia z gościem o jego zamówieniu:
+ * gdyby po obu stronach stały inne słowa, rozmowa przy stoliku rozjeżdżałaby się
+ * o nazewnictwo. Nazwy z bazy nie trafiają na żaden z tych ekranów.
+ *
+ * Klucze pokrywają oba cykle: status zamówienia (`OrderStatus`) i status
+ * pojedynczej pozycji na bonie (`queued` → `served`). Pozycja dziedziczy status
+ * zamówienia, dopóki zamówienie nie przejdzie bramki do kuchni.
+ */
+export const GUEST_STATUS_LABEL: Record<string, string> = {
+  submitted: 'Wysłane',
+  awaiting_confirmation: 'Czeka na potwierdzenie obsługi',
+  confirmed: 'Przyjęte',
+  queued: 'Przyjęte',
+  preparing: 'W przygotowaniu',
+  ready: 'Gotowe',
+  served: 'Wydane',
+  closed: 'Rozliczone',
+  rejected: 'Odrzucone',
+  canceled: 'Anulowane',
+};
+
+/** Etykieta albo sama wartość — nieznany status nie może zostawić pustego miejsca. */
+export function guestStatusLabel(status: string): string {
+  return GUEST_STATUS_LABEL[status] ?? status;
+}

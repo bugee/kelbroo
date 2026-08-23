@@ -189,14 +189,23 @@ function Room() {
                     </div>
                   )}
 
-                  {session.participants.length > 1 && (
+                  <div className="mt-2 flex flex-wrap justify-center gap-x-4">
+                    {/* „Co u nas z zupą?" — kelner odpowiada bez chodzenia do kuchni. */}
                     <Link
-                      href={`/tables/${session.id}`}
-                      className="mt-2 text-center text-sm text-[var(--teal)] underline"
+                      href={`/tables/${session.id}/orders`}
+                      className="text-sm text-[var(--teal)] underline"
                     >
-                      Podziel rachunek
+                      Podgląd zamówienia
                     </Link>
-                  )}
+                    {session.participants.length > 1 && (
+                      <Link
+                        href={`/tables/${session.id}`}
+                        className="text-sm text-[var(--teal)] underline"
+                      >
+                        Podziel rachunek
+                      </Link>
+                    )}
+                  </div>
 
                   <div className="mt-2 flex gap-2">
                     <button

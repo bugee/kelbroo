@@ -16,6 +16,7 @@ import { OrderPricingService } from '../src/orders/order-pricing.service';
 import { OrdersGateway } from '../src/realtime/orders.gateway';
 import type { GuestGateway } from '../src/realtime/guest.gateway';
 import { StaffOrderingService } from '../src/staff/staff-ordering.service';
+import { StaffSessionsService } from '../src/staff/staff-sessions.service';
 import type { StaffContext } from '../src/auth/auth.types';
 
 const direct = new PrismaClient({ datasourceUrl: process.env.DIRECT_DATABASE_URL });
@@ -29,6 +30,7 @@ const guestGateway = {
   publish: (tableSessionId: string, event: { kind: string }) =>
     visitEvents.push({ tableSessionId, kind: event.kind }),
 } as unknown as GuestGateway;
+const sessions = new StaffSessionsService(prisma);
 const ordering = new StaffOrderingService(
   prisma,
   new DailyCounterService(),
@@ -327,5 +329,69 @@ describe('historia zamówienia', () => {
     const usuniecie = historia.at(-1)!;
     expect(usuniecie.before).toMatchObject({ name: 'Kawa', quantity: 4 });
     expect(usuniecie.reason).toBe('gość zrezygnował');
+  });
+});
+
+/**
+ * Podgląd zamówień stolika.
+ *
+ * Kelner dostaje przy stoliku pytanie „co u nas z zupą?" i musi odpowiedzieć bez
+ * chodzenia do kuchni. Status musi być ten sam, który gość widzi u siebie —
+ * inaczej rozmowa rozjeżdża się o nazewnictwo.
+ */
+describe('podgląd zamówień stolika', () => {
+  it('podaje pozycje z kategorią, gościem i ceną', async () => {
+    await zamow(tableId);
+    const sesja = await direct.tableSession.findFirstOrThrow({ where: { tableId } });
+
+    const widok = await sessions.items(waiter, sesja.id);
+
+    expect(widok.items.length).toBeGreaterThan(0);
+    const pozycja = widok.items[0]!;
+    expect(pozycja.name).toBeTruthy();
+    expect(pozycja.categoryName).toBeTruthy();
+    expect(pozycja.unitPriceCents).toBeGreaterThan(0);
+    expect(pozycja.addedByStaff).toBe(true);
+  });
+
+  it('przed bramką do kuchni pozycja niesie status zamówienia, po niej własny', async () => {
+    // Zamówienie kelnera jest od razu `confirmed`, więc pozycje mają własny bieg.
+    const order = await zamow(tableId);
+    const sesja = await direct.tableSession.findFirstOrThrow({ where: { tableId } });
+
+    // Wizyta zbiera pozycje ze wszystkich zamówień, a my ruszamy tylko jedno —
+    // patrzymy więc wyłącznie na jego pozycje.
+    const naszePozycje = (widok: { items: { orderNumber: number }[] }) =>
+      widok.items.filter((item) => item.orderNumber === order.orderNumber);
+
+    let widok = await sessions.items(waiter, sesja.id);
+    expect(naszePozycje(widok).every((item) => item.status === 'queued')).toBe(true);
+
+    // Kuchnia bierze się za jedną pozycję — tylko ona zmienia stan.
+    const pierwsza = naszePozycje(widok)[0]! as { id: string };
+    await direct.orderItem.update({ where: { id: pierwsza.id }, data: { status: 'ready' } });
+    widok = await sessions.items(waiter, sesja.id);
+    expect(widok.items.find((item) => item.id === pierwsza.id)?.status).toBe('ready');
+
+    // Cofnięte przed bramkę: pozycje pokazują to, co widzi gość, a nie stan bonu.
+    await direct.order.update({
+      where: { id: order.id },
+      data: { status: 'awaiting_confirmation' },
+    });
+    widok = await sessions.items(waiter, sesja.id);
+    expect(naszePozycje(widok).every((item) => item.status === 'awaiting_confirmation')).toBe(true);
+  });
+
+  it('nie pokazuje wizyty z cudzego lokalu', async () => {
+    const obcy = await direct.organization.create({
+      data: { name: `Obca ${randomUUID()}`, billingEmail: 'obca@test.local' },
+    });
+    try {
+      const obcyStaff: StaffContext = { ...waiter, organizationId: obcy.id };
+      const sesja = await direct.tableSession.findFirstOrThrow({ where: { tableId } });
+      await expect(sessions.items(obcyStaff, sesja.id)).rejects.toThrow();
+    } finally {
+      await direct.organization.delete({ where: { id: obcy.id } });
+    }
   });
 });

@@ -310,6 +310,13 @@ export class StaffController {
 
   // --- podział rachunku ----------------------------------------------------
 
+  /** Podgląd zamówień stolika — pozycja po pozycji, ze statusem widzianym przez gościa. */
+  @Get('sessions/:id/items')
+  @Roles('owner', 'manager', 'waiter')
+  sessionItems(@Staff() staff: StaffContext, @Param('id', ParseUUIDPipe) id: string) {
+    return this.sessions.items(staff, id);
+  }
+
   @Get('sessions/:id/split')
   @Roles('owner', 'manager', 'waiter')
   splitPlan(@Staff() staff: StaffContext, @Param('id', ParseUUIDPipe) id: string) {

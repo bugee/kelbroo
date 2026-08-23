@@ -26,24 +26,13 @@ import {
   type SessionOrders,
   type TableEntry,
 } from '@/lib/api';
+import { guestStatusLabel } from '@kelbroo/types';
 import { ThemeToggle } from '@kelbroo/ui/theme';
 import { GuestMark } from '@kelbroo/ui/guest-mark';
 import { DishSheet } from './DishSheet';
 
 type View = 'menu' | 'cart' | 'status';
 
-/** Etykiety statusów po polsku — gość nie ma widzieć nazw z bazy. */
-const STATUS_LABEL: Record<string, string> = {
-  submitted: 'Wysłane',
-  awaiting_confirmation: 'Czeka na potwierdzenie obsługi',
-  confirmed: 'Przyjęte',
-  preparing: 'W przygotowaniu',
-  ready: 'Gotowe',
-  served: 'Wydane',
-  closed: 'Rozliczone',
-  rejected: 'Odrzucone',
-  canceled: 'Anulowane',
-};
 
 export function GuestApp({ qrToken }: { qrToken: string }) {
   const [entry, setEntry] = useState<TableEntry | null>(null);
@@ -465,7 +454,7 @@ function StatusView({
             <div className="flex items-baseline justify-between">
               <span className="mono text-sm">#{order.orderNumber}</span>
               <span className="mono text-xs text-[var(--teal)]">
-                {STATUS_LABEL[order.status] ?? order.status}
+                {guestStatusLabel(order.status)}
               </span>
             </div>
             <ul className="mt-2 flex flex-col gap-1">
