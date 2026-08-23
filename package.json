@@ -16,7 +16,9 @@
     "infra:down": "docker compose down",
     "db:migrate": "pnpm --filter @kelbroo/api exec prisma migrate dev",
     "db:seed": "pnpm --filter @kelbroo/api run db:seed",
-    "db:studio": "pnpm --filter @kelbroo/api exec prisma studio"
+    "db:studio": "pnpm --filter @kelbroo/api exec prisma studio",
+    "test:e2e": "pnpm --filter @kelbroo/e2e test:e2e",
+    "test:e2e:ui": "pnpm --filter @kelbroo/e2e test:e2e:ui"
   },
   "devDependencies": {
     "prettier": "^3.4.2",

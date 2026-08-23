@@ -1,0 +1,21 @@
+{
+  "name": "@kelbroo/e2e",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:report": "playwright show-report",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@kelbroo/config": "workspace:*",
+    "@playwright/test": "^1.50.0",
+    "@types/node": "^22.13.0",
+    "bcryptjs": "^3.0.3",
+    "dotenv": "^16.4.7",
+    "pg": "^8.13.1",
+    "@types/pg": "^8.11.10",
+    "typescript": "^5.7.3"
+  }
+}
