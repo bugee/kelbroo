@@ -44,14 +44,23 @@ async function withClient<T>(run: (client: Client) => Promise<T>): Promise<T> {
   }
 }
 
-/** Kasuje restaurację testową razem ze wszystkim, co pod nią wisi (kaskada z organizacji). */
+/**
+ * Kasuje restaurację testową razem ze wszystkim, co pod nią wisi.
+ *
+ * Płatności trzeba zdjąć pierwsze: `payment` trzyma wizytę kluczem RESTRICT,
+ * więc kaskada z organizacji sama się o nie zatrzyma. Reszta idzie kaskadą.
+ */
 export async function dropTestOrganization(): Promise<void> {
   await withClient(async (client) => {
-    await client.query(
-      `DELETE FROM organization
-        WHERE id IN (SELECT organization_id FROM restaurant WHERE slug = $1)`,
+    const { rows } = await client.query<{ organization_id: string }>(
+      'SELECT organization_id FROM restaurant WHERE slug = $1',
       [E2E_SLUG],
     );
+    const organizationId = rows[0]?.organization_id;
+    if (!organizationId) return;
+
+    await client.query('DELETE FROM payment WHERE organization_id = $1', [organizationId]);
+    await client.query('DELETE FROM organization WHERE id = $1', [organizationId]);
   });
 }
 
@@ -217,15 +226,89 @@ export async function seedMenuAndTable(): Promise<{
       dishName,
       cleanup: async () => {
         await withClient(async (inner) => {
-          // Kolejność jest istotna: `table_session` trzyma stolik kluczem RESTRICT,
-          // a `menu_item` tak samo trzyma kategorię. Kasowanie od góry pada.
-          // Zamówienia i pozycje znikają kaskadą po wizycie.
+          // Kolejność jest istotna i wynika z kluczy RESTRICT, nie z wygody:
+          // `payment` trzyma wizytę, `table_session` trzyma stolik, `menu_item`
+          // trzyma kategorię. Kasowanie od góry pada na każdym z nich po kolei.
+          // Zamówienia, pozycje i grupy rozliczeniowe znikają kaskadą po wizycie.
+          await inner.query(
+            `DELETE FROM payment
+              WHERE table_session_id IN (SELECT id FROM table_session WHERE table_id = $1)`,
+            [tableId],
+          );
           await inner.query('DELETE FROM table_session WHERE table_id = $1', [tableId]);
           await inner.query('DELETE FROM restaurant_table WHERE id = $1', [tableId]);
           await inner.query('DELETE FROM menu_item WHERE category_id = $1', [categoryId]);
           await inner.query('DELETE FROM menu_category WHERE id = $1', [categoryId]);
         });
       },
+    };
+  });
+}
+
+/**
+ * Wizyta z dwoma gośćmi i rachunkiem — punkt wyjścia do testów podziału.
+ *
+ * Zakładana wprost w bazie, bo przejście całej ścieżki gościa (skan QR, wybór
+ * nicku, koszyk) na potrzeby testu podziału kosztowałoby więcej niż wnosi.
+ */
+export async function seedSessionWithBill(options: {
+  tableId: string;
+  totalCents: number;
+}): Promise<{ sessionId: string; guests: { id: string; name: string }[] }> {
+  return withClient(async (client) => {
+    const { rows } = await client.query<{ id: string; organization_id: string }>(
+      'SELECT id, organization_id FROM restaurant WHERE slug = $1',
+      [E2E_SLUG],
+    );
+    const restaurant = rows[0];
+    if (!restaurant) {
+      throw new Error(`Brak restauracji testowej (${E2E_SLUG}).`);
+    }
+
+    const organizationId = restaurant.organization_id;
+    const sessionId = randomUUID();
+    const orderId = randomUUID();
+    const guests = [
+      { id: randomUUID(), name: 'Ala', isHost: true },
+      { id: randomUUID(), name: 'Borys', isHost: false },
+    ];
+
+    await client.query(
+      `INSERT INTO table_session
+         (id, organization_id, restaurant_id, table_id, session_number, opened_by, currency,
+          business_date, subtotal_cents, total_cents, updated_at)
+       VALUES ($1, $2, $3, $4, $5, 'guest', 'PLN', current_date, $6, $6, now())`,
+      [sessionId, organizationId, restaurant.id, options.tableId, 7000 + Math.floor(Math.random() * 900), options.totalCents],
+    );
+
+    for (const guest of guests) {
+      await client.query(
+        `INSERT INTO table_participant
+           (id, organization_id, table_session_id, display_name, avatar_key, color, is_host, created_by)
+         VALUES ($1, $2, $3, $4, 'a1', '#2A8F8C', $5, 'guest')`,
+        [guest.id, organizationId, sessionId, guest.name, guest.isHost],
+      );
+    }
+
+    await client.query(
+      `INSERT INTO "order"
+         (id, organization_id, restaurant_id, table_id, table_session_id, order_number, source,
+          status, payment_status, currency, business_date, subtotal_cents, total_cents, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, 'guest', 'confirmed', 'awaiting_settlement', 'PLN',
+               current_date, $7, $7, now())`,
+      [orderId, organizationId, restaurant.id, options.tableId, sessionId, 7000 + Math.floor(Math.random() * 900), options.totalCents],
+    );
+
+    await client.query(
+      `INSERT INTO order_item
+         (id, organization_id, order_id, name_snapshot, quantity, unit_price_cents, vat_rate, added_by)
+       VALUES ($1, $2, $3, 'Rachunek testowy', 1, $4, 0.0800, 'guest')`,
+      [randomUUID(), organizationId, orderId, options.totalCents],
+    );
+
+    return {
+      sessionId,
+      guests: guests.map((guest) => ({ id: guest.id, name: guest.name })),
     };
   });
 }

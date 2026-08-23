@@ -27,26 +27,21 @@ Czego brakuje do pełnego zakresu etapu 1: **Systemu 1 w całości** (rejestracj
 których modele istnieją w bazie, ale nie ma do nich ani linii kodu — `SettlementGroup`,
 `Review`, `WaiterCall`, `OrderItemShare`.
 
-**Najbliższa blokada: sekcja 3.** Podział rachunku jest ostatnim dużym brakiem po
-stronie obsługi. Arytmetyka jest gotowa i przetestowana w `packages/types`, ale nie woła
-jej ani jeden endpoint, a model `SettlementGroup` nadal nie ma odwołań w kodzie.
+**Najbliższa blokada: sekcja 4.** Panel obsługi ma już komplet zakresu etapu 1.
+Brakujące funkcje leżą teraz po stronie gościa — status na żywo, wołanie kelnera,
+ocena dania i prośba o rachunek. Trzy z nich mają modele w bazie bez ani jednej
+linii kodu; czwarta czeka na wybór dostawcy poczty.
 
 ---
 
-## 3. Podział rachunku (System 2 + 3)
+## 3. Podział rachunku — strona gościa
 
-Arytmetyka jest gotowa i pokryta testami w `packages/types/src/money.ts`
-(`allocateByShares`, `allocateEqually`, `assertAllocationSumsTo`), ale **nie używa jej ani
-jeden endpoint**. Model `SettlementGroup` nie ma żadnych odwołań w kodzie.
+Podział po stronie obsługi jest gotowy: tryby, grupy, ekran kelnera i rozliczanie
+grupa po grupie. Zostaje wejście od strony gościa.
 
-- [ ] **Tryby `none` / `per_person` / `equal` / `groups`** — wybór trybu na wizycie.
-      `per_item` należy do etapu 2 (`OrderItemShare`).
-- [ ] **API grup rozliczeniowych** — tworzenie, przypisanie uczestników, kwoty.
-- [ ] **Ekran podziału w panelu kelnera.**
-- [ ] **Prośba o rachunek z wyborem podziału** w aplikacji gościa.
-- [ ] **Zamykanie rachunku po grupach** — dziś `sessions/:id/settle` przyjmuje jedną kwotę
-      bez podziału.
-- [ ] **Test niezmiennika** — suma grup równa sumie rachunku, reszta do hosta.
+- [ ] **Prośba o rachunek z wyborem podziału** w aplikacji gościa — dziś podział ustawia
+      wyłącznie kelner w panelu. Gość nie ma jak zasygnalizować „chcemy płacić osobno",
+      więc prosi o to ustnie.
 
 ## 4. Pozostałe funkcje gościa (System 3)
 
@@ -164,6 +159,10 @@ Z [product.md §7](product.md#7-wymagania-niefunkcjonalne-dotyczą-wszystkich-tr
 - [x] Oznaczenie „obsługa" przy pozycjach w kolejce potwierdzeń i na KDS
 - [x] Historia zmian zamówienia z `OrderEvent`, append-only, z aktorem
 - [x] Stawka VAT w snapshocie pozycji — edycja przelicza podatek z niej, nie z bieżącego cennika
+- [x] Podział rachunku: tryby `none` / `per_person` / `equal` / `groups` z grupami rozliczeniowymi
+- [x] Ekran podziału w panelu i rozliczanie grupa po grupie, z zamknięciem wizyty po ostatniej
+- [x] Niezmiennik podziału pokryty testem — suma grup równa rachunkowi, reszta do hosta
+- [x] Konfiguracja panelu schowana pod rozwijanym menu „Ustawienia"
 
 ---
 

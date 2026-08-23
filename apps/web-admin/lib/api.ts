@@ -136,6 +136,58 @@ export interface OrderEventView {
   reason: string | null;
 }
 
+export type SplitMode = 'none' | 'per_person' | 'equal' | 'groups';
+
+export interface SplitPlan {
+  id: string;
+  number: number;
+  tableLabel: string;
+  status: string;
+  splitMode: SplitMode;
+  totalCents: number;
+  paidCents: number;
+  dueCents: number;
+  currency: string;
+  /** Po pierwszej płatności kwoty grup są zamrożone. */
+  locked: boolean;
+  participants: {
+    id: string;
+    displayName: string;
+    color: string;
+    isHost: boolean;
+    settlementGroupId: string | null;
+  }[];
+  groups: {
+    id: string;
+    label: string | null;
+    status: string;
+    totalCents: number;
+    members: { id: string; displayName: string }[];
+  }[];
+}
+
+export const fetchSplit = (sessionId: string) =>
+  authorized<SplitPlan>(`/staff/sessions/${sessionId}/split`);
+
+export const setSplitMode = (
+  sessionId: string,
+  payload: { splitMode: SplitMode; groups?: { label?: string; participantIds: string[] }[] },
+) =>
+  authorized<SplitPlan>(`/staff/sessions/${sessionId}/split`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
+
+export const settleSplitGroup = (
+  sessionId: string,
+  groupId: string,
+  method: 'cash' | 'card_terminal',
+) =>
+  authorized<SplitPlan>(`/staff/sessions/${sessionId}/groups/${groupId}/settle`, {
+    method: 'POST',
+    body: JSON.stringify({ method }),
+  });
+
 export const fetchOrderingTables = () => authorized<OrderingTable[]>('/staff/tables');
 export const fetchOrderingMenu = () => authorized<OrderingMenu>('/staff/menu');
 

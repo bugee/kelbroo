@@ -23,12 +23,13 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator';
-import type { OrderStatus } from '@kelbroo/types';
+import type { OrderStatus, SplitMode } from '@kelbroo/types';
 import { Roles, Staff, StaffAuthGuard } from '../auth/staff.guard';
 import type { StaffContext } from '../auth/auth.types';
 import { StaffOrdersService } from './staff-orders.service';
 import { StaffSessionsService, type OfflineMethod } from './staff-sessions.service';
 import { StaffOrderingService } from './staff-ordering.service';
+import { SplitService } from './split.service';
 
 class ReasonDto {
   @IsString()
@@ -111,6 +112,41 @@ class QuantityDto {
   quantity!: number;
 }
 
+class SplitGroupDto {
+  @IsString()
+  @MaxLength(60)
+  @IsOptional()
+  label?: string;
+
+  @IsArray()
+  @ArrayMinSize(1)
+  @IsUUID('4', { each: true })
+  participantIds!: string[];
+}
+
+class SplitModeDto {
+  // `per_item` należy do etapu 2 i celowo nie jest tu przyjmowane.
+  @IsIn(['none', 'per_person', 'equal', 'groups'])
+  splitMode!: Extract<SplitMode, 'none' | 'per_person' | 'equal' | 'groups'>;
+
+  /** Wymagane wyłącznie dla trybu `groups` — pozostałe liczą się same. */
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => SplitGroupDto)
+  @IsOptional()
+  groups?: SplitGroupDto[];
+}
+
+class GroupSettleDto {
+  @IsIn(['cash', 'card_terminal'])
+  method!: OfflineMethod;
+
+  @IsString()
+  @MaxLength(300)
+  @IsOptional()
+  reason?: string;
+}
+
 class RemoveItemDto {
   @IsString()
   @MaxLength(300)
@@ -125,6 +161,7 @@ export class StaffController {
     private readonly orders: StaffOrdersService,
     private readonly sessions: StaffSessionsService,
     private readonly ordering: StaffOrderingService,
+    private readonly split: SplitService,
   ) {}
 
   /** Kolejka „Do potwierdzenia" — kelner i wyżej. Kuchnia jej nie widzi. */
@@ -249,5 +286,34 @@ export class StaffController {
   @Roles('owner', 'manager', 'waiter')
   history(@Staff() staff: StaffContext, @Param('id', ParseUUIDPipe) id: string) {
     return this.ordering.history(staff, id);
+  }
+
+  // --- podział rachunku ----------------------------------------------------
+
+  @Get('sessions/:id/split')
+  @Roles('owner', 'manager', 'waiter')
+  splitPlan(@Staff() staff: StaffContext, @Param('id', ParseUUIDPipe) id: string) {
+    return this.split.get(staff, id);
+  }
+
+  @Patch('sessions/:id/split')
+  @Roles('owner', 'manager', 'waiter')
+  setSplit(
+    @Staff() staff: StaffContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: SplitModeDto,
+  ) {
+    return this.split.setMode(staff, id, dto);
+  }
+
+  @Post('sessions/:id/groups/:groupId/settle')
+  @Roles('owner', 'manager', 'waiter')
+  settleGroup(
+    @Staff() staff: StaffContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('groupId', ParseUUIDPipe) groupId: string,
+    @Body() dto: GroupSettleDto,
+  ) {
+    return this.split.settleGroup(staff, id, groupId, dto.method, dto.reason);
   }
 }

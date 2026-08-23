@@ -19,6 +19,7 @@ import { StaffAuthGuard } from './auth/staff.guard';
 import { StaffController } from './staff/staff.controller';
 import { StaffOrdersService } from './staff/staff-orders.service';
 import { StaffOrderingService } from './staff/staff-ordering.service';
+import { SplitService } from './staff/split.service';
 import { StaffSessionsService } from './staff/staff-sessions.service';
 import { OrdersGateway } from './realtime/orders.gateway';
 import { ManagementController } from './management/management.controller';
@@ -59,6 +60,7 @@ import { StaffAdminService } from './management/staff.admin.service';
     StaffAuthGuard,
     StaffOrdersService,
     StaffOrderingService,
+    SplitService,
     StaffSessionsService,
     OrdersGateway,
     MenuAdminService,

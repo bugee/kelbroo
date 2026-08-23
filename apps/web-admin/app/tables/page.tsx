@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useState } from 'react';
+import Link from 'next/link';
 import { StaffShell } from '@/components/StaffShell';
 import { useLiveData } from '@/components/useLiveData';
 import { fetchSessions, minutesSince, money, settleSession, type StaffSession } from '@/lib/api';
@@ -94,6 +95,15 @@ function Room() {
                   Terminal
                 </button>
               </div>
+            )}
+
+            {session.participants.length > 1 && (
+              <Link
+                href={`/tables/${session.id}`}
+                className="mt-2 text-center text-sm text-[var(--teal)] underline"
+              >
+                Podziel rachunek
+              </Link>
             )}
 
             {/* Fiskalizacja dzieje się na kasie lokalu — tu zapisujemy wyłącznie
