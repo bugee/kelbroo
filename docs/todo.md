@@ -142,9 +142,17 @@ rejestracje jest niezgodna z prawem** — to blokuje uruchomienie 5a, nie tylko 
 
 ### 5e. Aplikacja marketingowa
 
-- [ ] **`apps/web-marketing`** — Next.js SSG/ISR. Tokeny i komponenty przenieść z pliku
-      projektowego, nie projektować od nowa. Dopiero to daje miejsce na formularze
-      z 5a i 5b — statyczny plik ich nie obsłuży.
+- [x] **`apps/web-marketing`** — Next.js, strona renderowana statycznie. Znaczniki i style
+      przeniesione z pliku projektowego 1:1; cennik przepisany na dane (przełącznik okresu
+      jest jedynym stanem), ruch strony w osobnym komponencie klienckim.
+- [ ] **Przełączyć Caddy na `apps/web-marketing`** — dopóki tego nie ma, produkcja serwuje
+      nadal statyczny `design/landing-page.html`. Wymaga usługi w `docker-compose.prod.yml`
+      i zmiany bloku `{$LANDING_DOMAIN}` z `file_server` na `reverse_proxy`.
+
+      > Plik projektowy **nie ma `<!DOCTYPE html>`**, więc przeglądarki renderują go
+      > w trybie zgodności wstecznej. Nowa strona ma doctype i tryb standardowy — stąd
+      > jedyna różnica między nimi: wiersze gości na karcie „Rachunek stolika" są o 7 px
+      > wyższe. Nowa wersja jest poprawna; starej nie naprawiamy, bo i tak ją zastąpi.
 
 ## 6. Jakość i wymagania niefunkcjonalne
 
