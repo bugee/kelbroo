@@ -64,6 +64,16 @@ enum TableSessionStatus {
   abandoned
 }
 
+/// Czym goście zamierzają zapłacić. Deklaracja, nie zobowiązanie — kelner i tak
+/// przyjmuje to, co dostanie. Chodzi o to, żeby wiedział, czy brać terminal.
+enum PaymentPreference {
+  cash
+  card
+  /// Część stolika kartą, część gotówką. Sensowne wyłącznie przy dzielonym
+  /// rachunku — przy jednym nie ma czego dzielić między dwie formy.
+  mixed
+}
+
 enum SplitMode {
   none
   per_person
@@ -528,6 +538,13 @@ model TableSession {
   closedByStaffId String?   @map("closed_by_staff_id") @db.Uuid
 
   splitMode SplitMode @default(none) @map("split_mode")
+
+  /// Zadeklarowane przez gościa przy prośbie o rachunek. `null` = nie pytano
+  /// albo rachunek zamyka kelner z własnej inicjatywy.
+  paymentPreference PaymentPreference? @map("payment_preference")
+  /// Gość zapowiedział fakturę. Danych do niej nie zbieramy — bierze je kelner
+  /// przy stoliku, bo to dane firmy, a nie coś, co ma leżeć w naszej bazie.
+  invoiceRequested  Boolean            @default(false) @map("invoice_requested")
 
   subtotalCents Int    @default(0) @map("subtotal_cents")
   tipCents      Int    @default(0) @map("tip_cents")

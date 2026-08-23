@@ -35,6 +35,9 @@ export class WaiterCallsService {
         include: {
           table: { select: { label: true } },
           acknowledgedByStaff: { select: { name: true } },
+          // Przy prośbie o rachunek gość zadeklarował formę płatności i fakturę.
+          // Kelner czyta to tutaj, zanim wstanie — inaczej wraca po terminal.
+          tableSession: { select: { paymentPreference: true, invoiceRequested: true } },
         },
       });
 
@@ -47,6 +50,8 @@ export class WaiterCallsService {
         status: call.status,
         createdAt: call.createdAt,
         acknowledgedBy: call.acknowledgedByStaff?.name ?? null,
+        paymentPreference: call.tableSession?.paymentPreference ?? null,
+        invoiceRequested: call.tableSession?.invoiceRequested ?? false,
       }));
     });
   }

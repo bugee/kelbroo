@@ -293,3 +293,57 @@ test('gość widzi, kto jeszcze siedzi przy jego stoliku', async ({ browser }) =
     await fixture.cleanup();
   }
 });
+
+/**
+ * Prośba o rachunek: podział, forma płatności, faktura.
+ *
+ * Trzy pytania, bo kelner na podstawie odpowiedzi decyduje, co ze sobą zabrać.
+ * Do tej pory pytaliśmy tylko o podział i wracał po terminal.
+ */
+test('prośba o rachunek pyta o podział, płatność i fakturę', async ({ page }) => {
+  const fixture = await seedMenuAndTable();
+
+  try {
+    await page.goto(`${GUEST_URL}/t/${fixture.qrToken}`);
+    await expect(page.getByText(fixture.dishName)).toBeVisible();
+    await page.getByRole('button', { name: 'Zamówienia' }).click();
+
+    await page.getByRole('button', { name: 'Poproś o rachunek' }).click();
+
+    // 1. Podział. Jeden rachunek wyklucza „kartę i gotówkę" — nie ma czego dzielić.
+    await expect(page.getByText('Jak chcecie zapłacić?')).toBeVisible();
+    await page.getByRole('button', { name: 'Jeden rachunek' }).click();
+
+    // 2. Forma płatności.
+    await expect(page.getByText('Czym zapłacicie?')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Karta i gotówka' })).toHaveCount(0);
+    await page.getByRole('button', { name: 'Kartą' }).click();
+
+    // 3. Faktura.
+    await expect(page.getByText('Potrzebna faktura VAT?')).toBeVisible();
+    await page.getByRole('button', { name: 'Tak, poproszę fakturę' }).click();
+
+    // Potwierdzenie powtarza to, co gość wybrał — żeby mógł sprawdzić.
+    await expect(page.getByText(/Kelner już wie/)).toBeVisible();
+    await expect(page.getByText(/Kartą · faktura VAT/)).toBeVisible();
+  } finally {
+    await fixture.cleanup();
+  }
+});
+
+test('karta i gotówka pojawia się dopiero przy dzielonym rachunku', async ({ page }) => {
+  const fixture = await seedMenuAndTable();
+
+  try {
+    await page.goto(`${GUEST_URL}/t/${fixture.qrToken}`);
+    await expect(page.getByText(fixture.dishName)).toBeVisible();
+    await page.getByRole('button', { name: 'Zamówienia' }).click();
+
+    await page.getByRole('button', { name: 'Poproś o rachunek' }).click();
+    await page.getByRole('button', { name: 'Każdy za siebie' }).click();
+
+    await expect(page.getByRole('button', { name: 'Karta i gotówka' })).toBeVisible();
+  } finally {
+    await fixture.cleanup();
+  }
+});

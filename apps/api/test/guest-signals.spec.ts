@@ -299,7 +299,7 @@ describe('prośba o rachunek', () => {
   it('ustawia podział i przestawia wizytę w oczekiwanie na rozliczenie', async () => {
     const { session, guestSession } = await visit(10001);
 
-    const wynik = await guestSignals.requestBill(organizationId, guestSession.id, 'equal');
+    const wynik = await guestSignals.requestBill(organizationId, guestSession.id, 'equal', 'card', false);
 
     expect(wynik.splitMode).toBe('equal');
     // Ten sam niezmiennik co przy podziale ustawionym przez kelnera.
@@ -314,7 +314,7 @@ describe('prośba o rachunek', () => {
   it('dokłada wezwanie z powodem „rachunek", żeby kelner o tym wiedział', async () => {
     const { guestSession } = await visit(4000);
 
-    await guestSignals.requestBill(organizationId, guestSession.id, 'per_person');
+    await guestSignals.requestBill(organizationId, guestSession.id, 'per_person', 'card', false);
     const otwarte = await waiterCalls.open(staff);
 
     expect(otwarte.some((entry) => entry.reason === 'bill')).toBe(true);
@@ -325,7 +325,78 @@ describe('prośba o rachunek', () => {
     await direct.tableSession.update({ where: { id: session.id }, data: { status: 'closed' } });
 
     await expect(
-      guestSignals.requestBill(organizationId, guestSession.id, 'equal'),
+      guestSignals.requestBill(organizationId, guestSession.id, 'equal', 'card', false),
     ).rejects.toThrow('Rachunek jest już rozliczony.');
+  });
+});
+
+/**
+ * Deklaracje gościa przy prośbie o rachunek.
+ *
+ * Kelner czyta je, zanim wstanie od baru. Bez nich idzie do stolika, dowiaduje
+ * się o karcie i wraca po terminal — a przy fakturze wraca po dane firmy.
+ */
+describe('forma płatności i faktura', () => {
+  it('zapisuje deklarację na wizycie', async () => {
+    const { guestSession, session } = await visit(6000);
+
+    const wynik = await guestSignals.requestBill(
+      organizationId,
+      guestSession.id,
+      'none',
+      'cash',
+      true,
+    );
+
+    expect(wynik.payment).toBe('cash');
+    expect(wynik.invoiceRequested).toBe(true);
+
+    const wiersz = await direct.tableSession.findUniqueOrThrow({
+      where: { id: session.id },
+    });
+    expect(wiersz.paymentPreference).toBe('cash');
+    expect(wiersz.invoiceRequested).toBe(true);
+  });
+
+  it('nie przyjmuje karty i gotówki naraz przy jednym rachunku', async () => {
+    const { guestSession } = await visit(6000);
+
+    // Nie ma czego dzielić między dwie formy, więc to pomyłka, nie wybór.
+    await expect(
+      guestSignals.requestBill(organizationId, guestSession.id, 'none', 'mixed', false),
+    ).rejects.toThrow(/podzielonego rachunku/);
+  });
+
+  it('przyjmuje kartę i gotówkę przy podzielonym rachunku', async () => {
+    const { guestSession, session } = await visit(6000);
+
+    const wynik = await guestSignals.requestBill(
+      organizationId,
+      guestSession.id,
+      'equal',
+      'mixed',
+      false,
+    );
+    expect(wynik.payment).toBe('mixed');
+
+    const wiersz = await direct.tableSession.findUniqueOrThrow({
+      where: { id: session.id },
+    });
+    expect(wiersz.paymentPreference).toBe('mixed');
+  });
+
+  it('podaje deklarację obsłudze razem ze zgłoszeniem', async () => {
+    const { guestSession, session } = await visit(6000);
+    await guestSignals.requestBill(organizationId, guestSession.id, 'none', 'card', true);
+
+    // Wszystkie wizyty w tym pliku dzielą jeden stolik, więc otwartych zgłoszeń
+    // o rachunek jest kilka — szukamy tego, które należy do tej wizyty.
+    const nasze = await direct.waiterCall.findFirstOrThrow({
+      where: { tableSessionId: session.id, reason: 'bill' },
+    });
+    const zgloszenie = (await waiterCalls.open(staff)).find((call) => call.id === nasze.id);
+
+    expect(zgloszenie?.paymentPreference).toBe('card');
+    expect(zgloszenie?.invoiceRequested).toBe(true);
   });
 });

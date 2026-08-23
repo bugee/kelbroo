@@ -53,6 +53,15 @@ export interface StaffOrder {
   }[];
 }
 
+export type PaymentPreference = 'cash' | 'card' | 'mixed';
+
+/** Etykiety deklaracji gościa — kelner czyta je, zanim ruszy do stolika. */
+export const PAYMENT_LABEL: Record<PaymentPreference, string> = {
+  card: 'kartą',
+  cash: 'gotówką',
+  mixed: 'karta i gotówka',
+};
+
 export interface StaffSession {
   id: string;
   number: number;
@@ -63,6 +72,9 @@ export interface StaffSession {
   dueCents: number;
   currency: string;
   orderCount: number;
+  /** Zadeklarowane przez gościa przy prośbie o rachunek. */
+  paymentPreference: PaymentPreference | null;
+  invoiceRequested: boolean;
   participants: {
     id: string;
     displayName: string;
@@ -215,6 +227,9 @@ export interface WaiterCall {
   status: 'open' | 'acknowledged';
   createdAt: string;
   acknowledgedBy: string | null;
+  /** Deklaracja gościa przy prośbie o rachunek; `null` przy innych zgłoszeniach. */
+  paymentPreference: PaymentPreference | null;
+  invoiceRequested: boolean;
 }
 
 export const resetTable = (tableId: string, reason: string) =>

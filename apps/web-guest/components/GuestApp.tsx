@@ -21,6 +21,7 @@ import {
   type CartLine,
   type Dish,
   type GuestSplitMode,
+  type PaymentPreference,
   type PendingGuest,
   type SessionOrders,
   type TableEntry,
@@ -508,6 +509,14 @@ function StatusView({
   );
 }
 
+const PAYMENT_OPTIONS = ['card', 'cash', 'mixed'] as const;
+
+const PAYMENT_LABEL: Record<PaymentPreference, string> = {
+  card: 'Kartą',
+  cash: 'Gotówką',
+  mixed: 'Karta i gotówka',
+};
+
 const SPLIT_LABEL: Record<GuestSplitMode, string> = {
   none: 'Jeden rachunek',
   per_person: 'Każdy za siebie',
@@ -521,19 +530,22 @@ const SPLIT_LABEL: Record<GuestSplitMode, string> = {
  * gość nigdy nie oznacza wizyty jako zapłaconej.
  */
 function BillRequest({ qrToken, currency }: { qrToken: string; currency: string }) {
-  const [open, setOpen] = useState(false);
+  const [step, setStep] = useState<'closed' | 'split' | 'payment' | 'invoice'>('closed');
+  const [splitMode, setSplitMode] = useState<GuestSplitMode>('none');
+  const [payment, setPayment] = useState<PaymentPreference>('card');
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<BillRequestResult | null>(null);
   const [failure, setFailure] = useState<string | null>(null);
 
-  const ask = async (splitMode: GuestSplitMode) => {
+  const ask = async (invoiceRequested: boolean) => {
     setBusy(true);
     setFailure(null);
     try {
-      setResult(await requestBill(qrToken, splitMode));
-      setOpen(false);
+      setResult(await requestBill(qrToken, splitMode, payment, invoiceRequested));
+      setStep('closed');
     } catch (cause) {
       setFailure(cause instanceof Error ? cause.message : 'Nie udało się poprosić o rachunek.');
+      setStep('closed');
     } finally {
       setBusy(false);
     }
@@ -543,6 +555,10 @@ function BillRequest({ qrToken, currency }: { qrToken: string; currency: string 
     return (
       <section className="mt-6 rounded-[var(--radius-card)] border border-[var(--teal)] bg-[var(--teal-wash)] p-4">
         <p className="font-semibold text-[var(--teal)]">Kelner już wie — zaraz podejdzie.</p>
+        <p className="mono mt-1 text-sm text-[var(--muted)]">
+          {PAYMENT_LABEL[result.payment]}
+          {result.invoiceRequested ? ' · faktura VAT' : ''}
+        </p>
         {result.groups.length > 0 && (
           <ul className="mono mt-2 flex flex-col gap-1 text-sm">
             {result.groups.map((group, index) => (
@@ -557,44 +573,123 @@ function BillRequest({ qrToken, currency }: { qrToken: string; currency: string 
     );
   }
 
-  return (
-    <section className="mt-6">
-      {failure && <p className="mb-2 text-sm text-[var(--orange)]">{failure}</p>}
-
-      {open ? (
-        <div className="rounded-[var(--radius-card)] border border-[var(--line)] p-4">
-          <p className="text-sm font-semibold">Jak chcecie zapłacić?</p>
-          <div className="mt-3 flex flex-col gap-2">
-            {(Object.keys(SPLIT_LABEL) as GuestSplitMode[]).map((mode) => (
-              <button
-                key={mode}
-                type="button"
-                disabled={busy}
-                onClick={() => void ask(mode)}
-                className="min-h-12 rounded-[var(--radius-control)] border border-[var(--line)] px-4 font-semibold disabled:opacity-50"
-              >
-                {SPLIT_LABEL[mode]}
-              </button>
-            ))}
-          </div>
-          <button
-            type="button"
-            onClick={() => setOpen(false)}
-            className="mt-3 min-h-11 text-sm text-[var(--muted)] underline"
-          >
-            Jeszcze nie
-          </button>
-        </div>
-      ) : (
+  if (step === 'closed') {
+    return (
+      <section className="mt-6">
+        {failure && <p className="mb-2 text-sm text-[var(--orange)]">{failure}</p>}
         <button
           type="button"
-          onClick={() => setOpen(true)}
+          onClick={() => setStep('split')}
           className="min-h-12 w-full rounded-[var(--radius-control)] bg-[var(--orange)] px-4 font-semibold text-white"
         >
           Poproś o rachunek
         </button>
+      </section>
+    );
+  }
+
+  /**
+   * Trzy pytania, każde na osobnym ekranie.
+   *
+   * Razem byłyby formularzem do wypełnienia przy stole. Osobno to trzy stuknięcia,
+   * z których każde od razu przesuwa dalej — i widać, ile jeszcze zostało.
+   */
+  return (
+    <section className="mt-6 rounded-[var(--radius-card)] border border-[var(--line)] p-4">
+      {step === 'split' && (
+        <Question
+          title="Jak chcecie zapłacić?"
+          options={(Object.keys(SPLIT_LABEL) as GuestSplitMode[]).map((mode) => ({
+            key: mode,
+            label: SPLIT_LABEL[mode],
+            onPick: () => {
+              setSplitMode(mode);
+              // „Karta i gotówka" ma sens wyłącznie przy dzielonym rachunku;
+              // przy jednym trzeba cofnąć ewentualny wcześniejszy wybór.
+              if (mode === 'none' && payment === 'mixed') setPayment('card');
+              setStep('payment');
+            },
+          }))}
+          onCancel={() => setStep('closed')}
+        />
+      )}
+
+      {step === 'payment' && (
+        <Question
+          title="Czym zapłacicie?"
+          options={PAYMENT_OPTIONS.filter(
+            (option) => option !== 'mixed' || splitMode !== 'none',
+          ).map((option) => ({
+            key: option,
+            label: PAYMENT_LABEL[option],
+            onPick: () => {
+              setPayment(option);
+              setStep('invoice');
+            },
+          }))}
+          onCancel={() => setStep('split')}
+          cancelLabel="Wstecz"
+        />
+      )}
+
+      {step === 'invoice' && (
+        <Question
+          title="Potrzebna faktura VAT?"
+          hint="Dane firmy podacie kelnerowi przy stoliku."
+          busy={busy}
+          options={[
+            { key: 'no', label: 'Nie, dziękuję', onPick: () => void ask(false) },
+            { key: 'yes', label: 'Tak, poproszę fakturę', onPick: () => void ask(true) },
+          ]}
+          onCancel={() => setStep('payment')}
+          cancelLabel="Wstecz"
+        />
       )}
     </section>
+  );
+}
+
+/** Jedno pytanie: tytuł i lista odpowiedzi, każda jednym stuknięciem. */
+function Question({
+  title,
+  hint,
+  options,
+  onCancel,
+  cancelLabel = 'Jeszcze nie',
+  busy = false,
+}: {
+  title: string;
+  hint?: string;
+  options: { key: string; label: string; onPick: () => void }[];
+  onCancel: () => void;
+  cancelLabel?: string;
+  busy?: boolean;
+}) {
+  return (
+    <>
+      <p className="text-sm font-semibold">{title}</p>
+      {hint && <p className="mt-1 text-xs text-[var(--muted)]">{hint}</p>}
+      <div className="mt-3 flex flex-col gap-2">
+        {options.map((option) => (
+          <button
+            key={option.key}
+            type="button"
+            disabled={busy}
+            onClick={option.onPick}
+            className="min-h-12 rounded-[var(--radius-control)] border border-[var(--line)] px-4 font-semibold disabled:opacity-50"
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+      <button
+        type="button"
+        onClick={onCancel}
+        className="mt-3 min-h-11 text-sm text-[var(--muted)] underline"
+      >
+        {cancelLabel}
+      </button>
+    </>
   );
 }
 

@@ -267,8 +267,12 @@ export async function fetchActiveCalls(qrToken: string): Promise<ActiveCall[]> {
   return parse<ActiveCall[]>(response);
 }
 
+export type PaymentPreference = 'cash' | 'card' | 'mixed';
+
 export interface BillRequestResult {
   splitMode: GuestSplitMode;
+  payment: PaymentPreference;
+  invoiceRequested: boolean;
   totalCents: number;
   currency: string;
   groups: { label: string | null; totalCents: number; members: string[] }[];
@@ -278,8 +282,14 @@ export interface BillRequestResult {
 export async function requestBill(
   qrToken: string,
   splitMode: GuestSplitMode,
+  payment: PaymentPreference,
+  invoiceRequested: boolean,
 ): Promise<BillRequestResult> {
-  return request<BillRequestResult>(qrToken, '/guest/bill-request', { splitMode });
+  return request<BillRequestResult>(qrToken, '/guest/bill-request', {
+    splitMode,
+    payment,
+    invoiceRequested,
+  });
 }
 
 async function request<T = void>(qrToken: string, path: string, body: unknown): Promise<T> {

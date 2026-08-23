@@ -81,6 +81,9 @@ export class StaffSessionsService {
                 dueCents: session.totalCents - session.paidCents,
                 currency: session.currency,
                 orderCount: session._count.orders,
+                /// Zadeklarowane przez gościa przy prośbie o rachunek.
+                paymentPreference: session.paymentPreference,
+                invoiceRequested: session.invoiceRequested,
                 participants: session.participants.map((p) => ({
                   id: p.id,
                   displayName: p.displayName,

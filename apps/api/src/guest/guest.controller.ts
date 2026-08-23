@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
-import { IsIn } from 'class-validator';
+import { IsBoolean, IsIn } from 'class-validator';
 import { TableAccessService } from './table-access.service';
 import type { SplitMode } from '@kelbroo/types';
 import { Guest, GuestAuthGuard } from './guest.guard';
@@ -23,6 +23,14 @@ class BillRequestDto {
    */
   @IsIn(['none', 'per_person', 'equal'])
   splitMode!: Extract<SplitMode, 'none' | 'per_person' | 'equal'>;
+
+  /** Czym goście zamierzają zapłacić — kelner ma wiedzieć, czy brać terminal. */
+  @IsIn(['cash', 'card', 'mixed'])
+  payment!: 'cash' | 'card' | 'mixed';
+
+  /** Samą zapowiedź faktury; dane firmy kelner bierze przy stoliku. */
+  @IsBoolean()
+  invoiceRequested!: boolean;
 }
 
 /**
@@ -87,6 +95,12 @@ export class GuestController {
   /** Prośba o rachunek z wyborem podziału. Zamyka go i tak wyłącznie kelner. */
   @Post('bill-request')
   requestBill(@Guest() guest: ResolvedGuest, @Body() dto: BillRequestDto) {
-    return this.signals.requestBill(guest.organizationId, guest.guestSessionId, dto.splitMode);
+    return this.signals.requestBill(
+      guest.organizationId,
+      guest.guestSessionId,
+      dto.splitMode,
+      dto.payment,
+      dto.invoiceRequested,
+    );
   }
 }

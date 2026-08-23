@@ -1,5 +1,6 @@
 import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
 import type { SplitMode } from '@kelbroo/types';
+import type { PaymentPreference } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { SplitService } from '../staff/split.service';
 import { StaffSignalsGateway } from '../realtime/staff-signals.gateway';
@@ -215,7 +216,16 @@ export class GuestSignalsService {
     organizationId: string,
     guestSessionId: string,
     splitMode: Extract<SplitMode, 'none' | 'per_person' | 'equal'>,
+    payment: PaymentPreference,
+    invoiceRequested: boolean,
   ) {
+    // Dwie formy płatności mają sens tylko wtedy, gdy jest co między nie podzielić.
+    if (payment === 'mixed' && splitMode === 'none') {
+      throw new BadRequestException(
+        'Karta i gotówka naraz wymagają podzielonego rachunku — wybierz sposób podziału.',
+      );
+    }
+
     const guestSession = await this.prisma.withTenant(organizationId, async (tx) => {
       const found = await tx.guestSession.findUnique({
         where: { id: guestSessionId },
@@ -241,7 +251,11 @@ export class GuestSignalsService {
     await this.prisma.withTenant(organizationId, async (tx) => {
       await tx.tableSession.update({
         where: { id: guestSession.tableSessionId },
-        data: { status: 'awaiting_settlement' },
+        data: {
+          status: 'awaiting_settlement',
+          paymentPreference: payment,
+          invoiceRequested,
+        },
       });
     });
 
@@ -249,6 +263,8 @@ export class GuestSignalsService {
 
     return {
       splitMode: plan.splitMode,
+      payment,
+      invoiceRequested,
       totalCents: plan.totalCents,
       currency: plan.currency,
       groups: plan.groups.map((group) => ({

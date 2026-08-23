@@ -13,6 +13,7 @@ import {
   fetchWaiterCalls,
   minutesSince,
   money,
+  PAYMENT_LABEL,
   rejectOrder,
   resolveCall,
   openTable,
@@ -248,6 +249,9 @@ function Calls() {
             <span className="mono text-sm text-[var(--muted)]">
               czeka {minutesSince(call.createdAt)} min
               {call.acknowledgedBy && ` · idzie ${call.acknowledgedBy}`}
+              {/* Bez tego kelner idzie do stolika i wraca po terminal. */}
+              {call.paymentPreference && ` · ${PAYMENT_LABEL[call.paymentPreference]}`}
+              {call.invoiceRequested && ' · faktura VAT'}
             </span>
           </span>
 
