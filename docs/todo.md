@@ -206,6 +206,7 @@ Z [product.md §7](product.md#7-wymagania-niefunkcjonalne-dotyczą-wszystkich-tr
       i przy zgłoszeniu gościa w kolejce; zdejmuje blokadę i zakłada wizytę
 - [x] Sala pokazuje wszystkie stoliki lokalu, nie tylko te z otwartym rachunkiem
 - [x] Gość czekający na otwarcie prosi o nie przyciskiem, a ekran puszcza sam po otwarciu
+- [x] Odnośnik do karty gościa przy każdym stoliku na ekranie „Stoliki i QR" (poza wydrukiem)
 
 ---
 

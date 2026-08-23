@@ -76,6 +76,9 @@ export default defineConfig({
         // Lokalnie nie ma reverse proxy, więc ścieżka względna `/api` trafiłaby
         // w Next, a nie w API. Adres musi być znany w momencie kompilacji.
         NEXT_PUBLIC_API_URL: `http://localhost:${API_PORT}/api`,
+        // Panel wpisuje ten adres w kody QR i w odnośnik do karty gościa.
+        // Bez niego wskazywałyby na domyślny port 3001, którego w testach nie ma.
+        NEXT_PUBLIC_GUEST_URL: GUEST_URL,
       },
     },
     {

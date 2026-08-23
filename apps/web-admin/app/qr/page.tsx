@@ -172,6 +172,20 @@ function TableCard({
           {table.isActive ? 'wyłącz' : 'włącz'}
         </button>
       </div>
+
+      {/*
+        Ten sam adres, który niesie kod QR — sposób na sprawdzenie karty bez
+        sięgania po telefon. Poza wydrukiem: naklejka ma prowadzić gościa
+        skanowaniem, a wypisany link tylko zachęcałby do przepisywania go ręcznie.
+      */}
+      <a
+        href={guestUrlFor(table.qrToken)}
+        target="_blank"
+        rel="noreferrer"
+        className="mono mt-2 min-h-11 px-2 text-xs text-[var(--teal)] underline print:hidden"
+      >
+        otwórz menu gościa
+      </a>
     </article>
   );
 }
