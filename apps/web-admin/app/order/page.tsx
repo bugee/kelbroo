@@ -1,6 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { Suspense, useCallback, useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { GuestMark } from '@kelbroo/ui/guest-mark';
 import { StaffShell } from '@/components/StaffShell';
 import {
@@ -19,12 +20,26 @@ import {
 } from '@/lib/api';
 
 export default function OrderPage() {
-  return <StaffShell>{() => <WaiterOrdering />}</StaffShell>;
+  // `useSearchParams` wymaga granicy Suspense — bez niej budowanie strony pada.
+  return (
+    <StaffShell>
+      {() => (
+        <Suspense fallback={<p className="mono text-sm text-[var(--muted)]">Wczytuję…</p>}>
+          <WaiterOrdering />
+        </Suspense>
+      )}
+    </StaffShell>
+  );
 }
 
 type Cart = Record<string, number>;
 
 function WaiterOrdering() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  /** Stolik wskazany z Sali — omija pytanie „dla którego stolika?". */
+  const wskazany = searchParams.get('table');
+
   const [tables, setTables] = useState<OrderingTable[] | null>(null);
   const [menu, setMenu] = useState<OrderingMenu | null>(null);
   const [table, setTable] = useState<OrderingTable | null>(null);
@@ -51,6 +66,15 @@ function WaiterOrdering() {
       );
   }, [loadTables]);
 
+  /**
+   * Wybór stolika z adresu. Dopiero po wczytaniu listy, bo kelner ma dostać ten
+   * sam obiekt co po kliknięciu — z rachunkiem i uczestnikami, nie samo id.
+   */
+  useEffect(() => {
+    if (!wskazany || !tables) return;
+    setTable((obecny) => obecny ?? (tables.find((t) => t.id === wskazany) ?? null));
+  }, [wskazany, tables]);
+
   const run = async (action: () => Promise<StaffOrderDetail>) => {
     setError(null);
     setBusy(true);
@@ -69,6 +93,9 @@ function WaiterOrdering() {
     setTable(null);
     setParticipantId('');
     setCart({});
+    // Adres musi przestać wskazywać stolik, inaczej „zmień stolik" natychmiast
+    // wybrałby go z powrotem.
+    if (wskazany) router.replace('/order');
   };
 
   if (error && !tables) return <p className="text-[var(--orange)]">{error}</p>;

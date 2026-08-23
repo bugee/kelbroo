@@ -209,6 +209,8 @@ Z [product.md §7](product.md#7-wymagania-niefunkcjonalne-dotyczą-wszystkich-tr
 - [x] Odnośnik do karty gościa przy każdym stoliku na ekranie „Stoliki i QR" (poza wydrukiem)
 - [x] Wejście gościa do poczekalni wysyła sygnał: host widzi kolejkę bez przeładowania,
       panel dostaje listę oczekujących w „Do potwierdzenia" i licznik przy pozycji menu
+- [x] Zamawianie przeniesione na Salę — przycisk przy każdym stoliku, pozycja „Zamów"
+      zdjęta z menu panelu
 - [x] Półksiężyc zastąpiony samochodzikiem — jego kształt miał zerowe pole i nie rysował
       nic; kształty przeniesione do `packages/types`, test e2e liczy pomalowane piksele
 

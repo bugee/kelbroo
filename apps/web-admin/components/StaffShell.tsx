@@ -9,9 +9,14 @@ import { clearSession, fetchBadges, me, readAccess, type Staff, type StaffRole }
 
 type NavItem = { href: string; label: string; roles: StaffRole[] };
 
-/** Praca na zmianie: to, co kelner i kuchnia klikają dziesiątki razy dziennie. */
+/**
+ * Praca na zmianie: to, co kelner i kuchnia klikają dziesiątki razy dziennie.
+ *
+ * „Zamów" nie ma tu własnej pozycji: zamawianie zaczyna się od stolika, a stoliki
+ * są na Sali. Osobne wejście kazało wybrać stolik drugi raz, z listy bez rachunków
+ * i bez gości — czyli bez tego, po czym kelner ten stolik rozpoznaje.
+ */
 const NAV: NavItem[] = [
-  { href: '/order', label: 'Zamów', roles: ['owner', 'manager', 'waiter'] },
   { href: '/queue', label: 'Do potwierdzenia', roles: ['owner', 'manager', 'waiter'] },
   { href: '/kds', label: 'Kuchnia', roles: ['owner', 'manager', 'waiter', 'kitchen'] },
   { href: '/tables', label: 'Sala', roles: ['owner', 'manager', 'waiter'] },

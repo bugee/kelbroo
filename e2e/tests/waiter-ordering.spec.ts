@@ -16,12 +16,17 @@ test.describe('zamawianie przez kelnera', () => {
 
     try {
       await logInAsOwner(page);
-      await page.goto('/order');
 
-      // 1. Stolik bez otwartej wizyty — zamówienie ma ją otworzyć.
-      const stolik = page.getByRole('button', { name: new RegExp(fixture.tableLabel) });
-      await expect(stolik).toContainText('wolny');
-      await stolik.click();
+      // 1. Zamawianie zaczyna się na Sali, przy konkretnym stoliku — „Zamów"
+      // nie ma już własnej pozycji w menu. Stolik bez wizyty też da się obsłużyć:
+      // zamówienie samo ją otwiera.
+      await page.goto('/tables');
+      const karta = page.locator('article').filter({ hasText: fixture.tableLabel });
+      await expect(karta).toContainText('wolny');
+      await karta.getByRole('link', { name: 'Zamów' }).click();
+
+      // Stolik jest już wybrany — kelner nie wskazuje go drugi raz.
+      await expect(page.getByRole('heading', { name: fixture.tableLabel })).toBeVisible();
 
       // 2. Karta i koszyk.
       const danie = page.locator('li').filter({ hasText: fixture.dishName }).last();
@@ -57,8 +62,12 @@ test.describe('zamawianie przez kelnera', () => {
       const { guests } = await seedSessionWithBill({ tableId: fixture.tableId, totalCents: 4000 });
 
       await logInAsOwner(page);
-      await page.goto('/order');
-      await page.getByRole('button', { name: new RegExp(fixture.tableLabel) }).click();
+      await page.goto('/tables');
+      await page
+        .locator('article')
+        .filter({ hasText: fixture.tableLabel })
+        .getByRole('link', { name: 'Zamów' })
+        .click();
 
       // Lista rozwijana zniknęła — kelner szuka wzrokiem znaku, który gość nazwał.
       await expect(page.locator('select')).toHaveCount(0);
@@ -79,13 +88,16 @@ test.describe('zamawianie przez kelnera', () => {
     }
   });
 
-  test('kuchnia nie może zamawiać za gościa', async ({ page }) => {
+  test('kuchnia nie ma drogi do zamawiania', async ({ page }) => {
     await page.goto('/login');
     await page.getByLabel('E-mail').fill(ACCOUNTS.kitchen.email);
     await page.getByLabel('Hasło', { exact: true }).fill(ACCOUNTS.kitchen.password);
     await page.getByRole('button', { name: 'Zaloguj' }).click();
     await expect(page).toHaveURL(/\/kds$/);
 
-    await expect(page.getByRole('link', { name: 'Zamów' })).toHaveCount(0);
+    // Zamawianie wisi teraz przy stolikach na Sali, więc bariera jest tam.
+    // Sprawdzenie samego „Zamów" nic by już nie znaczyło — tej pozycji nie ma
+    // w menu nikt, także kelner.
+    await expect(page.getByRole('link', { name: 'Sala' })).toHaveCount(0);
   });
 });

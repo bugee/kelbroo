@@ -145,8 +145,20 @@ function Room() {
                     {money(session.dueCents, session.currency)}
                   </p>
 
+                  {/*
+                    Zamawianie zaczyna się od stolika, więc wchodzi się w nie
+                    stąd. Adres niesie stolik, żeby kelner nie wybierał go
+                    drugi raz — już go wybrał, klikając tę kartę.
+                  */}
+                  <Link
+                    href={`/order?table=${table.tableId}`}
+                    className="mt-3 flex min-h-12 items-center justify-center rounded-[var(--radius-control)] bg-[var(--orange)] font-semibold text-white"
+                  >
+                    Zamów
+                  </Link>
+
                   {session.dueCents > 0 && (
-                    <div className="mt-3 flex gap-2">
+                    <div className="mt-2 flex gap-2">
                       <button
                         type="button"
                         disabled={zajety}
@@ -226,6 +238,15 @@ function Room() {
                   >
                     Otwórz stolik
                   </button>
+
+                  {/* Zamówienie samo otwiera wizytę, więc kelner, który przyszedł
+                      przyjąć zamówienie, nie musi najpierw otwierać stolika. */}
+                  <Link
+                    href={`/order?table=${table.tableId}`}
+                    className="mt-2 text-center text-sm text-[var(--teal)] underline"
+                  >
+                    Zamów
+                  </Link>
                 </>
               )}
             </article>
