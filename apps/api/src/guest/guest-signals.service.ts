@@ -3,6 +3,7 @@ import type { SplitMode } from '@kelbroo/types';
 import { PrismaService } from '../prisma/prisma.service';
 import { SplitService } from '../staff/split.service';
 import { StaffSignalsGateway } from '../realtime/staff-signals.gateway';
+import { GuestGateway } from '../realtime/guest.gateway';
 
 export type CallReason = 'help' | 'bill' | 'water' | 'open_table' | 'other';
 
@@ -19,6 +20,7 @@ export class GuestSignalsService {
     private readonly prisma: PrismaService,
     private readonly split: SplitService,
     private readonly signals: StaffSignalsGateway,
+    private readonly visits: GuestGateway,
   ) {}
 
   /**
@@ -152,6 +154,53 @@ export class GuestSignalsService {
       });
 
       return { id: call.id, status: call.status, reason: call.reason };
+    });
+  }
+
+  /**
+   * Wycofanie wezwania — gość stuknął w przycisk i zaraz się rozmyślił.
+   *
+   * Wyłącznie dopóki nikt zgłoszenia nie przyjął: kelner, który już idzie przez
+   * salę, nie może zniknąć z ekranu gościa, bo za chwilę przy nim stanie.
+   * Zapisujemy `canceled`, nie `resolved` — nikt niczego nie załatwił.
+   */
+  async cancelCall(organizationId: string, guestSessionId: string, reason: CallReason) {
+    return this.prisma.withTenant(organizationId, async (tx) => {
+      const guestSession = await tx.guestSession.findUnique({ where: { id: guestSessionId } });
+      if (!guestSession) {
+        throw new BadRequestException('Sesja gościa wygasła — zeskanuj kod QR ponownie.');
+      }
+
+      const call = await tx.waiterCall.findFirst({
+        where: {
+          tableSessionId: guestSession.tableSessionId,
+          reason,
+          status: { in: ['open', 'acknowledged'] },
+        },
+      });
+      if (!call) {
+        // Nie ma czego wycofywać — stan po tej operacji i tak jest ten oczekiwany.
+        return { canceled: false as const };
+      }
+      if (call.status === 'acknowledged') {
+        throw new ConflictException('Kelner już idzie — tego zgłoszenia nie da się wycofać.');
+      }
+
+      await tx.waiterCall.update({
+        where: { id: call.id },
+        data: { status: 'canceled', resolvedAt: new Date() },
+      });
+
+      // Panel ma zdjąć zgłoszenie z kolejki, a pozostałe telefony przy stoliku
+      // odświeżyć swój przycisk — wezwanie jest wspólne dla całej wizyty.
+      this.signals.publishWaiterCall(guestSession.restaurantId, {
+        callId: call.id,
+        tableLabel: '',
+        reason,
+      });
+      this.visits.publish(guestSession.tableSessionId, { kind: 'call' });
+
+      return { canceled: true as const };
     });
   }
 

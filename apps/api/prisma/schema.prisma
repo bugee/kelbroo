@@ -180,6 +180,9 @@ enum WaiterCallStatus {
   open
   acknowledged
   resolved
+  /// Gość wycofał zgłoszenie, zanim ktokolwiek je przyjął. Osobno od `resolved`,
+  /// bo `resolved` znaczy „obsługa załatwiła" — a tu nikt nic nie zrobił.
+  canceled
 }
 
 // ------------------------------------------------------------------- tenant

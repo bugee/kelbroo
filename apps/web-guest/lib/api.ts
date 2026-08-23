@@ -239,6 +239,16 @@ export async function callWaiter(qrToken: string, reason: CallReason): Promise<A
   return request<ActiveCall>(qrToken, '/guest/calls', { reason });
 }
 
+/**
+ * Wycofanie wezwania — gość stuknął i zaraz się rozmyślił.
+ *
+ * Serwer odmawia, gdy kelner zgłoszenie przyjął: idzie już przez salę, więc
+ * zniknięcie tego z ekranu byłoby kłamstwem.
+ */
+export async function cancelWaiter(qrToken: string): Promise<{ canceled: boolean }> {
+  return request<{ canceled: boolean }>(qrToken, '/guest/calls/cancel', { reason: 'help' });
+}
+
 /** Stan wezwań stolika. Przycisk czyta go z serwera, zamiast zgadywać z timera. */
 export async function fetchActiveCalls(qrToken: string): Promise<ActiveCall[]> {
   const token = readToken(qrToken);

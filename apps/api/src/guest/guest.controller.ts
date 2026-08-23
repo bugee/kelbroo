@@ -78,6 +78,12 @@ export class GuestController {
     return this.signals.call(guest.organizationId, guest.guestSessionId, dto.reason);
   }
 
+  /** Wycofanie wezwania. Odmawia, gdy kelner już je przyjął — bo już idzie. */
+  @Post('calls/cancel')
+  cancelCall(@Guest() guest: ResolvedGuest, @Body() dto: CallDto) {
+    return this.signals.cancelCall(guest.organizationId, guest.guestSessionId, dto.reason);
+  }
+
   /** Prośba o rachunek z wyborem podziału. Zamyka go i tak wyłącznie kelner. */
   @Post('bill-request')
   requestBill(@Guest() guest: ResolvedGuest, @Body() dto: BillRequestDto) {

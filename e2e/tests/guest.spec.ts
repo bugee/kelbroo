@@ -1,6 +1,11 @@
 import { expect, test } from '@playwright/test';
 import { GUEST_URL } from '../playwright.config';
-import { blockTable, seedMenuAndTable, setHostApproval } from '../fixtures/db';
+import {
+  acknowledgeCallAt,
+  blockTable,
+  seedMenuAndTable,
+  setHostApproval,
+} from '../fixtures/db';
 
 /**
  * Ścieżka gościa od skanu kodu QR.
@@ -68,6 +73,52 @@ test.describe('gość przy stoliku', () => {
       await page.getByRole('button', { name: 'Kelner', exact: true }).click();
       // „Wysłane", nie „idzie" — nikt jeszcze zgłoszenia nie przyjął.
       await expect(page.getByRole('button', { name: /Kelner — wysłane/ })).toBeVisible();
+    } finally {
+      await fixture.cleanup();
+    }
+  });
+
+  test('drugie stuknięcie wycofuje wezwanie kelnera', async ({ page }) => {
+    const fixture = await seedMenuAndTable();
+
+    try {
+      await page.goto(`${GUEST_URL}/t/${fixture.qrToken}`);
+      await expect(page.getByText(fixture.dishName)).toBeVisible();
+
+      const przycisk = page.getByRole('button', { name: /^Kelner/ });
+      await przycisk.click();
+      await expect(page.getByRole('button', { name: /Kelner — wysłane/ })).toBeVisible();
+
+      // To samo miejsce, ta sama decyzja: „jednak nie".
+      await page.getByRole('button', { name: /Kelner — wysłane/ }).click();
+      await expect(page.getByRole('button', { name: 'Kelner', exact: true })).toBeVisible();
+
+      // Stan pochodzi z serwera, nie z pamięci komponentu — po przeładowaniu
+      // przycisk nie może wrócić do „wysłane".
+      await page.reload();
+      await expect(page.getByRole('button', { name: 'Kelner', exact: true })).toBeVisible();
+    } finally {
+      await fixture.cleanup();
+    }
+  });
+
+  test('nie wycofa wezwania, po które kelner już wstał', async ({ page }) => {
+    const fixture = await seedMenuAndTable();
+
+    try {
+      await page.goto(`${GUEST_URL}/t/${fixture.qrToken}`);
+      await expect(page.getByText(fixture.dishName)).toBeVisible();
+
+      await page.getByRole('button', { name: /^Kelner/ }).click();
+      await expect(page.getByRole('button', { name: /Kelner — wysłane/ })).toBeVisible();
+
+      await acknowledgeCallAt(fixture.tableId);
+      await page.reload();
+
+      // Kelner idzie przez salę — zniknięcie zgłoszenia byłoby kłamstwem.
+      const idzie = page.getByRole('button', { name: 'Kelner idzie' });
+      await expect(idzie).toBeVisible();
+      await expect(idzie).toBeDisabled();
     } finally {
       await fixture.cleanup();
     }

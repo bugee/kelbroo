@@ -28,13 +28,14 @@ signalsGateway.publishWaiterCall = (restaurantId, event) => {
 };
 
 const split = new SplitService(prisma);
-const guestSignals = new GuestSignalsService(prisma, split, signalsGateway);
 // Kanał gościa notuje zdarzenia zamiast je rozsyłać — sprawdzamy, że lecą.
 const visitEvents: { tableSessionId: string; kind: string }[] = [];
 const guestGateway = {
   publish: (tableSessionId: string, event: { kind: string }) =>
     visitEvents.push({ tableSessionId, kind: event.kind }),
 } as unknown as GuestGateway;
+
+const guestSignals = new GuestSignalsService(prisma, split, signalsGateway, guestGateway);
 
 const waiterCalls = new WaiterCallsService(prisma, guestGateway);
 
@@ -239,6 +240,58 @@ describe('wezwanie kelnera', () => {
     const otwarte = await waiterCalls.open(staff);
 
     expect(otwarte.some((entry) => entry.id === call.id)).toBe(false);
+  });
+});
+
+describe('wycofanie wezwania', () => {
+  it('gość cofa zgłoszenie, dopóki nikt go nie przyjął', async () => {
+    const { guestSession } = await visit(5000);
+    const call = await guestSignals.call(organizationId, guestSession.id, 'help');
+
+    const wynik = await guestSignals.cancelCall(organizationId, guestSession.id, 'help');
+    expect(wynik.canceled).toBe(true);
+
+    // Znika z kolejki obsługi i z ekranu gościa.
+    const otwarte = await waiterCalls.open(staff);
+    expect(otwarte.some((entry) => entry.id === call.id)).toBe(false);
+    const uGoscia = await guestSignals.activeCalls(organizationId, guestSession.id);
+    expect(uGoscia.some((entry) => entry.id === call.id)).toBe(false);
+
+    // `canceled`, nie `resolved`: nikt niczego nie załatwił, a mieszanie tych
+    // dwóch zafałszowałoby każdą statystykę czasu reakcji.
+    const wiersz = await direct.waiterCall.findUniqueOrThrow({ where: { id: call.id } });
+    expect(wiersz.status).toBe('canceled');
+  });
+
+  it('nie cofa zgłoszenia, po które kelner już wstał', async () => {
+    const { guestSession } = await visit(5000);
+    const call = await guestSignals.call(organizationId, guestSession.id, 'help');
+    await waiterCalls.acknowledge(staff, call.id);
+
+    await expect(
+      guestSignals.cancelCall(organizationId, guestSession.id, 'help'),
+    ).rejects.toThrow(/już idzie/);
+
+    const wiersz = await direct.waiterCall.findUniqueOrThrow({ where: { id: call.id } });
+    expect(wiersz.status).toBe('acknowledged');
+  });
+
+  it('milczy, gdy nie ma czego cofać', async () => {
+    const { guestSession } = await visit(5000);
+    // Stan po tej operacji jest ten sam, o który gościowi chodzi — brak wezwania.
+    await expect(
+      guestSignals.cancelCall(organizationId, guestSession.id, 'help'),
+    ).resolves.toEqual({ canceled: false });
+  });
+
+  it('po wycofaniu da się zawołać kelnera od nowa', async () => {
+    const { guestSession } = await visit(5000);
+    const pierwsze = await guestSignals.call(organizationId, guestSession.id, 'help');
+    await guestSignals.cancelCall(organizationId, guestSession.id, 'help');
+
+    const drugie = await guestSignals.call(organizationId, guestSession.id, 'help');
+    expect(drugie.id).not.toBe(pierwsze.id);
+    expect(drugie.status).toBe('open');
   });
 });
 

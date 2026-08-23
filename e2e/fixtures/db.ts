@@ -359,3 +359,19 @@ export async function setHostApproval(enabled: boolean): Promise<void> {
     ]);
   });
 }
+
+/**
+ * Przyjmuje wezwanie kelnera prosto w bazie — tak jak zrobiłby to panel.
+ *
+ * Test potrzebuje stanu „kelner idzie", a przechodzenie po to przez logowanie
+ * i kolejkę mierzyłoby panel zamiast przycisku gościa.
+ */
+export async function acknowledgeCallAt(tableId: string): Promise<void> {
+  await withClient(async (client) => {
+    await client.query(
+      `UPDATE waiter_call SET status = 'acknowledged', acknowledged_at = now()
+        WHERE table_id = $1 AND status = 'open'`,
+      [tableId],
+    );
+  });
+}

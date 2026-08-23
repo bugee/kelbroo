@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
   callWaiter,
+  cancelWaiter,
   connectVisit,
   decidePendingGuest,
   fetchPendingGuests,
@@ -618,6 +619,10 @@ function CallWaiterButton({ qrToken, tick }: { qrToken: string; tick: number }) 
     void refresh();
   }, [refresh, tick]);
 
+  const idzie = call?.status === 'acknowledged';
+  /** Wysłane, ale jeszcze nieprzyjęte — jedyny stan, z którego da się wycofać. */
+  const doWycofania = call !== null && !idzie;
+
   const send = async () => {
     setSending(true);
     setFailed(false);
@@ -630,11 +635,30 @@ function CallWaiterButton({ qrToken, tick }: { qrToken: string; tick: number }) 
     }
   };
 
+  /**
+   * Wycofanie zgłoszenia. Ten sam przycisk, bo to ta sama decyzja — „chcę
+   * kelnera" i „jednak nie" — a przy stoliku liczy się jedno stuknięcie.
+   */
+  const cancel = async () => {
+    setSending(true);
+    setFailed(false);
+    try {
+      await cancelWaiter(qrToken);
+      setCall(null);
+    } catch {
+      // Najczęstszy powód odmowy: kelner właśnie przyjął zgłoszenie. Stan
+      // z serwera jest wtedy prawdziwszy niż nasz, więc go dociągamy.
+      await refresh();
+    } finally {
+      setSending(false);
+    }
+  };
+
   const label = sending
     ? 'Wysyłam…'
     : failed
       ? 'Spróbuj jeszcze raz'
-      : call?.status === 'acknowledged'
+      : idzie
         ? 'Kelner idzie'
         : call
           ? 'Kelner — wysłane'
@@ -643,12 +667,16 @@ function CallWaiterButton({ qrToken, tick }: { qrToken: string; tick: number }) 
   return (
     <button
       type="button"
-      disabled={sending || call !== null}
-      onClick={() => void send()}
+      // Blokujemy wyłącznie „Kelner idzie": zgłoszenia, po które ktoś już
+      // wstał od baru, gość nie może cofnąć.
+      disabled={sending || idzie}
+      onClick={() => void (doWycofania ? cancel() : send())}
+      // Bez `aria-label`: nadpisałby nazwę przycisku i czytnik ekranu mówiłby coś
+      // innego, niż widać na nim napisane. Podpowiedź idzie tytułem, który dokłada
+      // się do nazwy, zamiast ją zastępować.
+      title={doWycofania ? 'Stuknij ponownie, żeby wycofać' : undefined}
       className={`mono min-h-12 shrink-0 rounded-[var(--radius-control)] border px-3 text-sm font-semibold disabled:opacity-100 ${
-        call?.status === 'acknowledged'
-          ? 'border-[var(--teal)] bg-[var(--teal-wash)] text-[var(--teal)]'
-          : 'border-[var(--line)]'
+        idzie ? 'border-[var(--teal)] bg-[var(--teal-wash)] text-[var(--teal)]' : 'border-[var(--line)]'
       }`}
     >
       {label}
@@ -656,11 +684,6 @@ function CallWaiterButton({ qrToken, tick }: { qrToken: string; tick: number }) 
   );
 }
 
-/**
- * Stolik zablokowany — po zamknięciu poprzedniego rachunku albo ręcznie przez
- * obsługę. Jedyna droga dalej prowadzi przez kogoś z obsługi, więc jedyny
- * przycisk o to prosi.
- */
 /**
  * Kolejka wpuszczania u hosta.
  *
