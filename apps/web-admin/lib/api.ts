@@ -198,6 +198,61 @@ export async function login(email: string, password: string): Promise<LoggedInSt
   return result.staff;
 }
 
+/** Własne dane konta — lista zespołu celowo nie pozwala ruszyć samego siebie. */
+export const updateProfile = (payload: { name?: string; email?: string }) =>
+  authorized<{ email: string; name: string }>('/auth/profile', {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
+
+export interface StaffMember {
+  id: string;
+  email: string;
+  name: string;
+  role: StaffRole;
+  isActive: boolean;
+  mustChangePassword: boolean;
+  lastLoginAt: string | null;
+  /** Konto zalogowanej osoby — zmienia się je przez ekran hasła, nie przez listę. */
+  isSelf: boolean;
+  /** Czy zalogowana rola w ogóle może ruszyć to konto. Panel nie pokazuje reszty akcji. */
+  canManage: boolean;
+}
+
+export const fetchStaff = () => authorized<StaffMember[]>('/management/staff');
+
+export const createStaffMember = (payload: {
+  email: string;
+  name: string;
+  role: StaffRole;
+  password: string;
+}) =>
+  authorized<StaffMember>('/management/staff', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+
+export const updateStaffMember = (
+  id: string,
+  payload: { email?: string; name?: string; role?: StaffRole },
+) =>
+  authorized<StaffMember>(`/management/staff/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
+
+export const setStaffActive = (id: string, isActive: boolean) =>
+  authorized<StaffMember>(`/management/staff/${id}/active`, {
+    method: 'PATCH',
+    body: JSON.stringify({ isActive }),
+  });
+
+export const resetStaffPassword = (id: string, password: string) =>
+  authorized<StaffMember>(`/management/staff/${id}/reset-password`, {
+    method: 'POST',
+    body: JSON.stringify({ password }),
+  });
+
 export const me = () => authorized<Staff>('/auth/me');
 
 /** Aktualne hasło jest wymagane mimo ważnej sesji — patrz komentarz w auth.service.ts. */

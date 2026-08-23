@@ -12,6 +12,7 @@ const NAV: { href: string; label: string; roles: StaffRole[] }[] = [
   { href: '/tables', label: 'Sala', roles: ['owner', 'manager', 'waiter'] },
   { href: '/menu', label: 'Menu', roles: ['owner', 'manager'] },
   { href: '/qr', label: 'Stoliki i QR', roles: ['owner', 'manager'] },
+  { href: '/staff', label: 'Zespół', roles: ['owner', 'manager'] },
   { href: '/settings', label: 'Ustawienia', roles: ['owner', 'manager'] },
 ];
 

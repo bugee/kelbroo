@@ -1,13 +1,18 @@
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import bcrypt from 'bcryptjs';
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 import type { SignOptions } from 'jsonwebtoken';
 import type { StaffRole } from '@kelbroo/types';
 import type { AccessTokenPayload, StaffContext } from './auth.types';
 
 /** Ten sam koszt co w seedzie — hasła z obu źródeł muszą być wymienne. */
-const PASSWORD_ROUNDS = 10;
+export const PASSWORD_ROUNDS = 10;
 
 export interface LoginResult {
   accessToken: string;
@@ -91,6 +96,38 @@ export class AuthService {
         mustChangePassword: false,
       },
     });
+  }
+
+  /**
+   * Własne dane konta. Osobno od listy pracowników, bo tamta celowo nie pozwala
+   * ruszyć samego siebie — bez tego zmiana własnego adresu wymagałaby wejścia
+   * do bazy, czyli dokładnie tego, co ekran zespołu miał wyeliminować.
+   */
+  async updateProfile(staffId: string, changes: { name?: string; email?: string }) {
+    const staff = await this.directory.staffMember.findUnique({ where: { id: staffId } });
+    if (!staff || !staff.isActive) {
+      throw new UnauthorizedException('Konto jest nieaktywne.');
+    }
+
+    // Ten sam zapis co przy zakładaniu kont: logowanie szuka po lower(trim()),
+    // ale porównuje dosłownie.
+    const email = changes.email?.toLowerCase().trim();
+
+    try {
+      const updated = await this.directory.staffMember.update({
+        where: { id: staff.id },
+        data: {
+          ...(email ? { email } : {}),
+          ...(changes.name ? { name: changes.name.trim() } : {}),
+        },
+      });
+      return { email: updated.email, name: updated.name };
+    } catch (cause) {
+      if (cause instanceof Prisma.PrismaClientKnownRequestError && cause.code === 'P2002') {
+        throw new ConflictException('Konto z tym adresem e-mail już istnieje w tym lokalu.');
+      }
+      throw cause;
+    }
   }
 
   async refresh(refreshToken: string): Promise<{ accessToken: string; refreshToken: string }> {

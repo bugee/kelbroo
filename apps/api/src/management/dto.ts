@@ -4,6 +4,7 @@ import {
   ArrayMinSize,
   IsArray,
   IsBoolean,
+  IsEmail,
   IsIn,
   IsInt,
   IsOptional,
@@ -12,8 +13,10 @@ import {
   Max,
   MaxLength,
   Min,
+  MinLength,
   ValidateNested,
 } from 'class-validator';
+import { STAFF_ROLES, type StaffRole } from '@kelbroo/types';
 
 /** Nazwa i opis w jednym języku. Restauracja podaje komplet dla obsługiwanych. */
 export class TranslationDto {
@@ -226,4 +229,47 @@ export class RestaurantSettingsDto {
   @Max(23)
   @IsOptional()
   businessDayStartHour?: number;
+}
+
+/**
+ * Hasło startowe pracownika. Górny limit to 72 bajty — tyle bierze pod uwagę
+ * bcrypt, resztę ucina po cichu.
+ */
+export class StaffCreateDto {
+  @IsEmail()
+  email!: string;
+
+  @IsString()
+  @Length(1, 120)
+  name!: string;
+
+  @IsIn(STAFF_ROLES)
+  role!: StaffRole;
+
+  @IsString()
+  @MinLength(8)
+  @MaxLength(72)
+  password!: string;
+}
+
+export class StaffUpdateDto {
+  @IsEmail()
+  @IsOptional()
+  email?: string;
+
+  @IsString()
+  @Length(1, 120)
+  @IsOptional()
+  name?: string;
+
+  @IsIn(STAFF_ROLES)
+  @IsOptional()
+  role?: StaffRole;
+}
+
+export class StaffPasswordDto {
+  @IsString()
+  @MinLength(8)
+  @MaxLength(72)
+  password!: string;
 }

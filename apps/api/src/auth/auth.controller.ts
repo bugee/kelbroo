@@ -1,5 +1,14 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
-import { IsEmail, IsString, MaxLength, MinLength } from 'class-validator';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
+import { IsEmail, IsOptional, IsString, Length, MaxLength, MinLength } from 'class-validator';
 import { AuthService, type LoginResult } from './auth.service';
 import { Staff, StaffAuthGuard } from './staff.guard';
 import type { StaffContext } from './auth.types';
@@ -16,6 +25,17 @@ class LoginDto {
 class RefreshDto {
   @IsString()
   refreshToken!: string;
+}
+
+class ProfileDto {
+  @IsEmail()
+  @IsOptional()
+  email?: string;
+
+  @IsString()
+  @Length(1, 120)
+  @IsOptional()
+  name?: string;
 }
 
 class ChangePasswordDto {
@@ -49,6 +69,12 @@ export class AuthController {
   @UseGuards(StaffAuthGuard)
   me(@Staff() staff: StaffContext): StaffContext {
     return staff;
+  }
+
+  @Patch('profile')
+  @UseGuards(StaffAuthGuard)
+  updateProfile(@Staff() staff: StaffContext, @Body() dto: ProfileDto) {
+    return this.auth.updateProfile(staff.staffId, dto);
   }
 
   @Post('password')

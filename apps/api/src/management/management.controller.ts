@@ -14,7 +14,17 @@ import type { StaffContext } from '../auth/auth.types';
 import { MenuAdminService } from './menu.admin.service';
 import { TablesAdminService } from './tables.admin.service';
 import { RestaurantAdminService } from './restaurant.admin.service';
-import { AvailabilityDto, CategoryDto, MenuItemDto, RestaurantSettingsDto, TableDto } from './dto';
+import { StaffAdminService } from './staff.admin.service';
+import {
+  AvailabilityDto,
+  CategoryDto,
+  MenuItemDto,
+  RestaurantSettingsDto,
+  StaffCreateDto,
+  StaffPasswordDto,
+  StaffUpdateDto,
+  TableDto,
+} from './dto';
 
 class ArchivedDto {
   @IsBoolean()
@@ -38,6 +48,7 @@ export class ManagementController {
     private readonly menu: MenuAdminService,
     private readonly tables: TablesAdminService,
     private readonly restaurant: RestaurantAdminService,
+    private readonly staffAdmin: StaffAdminService,
   ) {}
 
   @Get('menu')
@@ -146,5 +157,42 @@ export class ManagementController {
   @Patch('restaurant')
   updateRestaurant(@Staff() staff: StaffContext, @Body() dto: RestaurantSettingsDto) {
     return this.restaurant.update(staff, dto);
+  }
+
+  @Get('staff')
+  listStaff(@Staff() staff: StaffContext) {
+    return this.staffAdmin.list(staff);
+  }
+
+  @Post('staff')
+  createStaff(@Staff() staff: StaffContext, @Body() dto: StaffCreateDto) {
+    return this.staffAdmin.create(staff, dto);
+  }
+
+  @Patch('staff/:id')
+  updateStaff(
+    @Staff() staff: StaffContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: StaffUpdateDto,
+  ) {
+    return this.staffAdmin.update(staff, id, dto);
+  }
+
+  @Patch('staff/:id/active')
+  setStaffActive(
+    @Staff() staff: StaffContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: ActiveDto,
+  ) {
+    return this.staffAdmin.setActive(staff, id, dto.isActive);
+  }
+
+  @Post('staff/:id/reset-password')
+  resetStaffPassword(
+    @Staff() staff: StaffContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: StaffPasswordDto,
+  ) {
+    return this.staffAdmin.resetPassword(staff, id, dto.password);
   }
 }

@@ -23,6 +23,7 @@ import { ManagementController } from './management/management.controller';
 import { MenuAdminService } from './management/menu.admin.service';
 import { TablesAdminService } from './management/tables.admin.service';
 import { RestaurantAdminService } from './management/restaurant.admin.service';
+import { StaffAdminService } from './management/staff.admin.service';
 
 @Module({
   imports: [
@@ -59,6 +60,7 @@ import { RestaurantAdminService } from './management/restaurant.admin.service';
     MenuAdminService,
     TablesAdminService,
     RestaurantAdminService,
+    StaffAdminService,
   ],
 })
 export class AppModule {}

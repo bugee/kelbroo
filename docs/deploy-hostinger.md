@@ -309,37 +309,30 @@ Kliknij **swoje imię i rolę** w prawym górnym rogu panelu — otworzy się ek
 > zapisane jawnie w publicznym repozytorium, a panel stoi pod adresem dostępnym
 > z internetu.
 
-### 10c. Ustaw własny e-mail i usuń konta demo
+### 10c. Ustaw własny e-mail i wyłącz konta demo
 
-Adresu e-mail nie da się jeszcze zmienić z panelu — to jedno polecenie w bazie.
-**Wpisz adres małymi literami:**
+Wszystko klikasz w panelu — od tej wersji nie trzeba już wchodzić do bazy.
 
-```bash
-source .env.prod
-docker compose -f docker-compose.prod.yml --env-file .env.prod exec -T \
-  -e PGPASSWORD="$POSTGRES_PASSWORD" postgres psql -U kelbroo -d kelbroo -c \
-  "UPDATE staff_member SET email='szef@kelbroo.com', name='Twoje Imie' WHERE role='owner';
-   DELETE FROM staff_member WHERE email LIKE '%@demo.kelbroo.pl';"
-```
+1. **Własny adres.** Kliknij swoje imię w prawym górnym rogu → sekcja **Dane konta**.
+   Wpisz nowy adres i zapisz. Od następnego logowania logujesz się nim.
+2. **Konta demo.** Wejdź w **Zespół** i wyłącz trzy pozostałe konta demo
+   (`manager@`, `kelner@`, `kuchnia@demo.kelbroo.pl`) przyciskiem **Wyłącz**.
+   Wyłączone konto nie zaloguje się, mimo że jego hasło jest publicznie znane.
+3. **Własny zespół.** Tam samo zakładasz konta kelnerom i kuchni — każde dostaje
+   hasło tymczasowe, które pracownik zmieni przy pierwszym logowaniu.
 
-Prawidłowy wynik to dwie linie: `UPDATE 1` i `DELETE 3`.
+> Adres zapisuje się zawsze małymi literami i bez spacji, niezależnie od tego, co wpiszesz.
+> To celowe: logowanie szuka konta po `lower(trim())`, ale porównuje z bazą dosłownie,
+> więc adres z wielką literą byłby kontem nie do zalogowania.
 
-> ⚠️ **Adres musi być zapisany małymi literami i bez spacji.** Logowanie szuka
-> konta po `lower(trim())` tego, co wpiszesz w formularzu, ale porównuje z zawartością
-> bazy dosłownie. `Szef@TwojaDomena.pl` w bazie oznacza konto, którego nie da się
-> zalogować — i to bez żadnej wskazówki, co jest nie tak.
-
-Sprawdź wynik:
+Jeśli wolisz skasować konta demo zamiast je wyłączać — panel tego nie robi, zostaje baza:
 
 ```bash
 source .env.prod
 docker compose -f docker-compose.prod.yml --env-file .env.prod exec -T \
   -e PGPASSWORD="$POSTGRES_PASSWORD" postgres psql -U kelbroo -d kelbroo -c \
-  "SELECT '['||email||']' AS email, email = lower(trim(email)) AS zaloguje_sie,
-          role, is_active FROM staff_member;"
+  "DELETE FROM staff_member WHERE email LIKE '%@demo.kelbroo.pl' AND role <> 'owner';"
 ```
-
-Kolumna `zaloguje_sie` musi pokazywać `t`, a w nawiasach nie może być spacji.
 
 ### 10d. Zaloguj się ponownie
 

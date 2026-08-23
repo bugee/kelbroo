@@ -27,25 +27,11 @@ Czego brakuje do pełnego zakresu etapu 1: **Systemu 1 w całości** (rejestracj
 których modele istnieją w bazie, ale nie ma do nich ani linii kodu — `SettlementGroup`,
 `Review`, `WaiterCall`, `OrderItemShare`.
 
-**Najbliższa blokada: sekcja 1.** Konto kelnera i kuchni zakłada się dziś `INSERT`-em
-w bazie, więc panelu nie da się oddać nikomu poza właścicielem — a bez tego pilotaż
-nie wyjdzie poza jedną osobę.
+**Najbliższa blokada: sekcja 2.** Kelner nie może złożyć ani poprawić zamówienia
+w imieniu gościa, a to wymóg zakresu etapu 1 — gość bez telefonu albo taki, który woli
+zamówić ustnie, dziś nie ma jak. Panel ma już konta i role, więc jest gdzie to podpiąć.
 
 ---
-
-## 1. Konta pracowników (System 2)
-
-Dziś konto kelnera czy kuchni zakłada się `INSERT`-em w bazie. To blokuje oddanie panelu
-komukolwiek poza właścicielem.
-
-- [ ] **CRUD pracowników w panelu** — lista, dodanie, dezaktywacja, zmiana roli.
-      Rola `owner`/`manager` nadaje, `waiter`/`kitchen` nie widzi ekranu.
-- [ ] **Hasło startowe przy zakładaniu konta** — konto powstaje z `mustChangePassword = true`,
-      obsługa flagi jest już gotowa.
-- [ ] **Zmiana adresu e-mail** — dziś wyłącznie przez SQL, z pułapką wielkich liter
-      (logowanie szuka po `lower(trim())`, a porównuje dosłownie).
-- [ ] **Reset hasła pracownika przez managera** — bez tego zapomniane hasło to znów wejście
-      do bazy.
 
 ## 2. Zamawianie przez kelnera (System 2)
 
@@ -183,6 +169,9 @@ Z [product.md §7](product.md#7-wymagania-niefunkcjonalne-dotyczą-wszystkich-tr
 - [x] Ścieżka gościa przeszła na produkcji end-to-end (2026-08-23, weryfikacja ręczna)
 - [x] Backup bazy ustawiony
 - [x] Wydruk kodów QR działa
+- [x] Konta pracowników z panelu: lista, zakładanie, role, wyłączanie, reset hasła
+- [x] Zmiana własnego adresu e-mail i nazwy z panelu (koniec z `INSERT`-em w bazie)
+- [x] Testy e2e zespołu (Playwright) i 12 testów jednostkowych granic uprawnień
 
 ---
 
