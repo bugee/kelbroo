@@ -46,6 +46,28 @@ Modele są w schemacie od pierwszej migracji i nie mają ani jednego odwołania 
       abstrakcja dostawcy, dopiero potem treść wiadomości.
 - [ ] **Wybór nicku i awatara przez gościa** — dziś przydzielane automatycznie; zakres
       etapu 1 mówi o wpisaniu lub wylosowaniu.
+- [ ] **Powrót do wizyty bez ponownego skanowania** — gość zamyka kartę albo przeglądarkę
+      i wraca na `menu.kelbroo.com` z historii. Dziś widzi tam statyczne „Zeskanuj kod QR",
+      więc musi fizycznie znaleźć kod na stoliku, mimo że jego wizyta trwa.
+
+      **Połowa tego już działa:** token gościa leży w `localStorage` pod kluczem
+      `kelbroo.guest.{qrToken}`, a `enterTable` wysyła go przy wejściu — serwer odzyskuje
+      wtedy uczestnika i historię (`reuseGuestSession` w `table.service.ts`). Brakuje
+      **strony startowej, która to wykorzysta**: sprawdzi zapamiętaną wizytę i przerzuci
+      gościa prosto do menu, jeśli rachunek nie jest jeszcze zamknięty.
+
+      Do rozstrzygnięcia przy realizacji:
+      - **ciasteczko zamiast (albo obok) `localStorage`** — ciasteczko czyta serwer, więc
+        przekierowanie dzieje się przed wyrenderowaniem strony, bez migotania. Techniczne,
+        niezbędne do działania usługi, więc nie wymaga banera zgody; trzeba je opisać
+        w polityce prywatności (§5c).
+      - **wygasanie** — sesja gościa żyje `GUEST_SESSION_TTL_HOURS` (domyślnie 6 h),
+        a wizyta kończy się zamknięciem rachunku. Powrót po zamkniętym rachunku ma
+        prowadzić do ekranu „Zeskanuj kod QR", nie do cudzego stolika.
+      - **kilka stolików** — klucz jest per kod QR, więc przesiadka to inna wizyta.
+        Strona startowa musi wybrać tę właściwą, nie pierwszą z brzegu.
+      - **okno prywatne i wyczyszczone dane** — pamięci wtedy nie ma i ścieżka ma
+        po cichu wrócić do skanowania, a nie pokazać błąd.
 - [ ] **Zmiana hosta wizyty** — dwa wejścia: host wskazuje następcę spośród uczestników,
       a kelner może go zmienić z panelu. Dziś hostem zostaje na stałe pierwszy skanujący,
       co psuje się, gdy wychodzi wcześniej albo skanował ktoś przypadkowy.
