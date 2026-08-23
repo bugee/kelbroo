@@ -21,6 +21,7 @@ import { StaffOrdersService } from './staff/staff-orders.service';
 import { StaffOrderingService } from './staff/staff-ordering.service';
 import { SplitService } from './staff/split.service';
 import { WaiterCallsService } from './staff/waiter-calls.service';
+import { BadgesService } from './staff/badges.service';
 import { GuestSignalsService } from './guest/guest-signals.service';
 import { GuestController } from './guest/guest.controller';
 import { StaffSignalsGateway } from './realtime/staff-signals.gateway';
@@ -67,6 +68,7 @@ import { StaffAdminService } from './management/staff.admin.service';
     StaffOrderingService,
     SplitService,
     WaiterCallsService,
+    BadgesService,
     GuestSignalsService,
     StaffSignalsGateway,
     StaffSessionsService,

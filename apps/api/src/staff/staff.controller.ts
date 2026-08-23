@@ -31,6 +31,7 @@ import { StaffSessionsService, type OfflineMethod } from './staff-sessions.servi
 import { StaffOrderingService } from './staff-ordering.service';
 import { SplitService } from './split.service';
 import { WaiterCallsService } from './waiter-calls.service';
+import { BadgesService } from './badges.service';
 
 class ReasonDto {
   @IsString()
@@ -164,6 +165,7 @@ export class StaffController {
     private readonly ordering: StaffOrderingService,
     private readonly split: SplitService,
     private readonly calls: WaiterCallsService,
+    private readonly badges: BadgesService,
   ) {}
 
   /** Kolejka „Do potwierdzenia" — kelner i wyżej. Kuchnia jej nie widzi. */
@@ -306,6 +308,15 @@ export class StaffController {
     @Body() dto: SplitModeDto,
   ) {
     return this.split.setMode(staff, id, dto);
+  }
+
+  /**
+   * Liczniki pracy czekającej na obsługę — bez roli w zapytaniu, bo wynika
+   * z tokenu. Każda rola widzi swoją robotę, nie cudzą.
+   */
+  @Get('badges')
+  badgeCounts(@Staff() staff: StaffContext) {
+    return this.badges.forStaff(staff);
   }
 
   // --- wezwania kelnera ----------------------------------------------------

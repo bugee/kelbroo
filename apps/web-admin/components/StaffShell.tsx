@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { ThemeToggle } from '@kelbroo/ui/theme';
-import { clearSession, me, readAccess, type Staff, type StaffRole } from '@/lib/api';
+import { useLiveData } from '@/components/useLiveData';
+import { clearSession, fetchBadges, me, readAccess, type Staff, type StaffRole } from '@/lib/api';
 
 type NavItem = { href: string; label: string; roles: StaffRole[] };
 
@@ -58,6 +59,31 @@ export function StaffShell({ children }: { children: (staff: Staff) => React.Rea
 
   const visible = NAV.filter((item) => item.roles.includes(staff.role));
   const settings = SETTINGS_NAV.filter((item) => item.roles.includes(staff.role));
+  return (
+    <Shell staff={staff} visible={visible} settings={settings}>
+      {children}
+    </Shell>
+  );
+}
+
+function Shell({
+  staff,
+  visible,
+  settings,
+  children,
+}: {
+  staff: Staff;
+  visible: NavItem[];
+  settings: NavItem[];
+  children: (staff: Staff) => React.ReactNode;
+}) {
+  const router = useRouter();
+  const pathname = usePathname();
+
+  // Liczniki żyją w powłoce, więc kelner widzi pracę czekającą także wtedy,
+  // gdy stoi na zupełnie innym ekranie.
+  const loadBadges = useCallback(() => fetchBadges(), []);
+  const { data: badges } = useLiveData(loadBadges);
 
   return (
     <div className="min-h-dvh">
@@ -79,6 +105,7 @@ export function StaffShell({ children }: { children: (staff: Staff) => React.Rea
                 }`}
               >
                 {item.label}
+                <Badge count={badges?.[item.href]} />
               </Link>
             ))}
           </nav>
@@ -107,6 +134,25 @@ export function StaffShell({ children }: { children: (staff: Staff) => React.Rea
 
       <main className="mx-auto max-w-6xl p-4">{children(staff)}</main>
     </div>
+  );
+}
+
+/**
+ * Liczba pracy czekającej przy pozycji menu.
+ *
+ * Sama liczba, nie kropka — kelner ma wiedzieć, czy czeka jedno zamówienie,
+ * czy siedem. Zero nie jest informacją, więc serwer go nie zwraca i nic tu nie rysujemy.
+ */
+function Badge({ count }: { count?: number }) {
+  if (!count) return null;
+
+  return (
+    <span
+      aria-label={`${count} do obsługi`}
+      className="mono ml-2 inline-flex min-w-6 items-center justify-center rounded-full bg-[var(--orange)] px-1.5 py-0.5 text-xs font-bold text-white"
+    >
+      {count > 99 ? '99+' : count}
+    </span>
   );
 }
 

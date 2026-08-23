@@ -470,17 +470,45 @@ export const settleSession = (id: string, method: 'cash' | 'card_terminal', amou
  * połączenia i pojedyncze zgubione zdarzenie nie może zostawić kuchni
  * z nieaktualną tablicą.
  */
-export function connectRealtime(onChange: () => void): Socket | null {
+let shared: Socket | null = null;
+let subscribers = 0;
+
+/**
+ * Jedno połączenie na kartę, niezależnie od liczby subskrybentów.
+ *
+ * Powłoka panelu nasłuchuje dla liczników, a każdy ekran dla swoich danych —
+ * osobne gniazdo dla każdego z nich oznaczałoby kilka połączeń z jednego tabletu.
+ * Zwracany obiekt ma `close()`, więc wołający nie musi wiedzieć, że gniazdo jest wspólne.
+ */
+export function connectRealtime(onChange: () => void): { close: () => void } | null {
   const token = readAccess();
   if (!token) return null;
 
-  const socket = io(`${WS}/staff`, { auth: { token }, transports: ['websocket', 'polling'] });
+  shared ??= io(`${WS}/staff`, { auth: { token }, transports: ['websocket', 'polling'] });
+  subscribers += 1;
+
+  const socket = shared;
   socket.on('order.changed', onChange);
-  // Wezwania kelnera lecą tym samym pokojem lokalu — panel trzyma jedno połączenie.
+  // Wezwania kelnera lecą tym samym pokojem lokalu.
   socket.on('waiter.called', onChange);
   socket.on('connect', onChange);
-  return socket;
+
+  return {
+    close: () => {
+      socket.off('order.changed', onChange);
+      socket.off('waiter.called', onChange);
+      socket.off('connect', onChange);
+
+      subscribers -= 1;
+      if (subscribers === 0) {
+        socket.close();
+        shared = null;
+      }
+    },
+  };
 }
+
+export const fetchBadges = () => authorized<Record<string, number>>('/staff/badges');
 
 export const money = (cents: number, currency: string) =>
   new Intl.NumberFormat('pl-PL', { style: 'currency', currency }).format(cents / 100);

@@ -1,6 +1,11 @@
 import { expect, test, type Page } from '@playwright/test';
 import { ACCOUNTS } from '../fixtures/accounts';
-import { createStaffAccount, deleteStaffAccount, uniqueEmail } from '../fixtures/db';
+import {
+  createStaffAccount,
+  deleteStaffAccount,
+  seedMenuAndTable,
+  uniqueEmail,
+} from '../fixtures/db';
 
 async function logIn(page: Page, account: { email: string; password: string }): Promise<void> {
   await page.goto('/login');
@@ -148,6 +153,35 @@ test.describe('zespół', () => {
     } finally {
       await deleteStaffAccount(stary);
       await deleteStaffAccount(nowy);
+    }
+  });
+
+  test('licznik pokazuje czekającą pracę z każdego ekranu panelu', async ({ page }) => {
+    const fixture = await seedMenuAndTable();
+
+    try {
+      await logInAsOwner(page);
+      await page.goto('/order');
+
+      // Zamówienie kelnera idzie prosto do kuchni, więc licznik ma je złapać.
+      await page.getByRole('button', { name: new RegExp(fixture.tableLabel) }).click();
+      await page
+        .locator('li')
+        .filter({ hasText: fixture.dishName })
+        .last()
+        .getByRole('button', { name: 'Więcej' })
+        .click();
+      await page.getByRole('button', { name: 'Złóż zamówienie' }).click();
+      await expect(page.getByRole('heading', { name: /Zamówienie #/ })).toBeVisible();
+
+      // Licznik jest w powłoce, więc widać go z dowolnego ekranu.
+      const kuchnia = page.getByRole('link', { name: /Kuchnia/ });
+      await expect(kuchnia.getByLabel(/do obsługi/)).toHaveText('1');
+
+      await page.goto('/tables');
+      await expect(kuchnia.getByLabel(/do obsługi/)).toHaveText('1');
+    } finally {
+      await fixture.cleanup();
     }
   });
 
