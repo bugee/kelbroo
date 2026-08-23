@@ -214,9 +214,26 @@ export function formatMoney(cents: number, currency: string, locale = 'pl-PL'): 
 export type CallReason = 'help' | 'water' | 'other';
 export type GuestSplitMode = 'none' | 'per_person' | 'equal';
 
+export interface ActiveCall {
+  id: string;
+  reason: 'help' | 'bill' | 'water' | 'other';
+  /** `open` — poszło do obsługi. `acknowledged` — kelner potwierdził, że idzie. */
+  status: 'open' | 'acknowledged';
+}
+
 /** Wezwanie kelnera. Powtórzone przy otwartym zgłoszeniu nie tworzy drugiego. */
-export async function callWaiter(qrToken: string, reason: CallReason): Promise<void> {
-  await request(qrToken, '/guest/calls', { reason });
+export async function callWaiter(qrToken: string, reason: CallReason): Promise<ActiveCall> {
+  return request<ActiveCall>(qrToken, '/guest/calls', { reason });
+}
+
+/** Stan wezwań stolika. Przycisk czyta go z serwera, zamiast zgadywać z timera. */
+export async function fetchActiveCalls(qrToken: string): Promise<ActiveCall[]> {
+  const token = readToken(qrToken);
+  const response = await fetch(`${API}/guest/calls`, {
+    headers: token ? { 'x-guest-token': token } : undefined,
+    cache: 'no-store',
+  });
+  return parse<ActiveCall[]>(response);
 }
 
 export interface BillRequestResult {

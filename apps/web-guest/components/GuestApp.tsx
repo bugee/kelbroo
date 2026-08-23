@@ -4,11 +4,13 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   callWaiter,
   enterTable,
+  fetchActiveCalls,
   fetchOrders,
   formatMoney,
   lineTotal,
   requestBill,
   submitOrder,
+  type ActiveCall,
   type BillRequestResult,
   type CartLine,
   type Dish,
@@ -477,31 +479,79 @@ function BillRequest({ qrToken, currency }: { qrToken: string; currency: string 
 }
 
 /**
- * Wezwanie kelnera. Przycisk zostaje wyszarzony po wysłaniu — powtórne stuknięcia
- * i tak nie tworzą kolejnych zgłoszeń, ale gość ma widzieć, że coś się stało.
+ * Wezwanie kelnera.
+ *
+ * Stan pochodzi z serwera, nie z timera: „wysłane" znaczy, że zgłoszenie leży
+ * w kolejce obsługi, a „kelner idzie" pojawia się dopiero, gdy ktoś je przyjął.
+ * Przycisk, który sam po chwili wraca do punktu wyjścia, kłamałby dwa razy —
+ * najpierw obiecując, że ktoś idzie, potem gubiąc trwające zgłoszenie.
  */
 function CallWaiterButton({ qrToken }: { qrToken: string }) {
-  const [state, setState] = useState<'idle' | 'sending' | 'sent' | 'failed'>('idle');
+  const [call, setCall] = useState<ActiveCall | null>(null);
+  const [sending, setSending] = useState(false);
+  const [failed, setFailed] = useState(false);
 
-  const call = async () => {
-    setState('sending');
+  const refresh = useCallback(async () => {
     try {
-      await callWaiter(qrToken, 'help');
-      setState('sent');
-      window.setTimeout(() => setState('idle'), 20_000);
+      const calls = await fetchActiveCalls(qrToken);
+      setCall(calls.find((entry) => entry.reason === 'help') ?? null);
     } catch {
-      setState('failed');
+      // Utrata sieci nie może skasować widocznego stanu — zostawiamy ostatni znany.
+    }
+  }, [qrToken]);
+
+  // Stan początkowy: trwające zgłoszenie ma przetrwać przeładowanie strony.
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
+
+  // Odpytujemy tylko wtedy, gdy jest czego pilnować. Zależność jest boolowska,
+  // nie obiektem zgłoszenia — inaczej każde odświeżenie podmieniałoby referencję
+  // i uruchamiało efekt od nowa, w kółko.
+  const waiting = call !== null;
+  useEffect(() => {
+    if (!waiting) return;
+
+    // Realtime dla gościa czeka na osobne zadanie; do tego czasu krótki polling
+    // jest uczciwszy niż timer udający, że coś się wydarzyło.
+    const timer = setInterval(() => void refresh(), 5_000);
+    return () => clearInterval(timer);
+  }, [refresh, waiting]);
+
+  const send = async () => {
+    setSending(true);
+    setFailed(false);
+    try {
+      setCall(await callWaiter(qrToken, 'help'));
+    } catch {
+      setFailed(true);
+    } finally {
+      setSending(false);
     }
   };
+
+  const label = sending
+    ? 'Wysyłam…'
+    : failed
+      ? 'Spróbuj jeszcze raz'
+      : call?.status === 'acknowledged'
+        ? 'Kelner idzie'
+        : call
+          ? 'Kelner — wysłane'
+          : 'Kelner';
 
   return (
     <button
       type="button"
-      disabled={state === 'sending' || state === 'sent'}
-      onClick={() => void call()}
-      className="mono min-h-12 shrink-0 rounded-[var(--radius-control)] border border-[var(--line)] px-3 text-sm font-semibold disabled:opacity-60"
+      disabled={sending || call !== null}
+      onClick={() => void send()}
+      className={`mono min-h-12 shrink-0 rounded-[var(--radius-control)] border px-3 text-sm font-semibold disabled:opacity-100 ${
+        call?.status === 'acknowledged'
+          ? 'border-[var(--teal)] bg-[var(--teal-wash)] text-[var(--teal)]'
+          : 'border-[var(--line)]'
+      }`}
     >
-      {state === 'sent' ? 'Kelner idzie' : state === 'failed' ? 'Spróbuj jeszcze raz' : 'Kelner'}
+      {label}
     </button>
   );
 }

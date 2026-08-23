@@ -200,6 +200,26 @@ describe('wezwanie kelnera', () => {
     expect(wpis.acknowledgedBy).toBe('Kelner');
   });
 
+  it('gość widzi stan zgłoszenia: wysłane, potem przyjęte, potem nic', async () => {
+    const { guestSession } = await visit(5000);
+
+    // Zanim gość cokolwiek kliknie, nie ma czego pokazywać.
+    expect(await guestSignals.activeCalls(organizationId, guestSession.id)).toEqual([]);
+
+    const call = await guestSignals.call(organizationId, guestSession.id, 'help');
+    const poWyslaniu = await guestSignals.activeCalls(organizationId, guestSession.id);
+    // „Wysłane" — zgłoszenie leży w kolejce, ale nikt go jeszcze nie przyjął.
+    expect(poWyslaniu).toEqual([{ id: call.id, reason: 'help', status: 'open' }]);
+
+    await waiterCalls.acknowledge(staff, call.id);
+    const poPrzyjeciu = await guestSignals.activeCalls(organizationId, guestSession.id);
+    // Dopiero teraz gościowi wolno powiedzieć, że kelner idzie.
+    expect(poPrzyjeciu[0]?.status).toBe('acknowledged');
+
+    await waiterCalls.resolve(staff, call.id);
+    expect(await guestSignals.activeCalls(organizationId, guestSession.id)).toEqual([]);
+  });
+
   it('załatwione zgłoszenie znika z widoku', async () => {
     const { guestSession } = await visit(5000);
     const call = await guestSignals.call(organizationId, guestSession.id, 'other');

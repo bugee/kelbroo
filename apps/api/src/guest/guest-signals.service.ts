@@ -21,6 +21,36 @@ export class GuestSignalsService {
     private readonly signals: StaffSignalsGateway,
   ) {}
 
+  /**
+   * Aktywne wezwania tego stolika.
+   *
+   * Gość musi widzieć, czy jego zgłoszenie tylko poszło, czy ktoś je już przyjął —
+   * bez tego przycisk kłamałby, twierdząc „kelner idzie", zanim ktokolwiek to
+   * potwierdził. Stan pochodzi z bazy, więc przeżywa przeładowanie strony.
+   */
+  async activeCalls(organizationId: string, guestSessionId: string) {
+    return this.prisma.withTenant(organizationId, async (tx) => {
+      const guestSession = await tx.guestSession.findUnique({ where: { id: guestSessionId } });
+      if (!guestSession) {
+        throw new BadRequestException('Sesja gościa wygasła — zeskanuj kod QR ponownie.');
+      }
+
+      const calls = await tx.waiterCall.findMany({
+        where: {
+          tableSessionId: guestSession.tableSessionId,
+          status: { in: ['open', 'acknowledged'] },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      return calls.map((call) => ({
+        id: call.id,
+        reason: call.reason,
+        status: call.status,
+      }));
+    });
+  }
+
   /** Wezwanie kelnera. Powtórzone przy otwartym zgłoszeniu nie tworzy drugiego. */
   async call(organizationId: string, guestSessionId: string, reason: CallReason) {
     return this.prisma.withTenant(organizationId, async (tx) => {

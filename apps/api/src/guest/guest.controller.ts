@@ -1,4 +1,4 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { IsIn } from 'class-validator';
 import type { SplitMode } from '@kelbroo/types';
 import { Guest, GuestAuthGuard } from './guest.guard';
@@ -23,6 +23,12 @@ class BillRequestDto {
 @UseGuards(GuestAuthGuard)
 export class GuestController {
   constructor(private readonly signals: GuestSignalsService) {}
+
+  /** Stan wezwań tego stolika — przycisk gościa czyta go, zamiast zgadywać. */
+  @Get('calls')
+  activeCalls(@Guest() guest: ResolvedGuest) {
+    return this.signals.activeCalls(guest.organizationId, guest.guestSessionId);
+  }
 
   @Post('calls')
   call(@Guest() guest: ResolvedGuest, @Body() dto: CallDto) {
