@@ -9,6 +9,7 @@ import { Prisma } from '@prisma/client';
 import { MoneySplitError, type SplitMode } from '@kelbroo/types';
 import { PrismaService } from '../prisma/prisma.service';
 import { planSplit, type SplitGroupInput } from './split-plan';
+import { TableLifecycleService } from './table-lifecycle.service';
 import type { StaffContext } from '../auth/auth.types';
 import type { OfflineMethod } from './staff-sessions.service';
 
@@ -225,6 +226,13 @@ export class SplitService {
       });
 
       if (fullyPaid) {
+        // Zamknięty rachunek blokuje stolik na chwilę: odświeżenie strony przez
+        // gości, którzy właśnie zapłacili, nie może otworzyć kolejnej wizyty,
+        // a następni goście nie wejdą w połowie sprzątania.
+        await tx.table.update({
+          where: { id: session.tableId },
+          data: { blockedUntil: TableLifecycleService.blockUntil() },
+        });
         await tx.order.updateMany({
           where: { tableSessionId: session.id, status: { notIn: ['rejected', 'canceled'] } },
           data: { paymentStatus: 'settled' },

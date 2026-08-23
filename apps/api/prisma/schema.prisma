@@ -171,6 +171,8 @@ enum WaiterCallReason {
   help
   bill
   water
+  /// Gość zeskanował kod przy zablokowanym stoliku i prosi o otwarcie wizyty.
+  open_table
   other
 }
 
@@ -324,6 +326,10 @@ model Table {
   /// Inkrementacja unieważnia stary wydruk QR.
   qrVersion      Int     @default(1) @map("qr_version")
   isActive       Boolean @default(true) @map("is_active")
+  /// Stolik zablokowany do tej chwili — ręcznie przez obsługę albo automatycznie
+  /// po zamknięciu rachunku. Gość widzi wtedy wyłącznie prośbę o otwarcie wizyty,
+  /// więc odświeżenie strony przez poprzednich gości nie otwiera nowej.
+  blockedUntil   DateTime? @map("blocked_until")
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 

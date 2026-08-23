@@ -4,7 +4,7 @@ import { OrdersGateway, restaurantRoom } from './orders.gateway';
 export interface WaiterCallEvent {
   callId: string;
   tableLabel: string;
-  reason: 'help' | 'bill' | 'water' | 'other';
+  reason: 'help' | 'bill' | 'water' | 'open_table' | 'other';
 }
 
 /**

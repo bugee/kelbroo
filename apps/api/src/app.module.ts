@@ -22,8 +22,9 @@ import { StaffOrderingService } from './staff/staff-ordering.service';
 import { SplitService } from './staff/split.service';
 import { WaiterCallsService } from './staff/waiter-calls.service';
 import { BadgesService } from './staff/badges.service';
+import { TableLifecycleService } from './staff/table-lifecycle.service';
 import { GuestSignalsService } from './guest/guest-signals.service';
-import { GuestController } from './guest/guest.controller';
+import { GuestController, GuestOpenTableController } from './guest/guest.controller';
 import { StaffSignalsGateway } from './realtime/staff-signals.gateway';
 import { GuestGateway } from './realtime/guest.gateway';
 import { StaffSessionsService } from './staff/staff-sessions.service';
@@ -48,6 +49,7 @@ import { StaffAdminService } from './management/staff.admin.service';
   ],
   controllers: [
     GuestController,
+    GuestOpenTableController,
     HealthController,
     TableController,
     OrdersController,
@@ -70,6 +72,7 @@ import { StaffAdminService } from './management/staff.admin.service';
     SplitService,
     WaiterCallsService,
     BadgesService,
+    TableLifecycleService,
     GuestSignalsService,
     StaffSignalsGateway,
     GuestGateway,

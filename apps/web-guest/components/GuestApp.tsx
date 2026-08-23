@@ -5,11 +5,13 @@ import {
   callWaiter,
   connectVisit,
   enterTable,
+  forgetVisit,
   fetchActiveCalls,
   fetchOrders,
   formatMoney,
   lineTotal,
   requestBill,
+  requestTableOpen,
   submitOrder,
   type ActiveCall,
   type BillRequestResult,
@@ -113,6 +115,16 @@ export function GuestApp({ qrToken }: { qrToken: string }) {
         <p className="mono text-sm text-[var(--muted)]">Wczytuję menu…</p>
       </Centered>
     );
+  }
+
+  // Zablokowany stolik: gość nie dostaje menu z banerem, tylko jedno wyjście.
+  // Pokazanie karty sugerowałoby, że da się zamówić, a nie da.
+  if (entry.session.blockedReason === 'table_blocked') {
+    return <BlockedTable qrToken={qrToken} tableLabel={entry.table.label} />;
+  }
+
+  if (entry.session.blockedReason === 'visit_finished') {
+    return <FinishedVisit qrToken={qrToken} />;
   }
 
   const currency = entry.restaurant.currency;
@@ -567,6 +579,81 @@ function CallWaiterButton({ qrToken, tick }: { qrToken: string; tick: number }) 
     >
       {label}
     </button>
+  );
+}
+
+/**
+ * Stolik zablokowany — po zamknięciu poprzedniego rachunku albo ręcznie przez
+ * obsługę. Jedyna droga dalej prowadzi przez kogoś z obsługi, więc jedyny
+ * przycisk o to prosi.
+ */
+function BlockedTable({ qrToken, tableLabel }: { qrToken: string; tableLabel: string }) {
+  const [state, setState] = useState<'idle' | 'sending' | 'sent' | 'failed'>('idle');
+
+  const ask = async () => {
+    setState('sending');
+    try {
+      await requestTableOpen(qrToken);
+      setState('sent');
+    } catch {
+      setState('failed');
+    }
+  };
+
+  return (
+    <Centered>
+      <h1 className="text-xl">{tableLabel}</h1>
+      <p className="mt-2 text-[var(--muted)]">
+        Stolik czeka na przygotowanie. Obsługa otworzy go za chwilę.
+      </p>
+
+      {state === 'sent' ? (
+        <p className="mono mt-6 text-sm text-[var(--teal)]">
+          Obsługa już wie. Odśwież stronę, gdy stolik zostanie otwarty.
+        </p>
+      ) : (
+        <button
+          type="button"
+          disabled={state === 'sending'}
+          onClick={() => void ask()}
+          className="mt-6 min-h-14 w-full rounded-[var(--radius-control)] bg-[var(--orange)] px-6 font-semibold text-white disabled:opacity-50"
+        >
+          {state === 'sending' ? 'Wysyłam…' : 'Poproś o otwarcie stolika'}
+        </button>
+      )}
+
+      {state === 'failed' && (
+        <p className="mt-3 text-sm text-[var(--orange)]">
+          Nie udało się wysłać. Spróbuj jeszcze raz albo poproś obsługę bezpośrednio.
+        </p>
+      )}
+    </Centered>
+  );
+}
+
+/**
+ * Rachunek tej wizyty jest rozliczony.
+ *
+ * Odświeżenie strony po zapłaceniu zakładało wcześniej nową wizytę z nowym
+ * uczestnikiem — gość, który właśnie zapłacił, stawał się kolejnym gościem
+ * przy kolejnym rachunku. Nową wizytę otwiera się tu świadomie, nie przypadkiem.
+ */
+function FinishedVisit({ qrToken }: { qrToken: string }) {
+  return (
+    <Centered>
+      <h1 className="text-xl">Rachunek rozliczony</h1>
+      <p className="mt-2 text-[var(--muted)]">Dziękujemy za wizytę.</p>
+      <button
+        type="button"
+        onClick={() => {
+          forgetVisit(qrToken);
+          window.location.reload();
+        }}
+        className="mt-6 min-h-12 text-sm text-[var(--teal)] underline"
+      >
+        Zaczynamy od nowa przy tym stoliku
+      </button>
+    </Centered>
   );
 }
 

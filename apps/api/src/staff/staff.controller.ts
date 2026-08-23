@@ -32,6 +32,7 @@ import { StaffOrderingService } from './staff-ordering.service';
 import { SplitService } from './split.service';
 import { WaiterCallsService } from './waiter-calls.service';
 import { BadgesService } from './badges.service';
+import { TableLifecycleService } from './table-lifecycle.service';
 
 class ReasonDto {
   @IsString()
@@ -139,6 +140,13 @@ class SplitModeDto {
   groups?: SplitGroupDto[];
 }
 
+class BlockDto {
+  @IsString()
+  @MaxLength(300)
+  @IsOptional()
+  reason?: string;
+}
+
 class GroupSettleDto {
   @IsIn(['cash', 'card_terminal'])
   method!: OfflineMethod;
@@ -166,6 +174,7 @@ export class StaffController {
     private readonly split: SplitService,
     private readonly calls: WaiterCallsService,
     private readonly badges: BadgesService,
+    private readonly lifecycle: TableLifecycleService,
   ) {}
 
   /** Kolejka „Do potwierdzenia" — kelner i wyżej. Kuchnia jej nie widzi. */
@@ -317,6 +326,48 @@ export class StaffController {
   @Get('badges')
   badgeCounts(@Staff() staff: StaffContext) {
     return this.badges.forStaff(staff);
+  }
+
+  // --- cykl życia stolika --------------------------------------------------
+  // Kuchnia nie stoi przy stolikach, więc nic z tego jej nie dotyczy.
+
+  /** Goście zeskanowali kod i zrezygnowali — stolik wraca do stanu wyjściowego. */
+  @Post('tables/:id/reset')
+  @Roles('owner', 'manager', 'waiter')
+  resetTable(
+    @Staff() staff: StaffContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: ReasonDto,
+  ) {
+    return this.lifecycle.reset(staff, id, dto.reason);
+  }
+
+  @Post('tables/:id/block')
+  @Roles('owner', 'manager', 'waiter')
+  blockTable(
+    @Staff() staff: StaffContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: BlockDto,
+  ) {
+    return this.lifecycle.blockTable(staff, id, dto.reason);
+  }
+
+  /** Zdjęcie blokady, zwykle w odpowiedzi na prośbę gościa o otwarcie stolika. */
+  @Post('tables/:id/unblock')
+  @Roles('owner', 'manager', 'waiter')
+  unblockTable(@Staff() staff: StaffContext, @Param('id', ParseUUIDPipe) id: string) {
+    return this.lifecycle.unblockTable(staff, id);
+  }
+
+  /** Ktoś kliknął kod przez przypadek i wyszedł. Pozycje na rachunku zostają. */
+  @Delete('sessions/:id/participants/:participantId')
+  @Roles('owner', 'manager', 'waiter')
+  removeParticipant(
+    @Staff() staff: StaffContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('participantId', ParseUUIDPipe) participantId: string,
+  ) {
+    return this.lifecycle.removeParticipant(staff, id, participantId);
   }
 
   // --- wezwania kelnera ----------------------------------------------------

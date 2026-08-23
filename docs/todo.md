@@ -189,6 +189,9 @@ Z [product.md §7](product.md#7-wymagania-niefunkcjonalne-dotyczą-wszystkich-tr
 - [x] Polling z przycisku wezwania kelnera zdjęty, zastąpiony zdarzeniem
 - [x] Znak rozpoznawczy gościa: kształt w wyraźnym kolorze, para unikalna przy stoliku,
       widoczny w panelu i u gościa; wybór adresata na ekranie Zamów przez klikalne ikony
+- [x] Cykl życia stolika: sprzątanie wizyty, usuwanie gościa, blokada na 2 minuty
+      (ręczna i automatyczna po rozliczeniu), prośba gościa o otwarcie stolika
+- [x] Odświeżenie po zapłaceniu nie otwiera nowej wizyty — token rozpoznaje swój rachunek
 
 ---
 

@@ -332,3 +332,14 @@ export async function seedSessionWithBill(options: {
     };
   });
 }
+
+/** Blokuje stolik na potrzeby testu — tak jak robi to obsługa albo rozliczenie. */
+export async function blockTable(tableId: string, minutes = 2): Promise<void> {
+  await withClient(async (client) => {
+    await client.query(
+      `UPDATE restaurant_table SET blocked_until = now() + ($2 || ' minutes')::interval
+        WHERE id = $1`,
+      [tableId, String(minutes)],
+    );
+  });
+}

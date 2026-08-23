@@ -4,7 +4,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { SplitService } from '../staff/split.service';
 import { StaffSignalsGateway } from '../realtime/staff-signals.gateway';
 
-export type CallReason = 'help' | 'bill' | 'water' | 'other';
+export type CallReason = 'help' | 'bill' | 'water' | 'open_table' | 'other';
 
 /**
  * Sygnały od gościa do obsługi: wezwanie kelnera i prośba o rachunek.
@@ -48,6 +48,61 @@ export class GuestSignalsService {
         reason: call.reason,
         status: call.status,
       }));
+    });
+  }
+
+  /**
+   * Prośba o otwarcie zablokowanego stolika.
+   *
+   * Osobno od wezwania kelnera, bo gość nie ma tu jeszcze sesji — stolik jest
+   * zamknięty właśnie po to, żeby jej nie zakładał. Zgłoszenie wisi na stoliku,
+   * nie na wizycie.
+   */
+  async requestTableOpen(qrToken: string) {
+    // Skan QR jest z definicji bez kontekstu tenanta, a poza `withTenant` rola
+    // aplikacyjna nie widzi ani jednego wiersza. Organizację ustala wąska
+    // funkcja SECURITY DEFINER — tą samą drogą, co wejście po kodzie QR.
+    const located = await this.prisma.$queryRaw<
+      { organization_id: string; restaurant_id: string; table_id: string }[]
+    >`SELECT * FROM app.resolve_qr_token(${qrToken})`;
+
+    const table = located[0];
+    if (!table) {
+      throw new BadRequestException('Nieaktywny lub nieznany kod QR.');
+    }
+
+    return this.prisma.withTenant(table.organization_id, async (tx) => {
+      const existing = await tx.waiterCall.findFirst({
+        where: {
+          tableId: table.table_id,
+          reason: 'open_table',
+          status: { in: ['open', 'acknowledged'] },
+        },
+      });
+      if (existing) {
+        return { status: existing.status };
+      }
+
+      const call = await tx.waiterCall.create({
+        data: {
+          organizationId: table.organization_id,
+          restaurantId: table.restaurant_id,
+          tableId: table.table_id,
+          reason: 'open_table',
+        },
+      });
+
+      const row = await tx.table.findUniqueOrThrow({
+        where: { id: table.table_id },
+        select: { label: true },
+      });
+      this.signals.publishWaiterCall(table.restaurant_id, {
+        callId: call.id,
+        tableLabel: row.label,
+        reason: 'open_table',
+      });
+
+      return { status: call.status };
     });
   }
 

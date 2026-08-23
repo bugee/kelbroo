@@ -40,6 +40,8 @@ export class WaiterCallsService {
 
       return calls.map((call) => ({
         id: call.id,
+        // Prośba o otwarcie stolika wymaga akcji na stoliku, nie na zgłoszeniu.
+        tableId: call.tableId,
         tableLabel: call.table.label,
         reason: call.reason,
         status: call.status,

@@ -55,6 +55,7 @@ export interface StaffOrder {
 
 export interface StaffSession {
   id: string;
+  tableId: string;
   number: number;
   tableLabel: string;
   zone: string | null;
@@ -184,12 +185,36 @@ export interface SplitPlan {
 
 export interface WaiterCall {
   id: string;
+  tableId: string;
   tableLabel: string;
-  reason: 'help' | 'bill' | 'water' | 'other';
+  reason: 'help' | 'bill' | 'water' | 'open_table' | 'other';
   status: 'open' | 'acknowledged';
   createdAt: string;
   acknowledgedBy: string | null;
 }
+
+export const resetTable = (tableId: string, reason: string) =>
+  authorized<{ id: string; label: string; blockedUntil: string | null }>(
+    `/staff/tables/${tableId}/reset`,
+    { method: 'POST', body: JSON.stringify({ reason }) },
+  );
+
+export const blockTable = (tableId: string, reason?: string) =>
+  authorized<{ id: string; label: string; blockedUntil: string | null }>(
+    `/staff/tables/${tableId}/block`,
+    { method: 'POST', body: JSON.stringify({ reason }) },
+  );
+
+export const unblockTable = (tableId: string) =>
+  authorized<{ id: string; label: string; blockedUntil: string | null }>(
+    `/staff/tables/${tableId}/unblock`,
+    { method: 'POST' },
+  );
+
+export const removeParticipant = (sessionId: string, participantId: string) =>
+  authorized<{ sessionId: string }>(`/staff/sessions/${sessionId}/participants/${participantId}`, {
+    method: 'DELETE',
+  });
 
 export const fetchWaiterCalls = () => authorized<WaiterCall[]>('/staff/calls');
 

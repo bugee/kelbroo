@@ -5,7 +5,16 @@ import Link from 'next/link';
 import { GuestMark } from '@kelbroo/ui/guest-mark';
 import { StaffShell } from '@/components/StaffShell';
 import { useLiveData } from '@/components/useLiveData';
-import { fetchSessions, minutesSince, money, settleSession, type StaffSession } from '@/lib/api';
+import {
+  blockTable,
+  fetchSessions,
+  minutesSince,
+  money,
+  removeParticipant,
+  resetTable,
+  settleSession,
+  type StaffSession,
+} from '@/lib/api';
 
 export default function TablesPage() {
   return <StaffShell>{() => <Room />}</StaffShell>;
@@ -20,14 +29,17 @@ function Room() {
   if (error) return <p className="text-[var(--orange)]">{error}</p>;
   if (!sessions) return <p className="mono text-sm text-[var(--muted)]">Wczytuję…</p>;
 
-  const settle = async (session: StaffSession, method: 'cash' | 'card_terminal') => {
-    setBusy(session.id);
+  const settle = async (session: StaffSession, method: 'cash' | 'card_terminal') =>
+    act(session.id, () => settleSession(session.id, method, session.dueCents));
+
+  const act = async (sessionId: string, action: () => Promise<unknown>) => {
+    setBusy(sessionId);
     setFailure(null);
     try {
-      await settleSession(session.id, method, session.dueCents);
+      await action();
       await refresh();
     } catch (cause) {
-      setFailure(cause instanceof Error ? cause.message : 'Rozliczenie się nie powiodło.');
+      setFailure(cause instanceof Error ? cause.message : 'Nie udało się wykonać akcji.');
     } finally {
       setBusy(null);
     }
@@ -65,6 +77,19 @@ function Room() {
                   <GuestMark symbol={participant.symbol} color={participant.color} size={14} />
                   {participant.displayName}
                   {participant.isHost && <span className="text-[var(--muted)]">·host</span>}
+                  {/* Ktoś kliknął kod przez przypadek i wyszedł. Jego pozycje
+                      na rachunku zostają — znika tylko z listy wizyty. */}
+                  <button
+                    type="button"
+                    aria-label={`Usuń ${participant.displayName} ze stolika`}
+                    disabled={busy === session.id}
+                    onClick={() =>
+                      void act(session.id, () => removeParticipant(session.id, participant.id))
+                    }
+                    className="ml-0.5 px-1 text-[var(--muted)]"
+                  >
+                    ×
+                  </button>
                 </li>
               ))}
             </ul>
@@ -103,6 +128,30 @@ function Room() {
                 Podziel rachunek
               </Link>
             )}
+
+            <div className="mt-2 flex gap-2">
+              <button
+                type="button"
+                disabled={busy === session.id}
+                onClick={() => void act(session.id, () => blockTable(session.tableId))}
+                className="min-h-11 flex-1 text-sm text-[var(--muted)] underline disabled:opacity-50"
+              >
+                Zablokuj na 2 min
+              </button>
+              {/* Goście zeskanowali kod i zrezygnowali przy kelnerze. */}
+              <button
+                type="button"
+                disabled={busy === session.id}
+                onClick={() => {
+                  const reason = window.prompt('Dlaczego sprzątasz stolik?');
+                  if (!reason?.trim()) return;
+                  void act(session.id, () => resetTable(session.tableId, reason));
+                }}
+                className="min-h-11 flex-1 text-sm text-[var(--orange)] underline disabled:opacity-50"
+              >
+                Sprzątnij stolik
+              </button>
+            </div>
 
             {/* Fiskalizacja dzieje się na kasie lokalu — tu zapisujemy wyłącznie
                 ewidencję do rozliczenia zmiany. */}

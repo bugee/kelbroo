@@ -13,6 +13,7 @@ import {
   money,
   rejectOrder,
   resolveCall,
+  unblockTable,
   type WaiterCall,
 } from '@/lib/api';
 
@@ -137,6 +138,7 @@ const REASON_LABEL: Record<WaiterCall['reason'], string> = {
   help: 'Woła kelnera',
   bill: 'Prosi o rachunek',
   water: 'Prosi o wodę',
+  open_table: 'Prosi o otwarcie stolika',
   other: 'Zgłoszenie',
 };
 
@@ -178,7 +180,20 @@ function Calls() {
             </span>
           </span>
 
-          {call.status === 'open' && (
+          {/* Otwarcie stolika zdejmuje blokadę i zamyka samo zgłoszenie —
+              dwie akcje w jednym kliknięciu, bo to jedna decyzja. */}
+          {call.reason === 'open_table' && (
+            <button
+              type="button"
+              disabled={busy === call.id}
+              onClick={() => void act(call.id, () => unblockTable(call.tableId))}
+              className="min-h-11 rounded-[var(--radius-control)] bg-[var(--teal)] px-4 text-sm font-semibold text-white disabled:opacity-50"
+            >
+              Otwórz stolik
+            </button>
+          )}
+
+          {call.status === 'open' && call.reason !== 'open_table' && (
             <button
               type="button"
               disabled={busy === call.id}

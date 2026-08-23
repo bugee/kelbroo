@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { IsIn } from 'class-validator';
 import type { SplitMode } from '@kelbroo/types';
 import { Guest, GuestAuthGuard } from './guest.guard';
@@ -17,6 +17,20 @@ class BillRequestDto {
    */
   @IsIn(['none', 'per_person', 'equal'])
   splitMode!: Extract<SplitMode, 'none' | 'per_person' | 'equal'>;
+}
+
+/**
+ * Prośba o otwarcie stolika stoi poza strażnikiem sesji: gość przy zablokowanym
+ * stoliku żadnej sesji nie ma i mieć nie może — o to właśnie prosi.
+ */
+@Controller('guest')
+export class GuestOpenTableController {
+  constructor(private readonly signals: GuestSignalsService) {}
+
+  @Post('tables/:qrToken/open-request')
+  requestOpen(@Param('qrToken') qrToken: string) {
+    return this.signals.requestTableOpen(qrToken);
+  }
 }
 
 @Controller('guest')

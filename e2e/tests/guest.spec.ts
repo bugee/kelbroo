@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { GUEST_URL } from '../playwright.config';
-import { seedMenuAndTable } from '../fixtures/db';
+import { blockTable, seedMenuAndTable } from '../fixtures/db';
 
 /**
  * Ścieżka gościa od skanu kodu QR.
@@ -68,6 +68,25 @@ test.describe('gość przy stoliku', () => {
       await page.getByRole('button', { name: 'Kelner', exact: true }).click();
       // „Wysłane", nie „idzie" — nikt jeszcze zgłoszenia nie przyjął.
       await expect(page.getByRole('button', { name: /Kelner — wysłane/ })).toBeVisible();
+    } finally {
+      await fixture.cleanup();
+    }
+  });
+
+  test('przy zablokowanym stoliku widzi tylko prośbę o otwarcie', async ({ page }) => {
+    const fixture = await seedMenuAndTable();
+
+    try {
+      await blockTable(fixture.tableId);
+      await page.goto(`${GUEST_URL}/t/${fixture.qrToken}`);
+
+      await expect(page.getByRole('button', { name: 'Poproś o otwarcie stolika' })).toBeVisible();
+      // Karta nie może się pokazać: sugerowałaby, że da się zamówić, a nie da.
+      await expect(page.getByText(fixture.dishName)).toHaveCount(0);
+      await expect(page.getByRole('button', { name: 'Menu' })).toHaveCount(0);
+
+      await page.getByRole('button', { name: 'Poproś o otwarcie stolika' }).click();
+      await expect(page.getByText(/Obsługa już wie/)).toBeVisible();
     } finally {
       await fixture.cleanup();
     }

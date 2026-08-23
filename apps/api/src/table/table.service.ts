@@ -32,7 +32,12 @@ export interface TableEntry {
     number: number;
     /** Gość musi wiedzieć, czy może zamawiać — i dlaczego nie może. */
     orderingEnabled: boolean;
-    blockedReason: 'subscription_inactive' | 'awaiting_staff_activation' | null;
+    blockedReason:
+      | 'subscription_inactive'
+      | 'awaiting_staff_activation'
+      | 'table_blocked'
+      | 'visit_finished'
+      | null;
   };
   participant: {
     id: string;
@@ -105,6 +110,24 @@ export class TableService {
       where: { tableId: table.id, status: { in: ['open', 'awaiting_settlement'] } },
       orderBy: { openedAt: 'desc' },
     });
+
+    /**
+     * Wizyta, z którą przyszedł token, jest już rozliczona.
+     *
+     * Bez tego odświeżenie strony po zapłaceniu zakładało nową wizytę z nowym
+     * uczestnikiem — gość, który właśnie zapłacił, stawał się kolejnym gościem
+     * przy kolejnym rachunku. Sprawdzamy to przed blokadą, bo ta wygasa po
+     * dwóch minutach, a token trzeba rozpoznać także później.
+     */
+    if (await this.belongsToFinishedVisit(tx, options.existingGuestToken, table.id)) {
+      return this.blockedEntry(restaurant, table, locale, menu, 'visit_finished');
+    }
+
+    // Stolik zablokowany: przez obsługę albo automatycznie po zamknięciu rachunku.
+    // Gość może wtedy wyłącznie poprosić o otwarcie wizyty.
+    if (!openSession && table.blockedUntil && table.blockedUntil > new Date()) {
+      return this.blockedEntry(restaurant, table, locale, menu, 'table_blocked');
+    }
 
     if (!openSession && restaurant.tableActivationRequired) {
       return this.blockedEntry(restaurant, table, locale, menu, 'awaiting_staff_activation');
@@ -207,6 +230,30 @@ export class TableService {
     };
   }
 
+  /**
+   * Czy token gościa należy do wizyty przy tym stoliku, która już się skończyła.
+   *
+   * Rozpoznajemy własny token, a nie samą obecność otwartej wizyty: gość po
+   * zapłaceniu ma zobaczyć „rachunek rozliczony", a nie zostać po cichu wpisany
+   * do rachunku następnych gości.
+   */
+  private async belongsToFinishedVisit(
+    tx: Prisma.TransactionClient,
+    token: string | undefined,
+    tableId: string,
+  ): Promise<boolean> {
+    if (!token) return false;
+
+    const guestSession = await tx.guestSession.findFirst({
+      where: { tokenHash: GuestSessionService.hash(token), tableId },
+      orderBy: { createdAt: 'desc' },
+      include: { tableSession: { select: { status: true } } },
+    });
+
+    const status = guestSession?.tableSession.status;
+    return status === 'closed' || status === 'settled' || status === 'abandoned';
+  }
+
   /** Ponowny skan tym samym urządzeniem nie tworzy drugiego uczestnika. */
   private async reuseGuestSession(
     tx: Prisma.TransactionClient,
@@ -280,7 +327,7 @@ export class TableService {
     table: Parameters<TableService['baseEntry']>[1],
     locale: string,
     menu: MenuCategoryView[],
-    reason: 'awaiting_staff_activation',
+    reason: 'awaiting_staff_activation' | 'table_blocked' | 'visit_finished',
   ): TableEntry {
     return {
       ...this.baseEntry(restaurant, table, locale, menu),

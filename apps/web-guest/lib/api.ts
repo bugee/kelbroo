@@ -76,7 +76,12 @@ export interface TableEntry {
     id: string;
     number: number;
     orderingEnabled: boolean;
-    blockedReason: 'subscription_inactive' | 'awaiting_staff_activation' | null;
+    blockedReason:
+      | 'subscription_inactive'
+      | 'awaiting_staff_activation'
+      | 'table_blocked'
+      | 'visit_finished'
+      | null;
   };
   participant: {
     id: string;
@@ -295,4 +300,27 @@ export function connectVisit(
   const socket = io(`${WS}/guest`, { auth: { token }, transports: ['websocket', 'polling'] });
   socket.on('visit.changed', (event: { kind: 'orders' | 'call' }) => onChange(event.kind));
   return { close: () => socket.close() };
+}
+
+/**
+ * Prośba o otwarcie zablokowanego stolika.
+ *
+ * Bez tokenu gościa — przy zablokowanym stoliku żadnej sesji nie ma i mieć nie
+ * może, bo o jej otwarcie właśnie chodzi.
+ */
+export async function requestTableOpen(qrToken: string): Promise<{ status: string }> {
+  const response = await fetch(`${API}/guest/tables/${encodeURIComponent(qrToken)}/open-request`, {
+    method: 'POST',
+    cache: 'no-store',
+  });
+  return parse<{ status: string }>(response);
+}
+
+/** Zapomnienie wizyty — gość świadomie zaczyna nową przy tym samym stoliku. */
+export function forgetVisit(qrToken: string): void {
+  try {
+    localStorage.removeItem(tokenKey(qrToken));
+  } catch {
+    /* brak pamięci to i tak brak wizyty do zapomnienia */
+  }
 }

@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { TableLifecycleService } from './table-lifecycle.service';
 import type { StaffContext } from '../auth/auth.types';
 
 export type OfflineMethod = 'cash' | 'card_terminal';
@@ -41,6 +42,8 @@ export class StaffSessionsService {
 
       return sessions.map((session) => ({
         id: session.id,
+        // Akcje cyklu życia (sprzątanie, blokada) dotyczą stolika, nie wizyty.
+        tableId: session.tableId,
         number: session.sessionNumber,
         tableLabel: session.table.label,
         zone: session.table.zone,
@@ -122,6 +125,13 @@ export class StaffSessionsService {
       });
 
       if (fullyPaid) {
+        // Zamknięty rachunek blokuje stolik na chwilę: odświeżenie strony przez
+        // gości, którzy właśnie zapłacili, nie może otworzyć kolejnej wizyty,
+        // a następni goście nie wejdą w połowie sprzątania.
+        await tx.table.update({
+          where: { id: session.tableId },
+          data: { blockedUntil: TableLifecycleService.blockUntil() },
+        });
         // Realizacja i rozliczenie to niezależne cykle — zamykamy oba dopiero tu.
         await tx.order.updateMany({
           where: { tableSessionId: session.id, status: { notIn: ['rejected', 'canceled'] } },
