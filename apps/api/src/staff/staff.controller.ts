@@ -30,6 +30,7 @@ import { StaffOrdersService } from './staff-orders.service';
 import { StaffSessionsService, type OfflineMethod } from './staff-sessions.service';
 import { StaffOrderingService } from './staff-ordering.service';
 import { SplitService } from './split.service';
+import { WaiterCallsService } from './waiter-calls.service';
 
 class ReasonDto {
   @IsString()
@@ -162,6 +163,7 @@ export class StaffController {
     private readonly sessions: StaffSessionsService,
     private readonly ordering: StaffOrderingService,
     private readonly split: SplitService,
+    private readonly calls: WaiterCallsService,
   ) {}
 
   /** Kolejka „Do potwierdzenia" — kelner i wyżej. Kuchnia jej nie widzi. */
@@ -304,6 +306,27 @@ export class StaffController {
     @Body() dto: SplitModeDto,
   ) {
     return this.split.setMode(staff, id, dto);
+  }
+
+  // --- wezwania kelnera ----------------------------------------------------
+
+  @Get('calls')
+  @Roles('owner', 'manager', 'waiter')
+  openCalls(@Staff() staff: StaffContext) {
+    return this.calls.open(staff);
+  }
+
+  /** „Idę" — reszta zmiany widzi, że ktoś już się tym zajął. */
+  @Post('calls/:id/acknowledge')
+  @Roles('owner', 'manager', 'waiter')
+  acknowledgeCall(@Staff() staff: StaffContext, @Param('id', ParseUUIDPipe) id: string) {
+    return this.calls.acknowledge(staff, id);
+  }
+
+  @Post('calls/:id/resolve')
+  @Roles('owner', 'manager', 'waiter')
+  resolveCall(@Staff() staff: StaffContext, @Param('id', ParseUUIDPipe) id: string) {
+    return this.calls.resolve(staff, id);
   }
 
   @Post('sessions/:id/groups/:groupId/settle')

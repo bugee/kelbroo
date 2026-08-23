@@ -166,6 +166,23 @@ export interface SplitPlan {
   }[];
 }
 
+export interface WaiterCall {
+  id: string;
+  tableLabel: string;
+  reason: 'help' | 'bill' | 'water' | 'other';
+  status: 'open' | 'acknowledged';
+  createdAt: string;
+  acknowledgedBy: string | null;
+}
+
+export const fetchWaiterCalls = () => authorized<WaiterCall[]>('/staff/calls');
+
+export const acknowledgeCall = (id: string) =>
+  authorized<{ id: string; status: string }>(`/staff/calls/${id}/acknowledge`, { method: 'POST' });
+
+export const resolveCall = (id: string) =>
+  authorized<{ id: string; status: string }>(`/staff/calls/${id}/resolve`, { method: 'POST' });
+
 export const fetchSplit = (sessionId: string) =>
   authorized<SplitPlan>(`/staff/sessions/${sessionId}/split`);
 
@@ -459,6 +476,8 @@ export function connectRealtime(onChange: () => void): Socket | null {
 
   const socket = io(`${WS}/staff`, { auth: { token }, transports: ['websocket', 'polling'] });
   socket.on('order.changed', onChange);
+  // Wezwania kelnera lecą tym samym pokojem lokalu — panel trzyma jedno połączenie.
+  socket.on('waiter.called', onChange);
   socket.on('connect', onChange);
   return socket;
 }

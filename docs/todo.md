@@ -27,21 +27,11 @@ Czego brakuje do pełnego zakresu etapu 1: **Systemu 1 w całości** (rejestracj
 których modele istnieją w bazie, ale nie ma do nich ani linii kodu — `SettlementGroup`,
 `Review`, `WaiterCall`, `OrderItemShare`.
 
-**Najbliższa blokada: sekcja 4.** Panel obsługi ma już komplet zakresu etapu 1.
-Brakujące funkcje leżą teraz po stronie gościa — status na żywo, wołanie kelnera,
-ocena dania i prośba o rachunek. Trzy z nich mają modele w bazie bez ani jednej
-linii kodu; czwarta czeka na wybór dostawcy poczty.
+**Najbliższa blokada: sekcja 4.** Gość umie już zawołać kelnera i poprosić o rachunek
+z wyborem podziału. Zostaje status zamówienia na żywo, ocena dania, zestawienie na e-mail,
+wybór nicku oraz zmiana hosta wizyty.
 
 ---
-
-## 3. Podział rachunku — strona gościa
-
-Podział po stronie obsługi jest gotowy: tryby, grupy, ekran kelnera i rozliczanie
-grupa po grupie. Zostaje wejście od strony gościa.
-
-- [ ] **Prośba o rachunek z wyborem podziału** w aplikacji gościa — dziś podział ustawia
-      wyłącznie kelner w panelu. Gość nie ma jak zasygnalizować „chcemy płacić osobno",
-      więc prosi o to ustnie.
 
 ## 4. Pozostałe funkcje gościa (System 3)
 
@@ -50,12 +40,17 @@ Modele są w schemacie od pierwszej migracji i nie mają ani jednego odwołania 
 - [ ] **Status zamówienia na żywo** — `orders.gateway.ts` istnieje, ale aplikacja gościa
       nie używa Socket.IO, a Caddy proxuje `/socket.io` wyłącznie na domenie panelu.
       Wymaga zmiany w [deploy/Caddyfile](../deploy/Caddyfile).
-- [ ] **Wołanie kelnera** (`WaiterCall`) — plus sygnał w panelu.
 - [ ] **Ocena dania po posiłku** (`Review`).
-- [ ] **Zestawienie rachunku na e-mail** — w projekcie **nie ma w ogóle wysyłki poczty**;
-      trzeba wybrać dostawcę i dodać abstrakcję, zanim to powstanie.
+- [ ] **Zestawienie rachunku na e-mail** — poczta przez SMTP Hostingera, nadawca
+      `kontakt@kelbroo.com`. W projekcie nie ma jeszcze żadnej wysyłki, więc najpierw
+      abstrakcja dostawcy, dopiero potem treść wiadomości.
 - [ ] **Wybór nicku i awatara przez gościa** — dziś przydzielane automatycznie; zakres
       etapu 1 mówi o wpisaniu lub wylosowaniu.
+- [ ] **Zmiana hosta wizyty** — dwa wejścia: host wskazuje następcę spośród uczestników,
+      a kelner może go zmienić z panelu. Dziś hostem zostaje na stałe pierwszy skanujący,
+      co psuje się, gdy wychodzi wcześniej albo skanował ktoś przypadkowy.
+      Host jest domyślnym płatnikiem i to do niego trafia nierozdzielony grosz przy
+      podziale, więc pomyłka zostaje na rachunku.
 
 ## 5. System 1 — strona produktowa i sprzedaż
 
@@ -163,6 +158,9 @@ Z [product.md §7](product.md#7-wymagania-niefunkcjonalne-dotyczą-wszystkich-tr
 - [x] Ekran podziału w panelu i rozliczanie grupa po grupie, z zamknięciem wizyty po ostatniej
 - [x] Niezmiennik podziału pokryty testem — suma grup równa rachunkowi, reszta do hosta
 - [x] Konfiguracja panelu schowana pod rozwijanym menu „Ustawienia"
+- [x] **Decyzja:** poczta przez SMTP Hostingera, nadawca `kontakt@kelbroo.com` (2026-08-23)
+- [x] Wołanie kelnera: zgłoszenie gościa, lista w panelu, „Idę" i „Załatwione", sygnał realtime
+- [x] Prośba o rachunek z wyborem podziału po stronie gościa — tą samą ścieżką co w panelu
 
 ---
 
@@ -172,7 +170,6 @@ Blokują zadania powyżej — wymagają twojej decyzji, nie kodu.
 
 - [ ] **Czy plan Menu (0 zł) wchodzi do oferty** — wpływa na zakres rejestracji i abonamentu (§5).
 - [ ] **Walidacja cennika** rozmowami z 5–10 restauratorami przed publikacją strony.
-- [ ] **Dostawca wysyłki e-mail** — potrzebny do zestawienia rachunku.
 - [ ] **Czy gość w trybie `pay_at_table` widzi bieżący rachunek stolika** — ryzyko, że goście
       przy jednym stoliku zobaczą nawzajem swoje zamówienia.
 - [ ] **Kto pisze dokumenty prawne** — regulamin i polityka prywatności wymagają prawnika,

@@ -18,8 +18,9 @@ export interface OrderChangedEvent {
 export class OrdersGateway implements OnGatewayConnection {
   private readonly logger = new Logger(OrdersGateway.name);
 
+  /** Publiczny, bo współdzielą go inne kanały tego samego pokoju lokalu. */
   @WebSocketServer()
-  private server!: Server;
+  server!: Server;
 
   constructor(private readonly auth: AuthService) {}
 

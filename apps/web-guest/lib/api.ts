@@ -210,3 +210,49 @@ export function lineTotal(line: CartLine): number {
 export function formatMoney(cents: number, currency: string, locale = 'pl-PL'): string {
   return new Intl.NumberFormat(locale, { style: 'currency', currency }).format(cents / 100);
 }
+
+export type CallReason = 'help' | 'water' | 'other';
+export type GuestSplitMode = 'none' | 'per_person' | 'equal';
+
+/** Wezwanie kelnera. Powtórzone przy otwartym zgłoszeniu nie tworzy drugiego. */
+export async function callWaiter(qrToken: string, reason: CallReason): Promise<void> {
+  await request(qrToken, '/guest/calls', { reason });
+}
+
+export interface BillRequestResult {
+  splitMode: GuestSplitMode;
+  totalCents: number;
+  currency: string;
+  groups: { label: string | null; totalCents: number; members: string[] }[];
+}
+
+/** Prośba o rachunek z wyborem podziału. Zamyka go i tak wyłącznie kelner. */
+export async function requestBill(
+  qrToken: string,
+  splitMode: GuestSplitMode,
+): Promise<BillRequestResult> {
+  return request<BillRequestResult>(qrToken, '/guest/bill-request', { splitMode });
+}
+
+async function request<T = void>(qrToken: string, path: string, body: unknown): Promise<T> {
+  const token = readToken(qrToken);
+  const response = await fetch(`${API}${path}`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      ...(token ? { 'x-guest-token': token } : {}),
+    },
+    body: JSON.stringify(body),
+    cache: 'no-store',
+  });
+
+  const payload: unknown = await response.json().catch(() => null);
+  if (!response.ok) {
+    const message =
+      payload && typeof payload === 'object' && 'message' in payload
+        ? String((payload as { message: unknown }).message)
+        : 'Nie udało się wysłać zgłoszenia.';
+    throw new Error(message);
+  }
+  return payload as T;
+}

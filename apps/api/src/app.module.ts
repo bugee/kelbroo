@@ -20,6 +20,10 @@ import { StaffController } from './staff/staff.controller';
 import { StaffOrdersService } from './staff/staff-orders.service';
 import { StaffOrderingService } from './staff/staff-ordering.service';
 import { SplitService } from './staff/split.service';
+import { WaiterCallsService } from './staff/waiter-calls.service';
+import { GuestSignalsService } from './guest/guest-signals.service';
+import { GuestController } from './guest/guest.controller';
+import { StaffSignalsGateway } from './realtime/staff-signals.gateway';
 import { StaffSessionsService } from './staff/staff-sessions.service';
 import { OrdersGateway } from './realtime/orders.gateway';
 import { ManagementController } from './management/management.controller';
@@ -41,6 +45,7 @@ import { StaffAdminService } from './management/staff.admin.service';
     PrismaModule,
   ],
   controllers: [
+    GuestController,
     HealthController,
     TableController,
     OrdersController,
@@ -61,6 +66,9 @@ import { StaffAdminService } from './management/staff.admin.service';
     StaffOrdersService,
     StaffOrderingService,
     SplitService,
+    WaiterCallsService,
+    GuestSignalsService,
+    StaffSignalsGateway,
     StaffSessionsService,
     OrdersGateway,
     MenuAdminService,

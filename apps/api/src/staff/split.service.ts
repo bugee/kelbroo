@@ -58,82 +58,115 @@ export class SplitService {
   ) {
     return this.prisma.withTenant(staff.organizationId, async (tx) => {
       const session = await this.load(tx, staff, sessionId);
+      return this.applyMode(tx, staff.organizationId, 'staff', session, dto);
+    });
+  }
 
-      if (await this.hasPayments(tx, session.id)) {
-        throw new ConflictException(
-          'Rachunek jest już częściowo zapłacony — podziału nie da się zmienić.',
-        );
+  /**
+   * Wybór podziału zgłoszony przez gościa przy prośbie o rachunek.
+   *
+   * Gość wybiera spośród trybów, które nie wymagają układania składu grup —
+   * `groups` zostaje po stronie kelnera, bo tylko on wie, kto z kim płaci.
+   * To ta sama ścieżka co w panelu, więc niezmiennik podziału obowiązuje tak samo.
+   */
+  async setModeForGuest(
+    organizationId: string,
+    tableSessionId: string,
+    splitMode: Extract<SplitMode, 'none' | 'per_person' | 'equal'>,
+  ) {
+    return this.prisma.withTenant(organizationId, async (tx) => {
+      const session = await tx.tableSession.findUnique({ where: { id: tableSessionId } });
+      if (!session) {
+        throw new NotFoundException('Wizyta nie istnieje.');
       }
-
-      const participants = await tx.tableParticipant.findMany({
-        where: { tableSessionId: session.id, leftAt: null },
-        orderBy: [{ isHost: 'desc' }, { joinedAt: 'asc' }],
-      });
-
-      // Stary podział znika w całości — grupy są wyliczane od nowa, nie łatane.
-      await tx.tableParticipant.updateMany({
-        where: { tableSessionId: session.id },
-        data: { settlementGroupId: null },
-      });
-      await tx.settlementGroup.deleteMany({ where: { tableSessionId: session.id } });
-
-      if (dto.splitMode === 'none') {
-        await tx.tableSession.update({
-          where: { id: session.id },
-          data: { splitMode: 'none' },
-        });
-        return this.view(tx, session.id);
+      if (session.status === 'closed' || session.status === 'settled') {
+        throw new ConflictException('Wizyta jest już rozliczona.');
       }
+      return this.applyMode(tx, organizationId, 'guest', session, { splitMode });
+    });
+  }
 
-      if (participants.length === 0) {
-        throw new BadRequestException(
-          'Wizyta nie ma gości — rachunku nie ma na kogo podzielić. Rozlicz go w całości.',
-        );
-      }
+  private async applyMode(
+    tx: Prisma.TransactionClient,
+    organizationId: string,
+    actor: 'staff' | 'guest',
+    session: { id: string; totalCents: number },
+    dto: { splitMode: SplitMode; groups?: { label?: string; participantIds: string[] }[] },
+  ) {
+    if (await this.hasPayments(tx, session.id)) {
+      throw new ConflictException(
+        'Rachunek jest już częściowo zapłacony — podziału nie da się zmienić.',
+      );
+    }
 
-      const requested =
-        dto.splitMode === 'groups'
-          ? (dto.groups ?? [])
-          : participants.map((participant) => ({
-              label: participant.displayName,
-              participantIds: [participant.id],
-            }));
+    const participants = await tx.tableParticipant.findMany({
+      where: { tableSessionId: session.id, leftAt: null },
+      orderBy: [{ isHost: 'desc' }, { joinedAt: 'asc' }],
+    });
 
-      this.assertCoversEveryone(requested, participants);
+    // Stary podział znika w całości — grupy są wyliczane od nowa, nie łatane.
+    await tx.tableParticipant.updateMany({
+      where: { tableSessionId: session.id },
+      data: { settlementGroupId: null },
+    });
+    await tx.settlementGroup.deleteMany({ where: { tableSessionId: session.id } });
 
-      const hostId = participants.find((participant) => participant.isHost)?.id ?? null;
-      const created: SplitGroupInput[] = [];
-
-      for (const group of requested) {
-        const row = await tx.settlementGroup.create({
-          data: {
-            organizationId: staff.organizationId,
-            tableSessionId: session.id,
-            label: group.label ?? null,
-            createdBy: 'staff',
-            // Domyślnym płatnikiem grupy jest jej pierwszy uczestnik.
-            payerParticipantId: group.participantIds[0] ?? null,
-          },
-        });
-        await tx.tableParticipant.updateMany({
-          where: { id: { in: group.participantIds } },
-          data: { settlementGroupId: row.id },
-        });
-        created.push({
-          id: row.id,
-          participantIds: group.participantIds,
-          hasHost: hostId !== null && group.participantIds.includes(hostId),
-        });
-      }
-
+    if (dto.splitMode === 'none') {
       await tx.tableSession.update({
         where: { id: session.id },
-        data: { splitMode: dto.splitMode },
+        data: { splitMode: 'none' },
       });
-
-      await this.applyPlan(tx, session.id, dto.splitMode, session.totalCents, created);
       return this.view(tx, session.id);
+    }
+
+    if (participants.length === 0) {
+      throw new BadRequestException(
+        'Wizyta nie ma gości — rachunku nie ma na kogo podzielić. Rozlicz go w całości.',
+      );
+    }
+
+    const requested =
+      dto.splitMode === 'groups'
+        ? (dto.groups ?? [])
+        : participants.map((participant) => ({
+            label: participant.displayName,
+            participantIds: [participant.id],
+          }));
+
+    this.assertCoversEveryone(requested, participants);
+
+    const hostId = participants.find((participant) => participant.isHost)?.id ?? null;
+    const created: SplitGroupInput[] = [];
+
+    for (const group of requested) {
+      const row = await tx.settlementGroup.create({
+        data: {
+          organizationId,
+          tableSessionId: session.id,
+          label: group.label ?? null,
+          createdBy: actor,
+          // Domyślnym płatnikiem grupy jest jej pierwszy uczestnik.
+          payerParticipantId: group.participantIds[0] ?? null,
+        },
+      });
+      await tx.tableParticipant.updateMany({
+        where: { id: { in: group.participantIds } },
+        data: { settlementGroupId: row.id },
+      });
+      created.push({
+        id: row.id,
+        participantIds: group.participantIds,
+        hasHost: hostId !== null && group.participantIds.includes(hostId),
+      });
+    }
+
+    await tx.tableSession.update({
+      where: { id: session.id },
+      data: { splitMode: dto.splitMode },
     });
+
+    await this.applyPlan(tx, session.id, dto.splitMode, session.totalCents, created);
+    return this.view(tx, session.id);
   }
 
   /**

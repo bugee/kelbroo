@@ -1,0 +1,127 @@
+import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
+import type { SplitMode } from '@kelbroo/types';
+import { PrismaService } from '../prisma/prisma.service';
+import { SplitService } from '../staff/split.service';
+import { StaffSignalsGateway } from '../realtime/staff-signals.gateway';
+
+export type CallReason = 'help' | 'bill' | 'water' | 'other';
+
+/**
+ * Sygnały od gościa do obsługi: wezwanie kelnera i prośba o rachunek.
+ *
+ * Do tej pory gość musiał złapać kelnera wzrokiem. Wezwanie jest zapisem w bazie,
+ * nie tylko powiadomieniem — po zgubionym połączeniu albo przeładowanym tablecie
+ * nadal widać, że ktoś czeka.
+ */
+@Injectable()
+export class GuestSignalsService {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly split: SplitService,
+    private readonly signals: StaffSignalsGateway,
+  ) {}
+
+  /** Wezwanie kelnera. Powtórzone przy otwartym zgłoszeniu nie tworzy drugiego. */
+  async call(organizationId: string, guestSessionId: string, reason: CallReason) {
+    return this.prisma.withTenant(organizationId, async (tx) => {
+      const guestSession = await tx.guestSession.findUnique({
+        where: { id: guestSessionId },
+        include: { tableSession: true },
+      });
+      if (!guestSession) {
+        throw new BadRequestException('Sesja gościa wygasła — zeskanuj kod QR ponownie.');
+      }
+
+      const existing = await tx.waiterCall.findFirst({
+        where: {
+          tableSessionId: guestSession.tableSessionId,
+          reason,
+          status: { in: ['open', 'acknowledged'] },
+        },
+      });
+      if (existing) {
+        // Wielokrotne stuknięcie w przycisk nie ma zasypywać kelnera zgłoszeniami.
+        return { id: existing.id, status: existing.status, reason: existing.reason };
+      }
+
+      const call = await tx.waiterCall.create({
+        data: {
+          organizationId,
+          restaurantId: guestSession.restaurantId,
+          tableId: guestSession.tableId,
+          tableSessionId: guestSession.tableSessionId,
+          guestSessionId: guestSession.id,
+          reason,
+        },
+      });
+
+      const table = await tx.table.findUniqueOrThrow({
+        where: { id: guestSession.tableId },
+        select: { label: true },
+      });
+
+      this.signals.publishWaiterCall(guestSession.restaurantId, {
+        callId: call.id,
+        tableLabel: table.label,
+        reason,
+      });
+
+      return { id: call.id, status: call.status, reason: call.reason };
+    });
+  }
+
+  /**
+   * Prośba o rachunek z wyborem podziału.
+   *
+   * Wybór gościa przechodzi tą samą ścieżką co ustawienie podziału przez kelnera,
+   * więc obowiązuje ten sam niezmiennik. `groups` zostaje po stronie panelu —
+   * kto z kim płaci, wie kelner przy stoliku, nie aplikacja.
+   */
+  async requestBill(
+    organizationId: string,
+    guestSessionId: string,
+    splitMode: Extract<SplitMode, 'none' | 'per_person' | 'equal'>,
+  ) {
+    const guestSession = await this.prisma.withTenant(organizationId, async (tx) => {
+      const found = await tx.guestSession.findUnique({
+        where: { id: guestSessionId },
+        include: { tableSession: true },
+      });
+      if (!found) {
+        throw new BadRequestException('Sesja gościa wygasła — zeskanuj kod QR ponownie.');
+      }
+      if (found.tableSession.status === 'closed' || found.tableSession.status === 'settled') {
+        throw new ConflictException('Rachunek jest już rozliczony.');
+      }
+      return found;
+    });
+
+    const plan = await this.split.setModeForGuest(
+      organizationId,
+      guestSession.tableSessionId,
+      splitMode,
+    );
+
+    // Rachunek zamyka wyłącznie personel — prośba gościa przestawia wizytę
+    // w oczekiwanie na rozliczenie, nigdy nie oznacza jej jako zapłaconej.
+    await this.prisma.withTenant(organizationId, async (tx) => {
+      await tx.tableSession.update({
+        where: { id: guestSession.tableSessionId },
+        data: { status: 'awaiting_settlement' },
+      });
+    });
+
+    await this.call(organizationId, guestSessionId, 'bill');
+
+    return {
+      splitMode: plan.splitMode,
+      totalCents: plan.totalCents,
+      currency: plan.currency,
+      groups: plan.groups.map((group) => ({
+        label: group.label,
+        totalCents: group.totalCents,
+        members: group.members.map((member) => member.displayName),
+      })),
+    };
+  }
+}
