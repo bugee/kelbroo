@@ -22,59 +22,78 @@ export class StaffSessionsService {
     return staff.restaurantId;
   }
 
-  /** Widok sali: otwarte wizyty z kwotą do rozliczenia. */
+  /**
+   * Widok sali: **wszystkie** stoliki lokalu, z wizytą albo bez.
+   *
+   * Kelner obsługuje salę, a nie listę otwartych rachunków. Stolik, przy którym
+   * nikt jeszcze nie zeskanował kodu, musi być widoczny — inaczej nie ma gdzie
+   * kliknąć „otwórz", a przy włączonej aktywacji przez obsługę gość zostaje
+   * z prośbą, której nikt nie może spełnić.
+   */
   async openSessions(staff: StaffContext) {
     return this.prisma.withTenant(staff.organizationId, async (tx) => {
-      const sessions = await tx.tableSession.findMany({
-        where: {
-          restaurantId: this.restaurantOf(staff),
-          status: { in: ['open', 'awaiting_settlement'] },
-        },
-        orderBy: { openedAt: 'asc' },
+      const tables = await tx.table.findMany({
+        where: { restaurantId: this.restaurantOf(staff), isActive: true },
+        orderBy: [{ zone: 'asc' }, { label: 'asc' }],
         include: {
-          table: { select: { label: true, zone: true } },
-          participants: {
-            // Usunięci goście znikają z listy — inaczej kelner widziałby przy
-            // stoliku kogoś, kogo sam stamtąd wyprowadził.
-            where: { leftAt: null },
-            orderBy: [{ isHost: 'desc' }, { joinedAt: 'asc' }],
-            select: {
-              id: true,
-              displayName: true,
-              symbol: true,
-              color: true,
-              isHost: true,
-              approvedAt: true,
+          tableSessions: {
+            where: { status: { in: ['open', 'awaiting_settlement'] } },
+            orderBy: { openedAt: 'desc' },
+            take: 1,
+            include: {
+              participants: {
+                // Usunięci goście znikają z listy — inaczej kelner widziałby przy
+                // stoliku kogoś, kogo sam stamtąd wyprowadził.
+                where: { leftAt: null },
+                orderBy: [{ isHost: 'desc' }, { joinedAt: 'asc' }],
+                select: {
+                  id: true,
+                  displayName: true,
+                  symbol: true,
+                  color: true,
+                  isHost: true,
+                  approvedAt: true,
+                },
+              },
+              _count: { select: { orders: true } },
             },
           },
-          _count: { select: { orders: true } },
         },
       });
 
-      return sessions.map((session) => ({
-        id: session.id,
-        // Akcje cyklu życia (sprzątanie, blokada) dotyczą stolika, nie wizyty.
-        tableId: session.tableId,
-        number: session.sessionNumber,
-        tableLabel: session.table.label,
-        zone: session.table.zone,
-        status: session.status,
-        openedAt: session.openedAt,
-        totalCents: session.totalCents,
-        paidCents: session.paidCents,
-        dueCents: session.totalCents - session.paidCents,
-        currency: session.currency,
-        orderCount: session._count.orders,
-        participants: session.participants.map((p) => ({
-          id: p.id,
-          displayName: p.displayName,
-          symbol: p.symbol,
-          color: p.color,
-          isHost: p.isHost,
-          /// `false` znaczy: czeka, aż host go wpuści.
-          approved: p.approvedAt !== null,
-        })),
-      }));
+      const now = new Date();
+      return tables.map((table) => {
+        const session = table.tableSessions[0] ?? null;
+        return {
+          tableId: table.id,
+          tableLabel: table.label,
+          zone: table.zone,
+          /// Blokada wygasa sama, więc liczy się termin, nie sama obecność wartości.
+          blockedUntil: table.blockedUntil && table.blockedUntil > now ? table.blockedUntil : null,
+          session: session
+            ? {
+                id: session.id,
+                number: session.sessionNumber,
+                status: session.status,
+                openedAt: session.openedAt,
+                totalCents: session.totalCents,
+                paidCents: session.paidCents,
+                dueCents: session.totalCents - session.paidCents,
+                currency: session.currency,
+                orderCount: session._count.orders,
+                participants: session.participants.map((p) => ({
+                  id: p.id,
+                  displayName: p.displayName,
+                  symbol: p.symbol,
+                  color: p.color,
+                  isHost: p.isHost,
+                  /// `false` znaczy: czeka, aż host go wpuści.
+                  approved: p.approvedAt !== null,
+                })),
+              }
+            : null,
+        };
+      });
     });
   }
 

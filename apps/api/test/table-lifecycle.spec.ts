@@ -20,10 +20,9 @@ import type { StaffContext } from '../src/auth/auth.types';
 const direct = new PrismaClient({ datasourceUrl: process.env.DIRECT_DATABASE_URL });
 const prisma = new PrismaService();
 const guestGateway = { publish: () => undefined } as unknown as GuestGateway;
-const lifecycle = new TableLifecycleService(prisma, guestGateway);
-
 const menu = new MenuService();
 const counters = new DailyCounterService();
+const lifecycle = new TableLifecycleService(prisma, guestGateway, counters);
 const guests = new GuestSessionService(prisma);
 const tables = new TableService(prisma, menu, counters, guests);
 
@@ -291,14 +290,60 @@ describe('blokada stolika', () => {
     expect(await direct.tableSession.count({ where: { tableId: table.id } })).toBe(0);
   });
 
-  it('zdjęcie blokady wpuszcza gościa z powrotem', async () => {
+  it('otwarcie stolika wpuszcza gościa z powrotem', async () => {
     const { table, qrToken } = await newTable();
     await lifecycle.blockTable(staff, table.id);
-    await lifecycle.unblockTable(staff, table.id);
+    await lifecycle.openTable(staff, table.id);
 
     const wejscie = await scan(qrToken);
     expect(wejscie.session.blockedReason).toBeNull();
     expect(wejscie.participant.id).toBeTruthy();
+  });
+
+  it('otwarcie zakłada wizytę, więc obsługa otwiera stolik przed przyjściem gości', async () => {
+    const { table, qrToken } = await newTable();
+
+    // Ten sam przycisk działa na wolnym stoliku, nie tylko na zablokowanym:
+    // kelner sadza gości, zanim ktokolwiek zeskanuje kod.
+    const otwarty = await lifecycle.openTable(staff, table.id);
+    expect(otwarty.sessionId).toBeTruthy();
+
+    const sesja = await direct.tableSession.findFirstOrThrow({ where: { tableId: table.id } });
+    expect(sesja.openedBy).toBe('staff');
+    expect(sesja.openedByStaffId).toBe(staff.staffId);
+
+    // Gość dołącza do wizyty założonej przez obsługę, nie zakłada drugiej.
+    const wejscie = await scan(qrToken);
+    expect(wejscie.session.id).toBe(sesja.id);
+    expect(await direct.tableSession.count({ where: { tableId: table.id } })).toBe(1);
+  });
+
+  it('otwarcie stolika z otwartą wizytą nie zakłada drugiej', async () => {
+    const { table, qrToken } = await newTable();
+    await scan(qrToken);
+
+    const pierwsza = await direct.tableSession.findFirstOrThrow({ where: { tableId: table.id } });
+    const wynik = await lifecycle.openTable(staff, table.id);
+
+    expect(wynik.sessionId).toBe(pierwsza.id);
+    expect(await direct.tableSession.count({ where: { tableId: table.id } })).toBe(1);
+  });
+
+  it('otwarcie stolika zamyka prośbę gościa, żeby nie wisiała w kolejce', async () => {
+    const { table } = await newTable();
+    await direct.waiterCall.create({
+      data: {
+        organizationId,
+        restaurantId,
+        tableId: table.id,
+        reason: 'open_table',
+      },
+    });
+
+    await lifecycle.openTable(staff, table.id);
+
+    const zgloszenia = await direct.waiterCall.findMany({ where: { tableId: table.id } });
+    expect(zgloszenia.every((call) => call.status === 'resolved')).toBe(true);
   });
 
   it('wygasła blokada przestaje obowiązywać', async () => {

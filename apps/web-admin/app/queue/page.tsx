@@ -13,7 +13,7 @@ import {
   money,
   rejectOrder,
   resolveCall,
-  unblockTable,
+  openTable,
   type WaiterCall,
 } from '@/lib/api';
 
@@ -186,7 +186,7 @@ function Calls() {
             <button
               type="button"
               disabled={busy === call.id}
-              onClick={() => void act(call.id, () => unblockTable(call.tableId))}
+              onClick={() => void act(call.id, () => openTable(call.tableId))}
               className="min-h-11 rounded-[var(--radius-control)] bg-[var(--teal)] px-4 text-sm font-semibold text-white disabled:opacity-50"
             >
               Otwórz stolik

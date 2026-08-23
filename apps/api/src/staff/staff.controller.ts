@@ -359,11 +359,14 @@ export class StaffController {
     return this.lifecycle.blockTable(staff, id, dto.reason);
   }
 
-  /** Zdjęcie blokady, zwykle w odpowiedzi na prośbę gościa o otwarcie stolika. */
-  @Post('tables/:id/unblock')
+  /**
+   * Otwarcie stolika: zdejmuje blokadę i zakłada wizytę, jeśli jeszcze jej nie ma.
+   * Kuchnia nie otwiera stolików — nie stoi przy nich.
+   */
+  @Post('tables/:id/open')
   @Roles('owner', 'manager', 'waiter')
-  unblockTable(@Staff() staff: StaffContext, @Param('id', ParseUUIDPipe) id: string) {
-    return this.lifecycle.unblockTable(staff, id);
+  openTable(@Staff() staff: StaffContext, @Param('id', ParseUUIDPipe) id: string) {
+    return this.lifecycle.openTable(staff, id);
   }
 
   /** Ktoś kliknął kod przez przypadek i wyszedł. Pozycje na rachunku zostają. */

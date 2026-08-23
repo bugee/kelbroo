@@ -55,10 +55,7 @@ export interface StaffOrder {
 
 export interface StaffSession {
   id: string;
-  tableId: string;
   number: number;
-  tableLabel: string;
-  zone: string | null;
   status: string;
   openedAt: string;
   totalCents: number;
@@ -75,6 +72,31 @@ export interface StaffSession {
     /** `false` znaczy: czeka, aż host go wpuści do wizyty. */
     approved: boolean;
   }[];
+}
+
+/**
+ * Stolik na sali — z wizytą albo bez.
+ *
+ * Kelner obsługuje salę, nie listę otwartych rachunków: stolik, przy którym nikt
+ * nie zeskanował kodu, też musi być widoczny i klikalny.
+ */
+export interface StaffFloorTable {
+  tableId: string;
+  tableLabel: string;
+  zone: string | null;
+  /** Termin, do którego stolik jest zamknięty dla gości. `null` = otwarty. */
+  blockedUntil: string | null;
+  session: StaffSession | null;
+}
+
+/** Kwoty po rozliczeniu — bez uczestników, bo ekran i tak przeładowuje salę. */
+export interface SettlementResult {
+  id: string;
+  status: string;
+  totalCents: number;
+  paidCents: number;
+  dueCents: number;
+  currency: string;
 }
 
 export interface OrderingTable {
@@ -207,9 +229,10 @@ export const blockTable = (tableId: string, reason?: string) =>
     { method: 'POST', body: JSON.stringify({ reason }) },
   );
 
-export const unblockTable = (tableId: string) =>
-  authorized<{ id: string; label: string; blockedUntil: string | null }>(
-    `/staff/tables/${tableId}/unblock`,
+/** Otwarcie stolika: zdejmuje blokadę i zakłada wizytę, jeśli jeszcze jej nie ma. */
+export const openTable = (tableId: string) =>
+  authorized<{ id: string; label: string; sessionId: string; sessionNumber: number }>(
+    `/staff/tables/${tableId}/open`,
     { method: 'POST' },
   );
 
@@ -495,7 +518,7 @@ export const changePassword = async (
 };
 export const fetchQueue = () => authorized<StaffOrder[]>('/staff/orders/queue');
 export const fetchKitchen = () => authorized<StaffOrder[]>('/staff/orders/kitchen');
-export const fetchSessions = () => authorized<StaffSession[]>('/staff/sessions');
+export const fetchSessions = () => authorized<StaffFloorTable[]>('/staff/sessions');
 
 export const confirmOrder = (id: string) =>
   authorized<StaffOrder>(`/staff/orders/${id}/confirm`, { method: 'POST' });
@@ -513,7 +536,7 @@ export const advanceOrder = (id: string, status: 'preparing' | 'ready' | 'served
   });
 
 export const settleSession = (id: string, method: 'cash' | 'card_terminal', amountCents: number) =>
-  authorized<StaffSession>(`/staff/sessions/${id}/settle`, {
+  authorized<SettlementResult>(`/staff/sessions/${id}/settle`, {
     method: 'POST',
     body: JSON.stringify({ method, amountCents }),
   });

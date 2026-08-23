@@ -150,7 +150,7 @@ export function GuestApp({ qrToken }: { qrToken: string }) {
   // Zablokowany stolik: gość nie dostaje menu z banerem, tylko jedno wyjście.
   // Pokazanie karty sugerowałoby, że da się zamówić, a nie da.
   if (entry.session.blockedReason === 'table_blocked') {
-    return <BlockedTable qrToken={qrToken} tableLabel={entry.table.label} />;
+    return <BlockedTable qrToken={qrToken} tableLabel={entry.table.label} onOpened={load} />;
   }
 
   if (entry.session.blockedReason === 'visit_finished') {
@@ -220,13 +220,23 @@ export function GuestApp({ qrToken }: { qrToken: string }) {
       </header>
 
       {!canOrder && (
-        <p className="m-4 rounded-[var(--radius-control)] bg-[var(--orange-wash)] p-4 text-sm">
-          {entry.session.blockedReason === 'awaiting_staff_activation'
-            ? 'Poproś obsługę o otwarcie stolika — menu możesz przeglądać już teraz.'
-            : entry.session.blockedReason === 'awaiting_host_approval'
-              ? 'Osoba, która otworzyła stolik, musi Cię wpuścić. Pokaż jej swój znak z góry ekranu — menu możesz przeglądać już teraz.'
-              : 'Zamawianie jest chwilowo niedostępne. Poproś obsługę.'}
-        </p>
+        <div className="m-4 rounded-[var(--radius-control)] bg-[var(--orange-wash)] p-4 text-sm">
+          {entry.session.blockedReason === 'awaiting_staff_activation' ? (
+            <>
+              <p>Stolik czeka na otwarcie przez obsługę — menu możesz przeglądać już teraz.</p>
+              {/* Zgłoszenie idzie do tej samej kolejki co wołanie kelnera, więc
+                  gość nie musi nikogo szukać wzrokiem po sali. */}
+              <AskToOpen qrToken={qrToken} onOpened={load} />
+            </>
+          ) : entry.session.blockedReason === 'awaiting_host_approval' ? (
+            <p>
+              Osoba, która otworzyła stolik, musi Cię wpuścić. Pokaż jej swój znak z góry ekranu —
+              menu możesz przeglądać już teraz.
+            </p>
+          ) : (
+            <p>Zamawianie jest chwilowo niedostępne. Poproś obsługę.</p>
+          )}
+        </div>
       )}
 
       {pending.length > 0 && (
@@ -703,7 +713,14 @@ function PendingGuests({
   );
 }
 
-function BlockedTable({ qrToken, tableLabel }: { qrToken: string; tableLabel: string }) {
+/**
+ * Prośba o otwarcie stolika.
+ *
+ * Zgłoszenie trafia do tej samej kolejki co wołanie kelnera — widzą je kelner,
+ * manager i właściciel, a otwarcie jest jednym kliknięciem po ich stronie.
+ * Gość nie ma potem nic odświeżać: `onOpened` odpytuje serwer, aż stolik puści.
+ */
+function AskToOpen({ qrToken, onOpened }: { qrToken: string; onOpened: () => void }) {
   const [state, setState] = useState<'idle' | 'sending' | 'sent' | 'failed'>('idle');
 
   const ask = async () => {
@@ -716,33 +733,58 @@ function BlockedTable({ qrToken, tableLabel }: { qrToken: string; tableLabel: st
     }
   };
 
-  return (
-    <Centered>
-      <h1 className="text-xl">{tableLabel}</h1>
-      <p className="mt-2 text-[var(--muted)]">
-        Stolik czeka na przygotowanie. Obsługa otworzy go za chwilę.
-      </p>
+  // Gość przy zablokowanym stoliku nie ma sesji, więc nie ma też kanału realtime —
+  // pokój wizyty wyprowadzamy z tokenu, a tokenu tu jeszcze nie ma. Zostaje
+  // odpytywanie; to jedyne miejsce w aplikacji gościa, gdzie jest konieczne.
+  useEffect(() => {
+    const timer = setInterval(onOpened, 5_000);
+    return () => clearInterval(timer);
+  }, [onOpened]);
 
-      {state === 'sent' ? (
-        <p className="mono mt-6 text-sm text-[var(--teal)]">
-          Obsługa już wie. Odśwież stronę, gdy stolik zostanie otwarty.
-        </p>
-      ) : (
-        <button
-          type="button"
-          disabled={state === 'sending'}
-          onClick={() => void ask()}
-          className="mt-6 min-h-14 w-full rounded-[var(--radius-control)] bg-[var(--orange)] px-6 font-semibold text-white disabled:opacity-50"
-        >
-          {state === 'sending' ? 'Wysyłam…' : 'Poproś o otwarcie stolika'}
-        </button>
-      )}
+  if (state === 'sent') {
+    return (
+      <p className="mono mt-4 text-sm text-[var(--teal)]">
+        Obsługa już wie. Stolik otworzy się tutaj sam.
+      </p>
+    );
+  }
+
+  return (
+    <>
+      <button
+        type="button"
+        disabled={state === 'sending'}
+        onClick={() => void ask()}
+        className="mt-4 min-h-14 w-full rounded-[var(--radius-control)] bg-[var(--orange)] px-6 font-semibold text-white disabled:opacity-50"
+      >
+        {state === 'sending' ? 'Wysyłam…' : 'Poproś o otwarcie stolika'}
+      </button>
 
       {state === 'failed' && (
         <p className="mt-3 text-sm text-[var(--orange)]">
           Nie udało się wysłać. Spróbuj jeszcze raz albo poproś obsługę bezpośrednio.
         </p>
       )}
+    </>
+  );
+}
+
+function BlockedTable({
+  qrToken,
+  tableLabel,
+  onOpened,
+}: {
+  qrToken: string;
+  tableLabel: string;
+  onOpened: () => void;
+}) {
+  return (
+    <Centered>
+      <h1 className="text-xl">{tableLabel}</h1>
+      <p className="mt-2 text-[var(--muted)]">
+        Stolik czeka na przygotowanie. Obsługa otworzy go za chwilę.
+      </p>
+      <AskToOpen qrToken={qrToken} onOpened={onOpened} />
     </Centered>
   );
 }

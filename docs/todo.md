@@ -202,6 +202,10 @@ Z [product.md §7](product.md#7-wymagania-niefunkcjonalne-dotyczą-wszystkich-tr
       zastępcza przez obsługę, oczekujący nie zamówi — bariera po stronie serwera
 - [x] Rozliczanie po jednym gościu jako przełącznik lokalu (`partial_settlement_enabled`)
 - [x] Każda pozycja rachunku podpisana znakiem swojego właściciela, także cudza
+- [x] Otwieranie stolika przez obsługę: przycisk przy każdym stoliku na sali (także wolnym)
+      i przy zgłoszeniu gościa w kolejce; zdejmuje blokadę i zakłada wizytę
+- [x] Sala pokazuje wszystkie stoliki lokalu, nie tylko te z otwartym rachunkiem
+- [x] Gość czekający na otwarcie prosi o nie przyciskiem, a ekran puszcza sam po otwarciu
 
 ---
 

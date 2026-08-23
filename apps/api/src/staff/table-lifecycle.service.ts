@@ -8,6 +8,8 @@ import {
 import { Prisma } from '@prisma/client';
 import { isTerminal } from '@kelbroo/types';
 import { PrismaService } from '../prisma/prisma.service';
+import { DailyCounterService } from '../common/daily-counter.service';
+import { businessDateFor, toDateColumn } from '../common/business-date';
 import { GuestGateway } from '../realtime/guest.gateway';
 import type { StaffContext } from '../auth/auth.types';
 
@@ -30,6 +32,7 @@ export class TableLifecycleService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly guests: GuestGateway,
+    private readonly counters: DailyCounterService,
   ) {}
 
   private restaurantOf(staff: StaffContext): string {
@@ -195,27 +198,72 @@ export class TableLifecycleService {
   }
 
   /**
-   * Zdjęcie blokady, zwykle w odpowiedzi na prośbę gościa o otwarcie stolika.
-   * Zamyka też samo zgłoszenie, żeby nie zostawało w kolejce jako niezałatwione.
+   * Otwarcie stolika dla gości — jedna decyzja, więc jedna akcja.
+   *
+   * Zdejmuje blokadę **i** zakłada wizytę, jeśli jeszcze jej nie ma. Samo zdjęcie
+   * blokady nie wystarczało: przy włączonej aktywacji przez obsługę gość po skanie
+   * i tak trafiał na „poproś obsługę", bo wizyty nikt nie otworzył, a obsługa nie
+   * miała czym jej otworzyć. Zamyka też zgłoszenie gościa, żeby nie zostawało
+   * w kolejce jako niezałatwione.
    */
-  async unblockTable(staff: StaffContext, tableId: string) {
+  async openTable(staff: StaffContext, tableId: string) {
     return this.prisma.withTenant(staff.organizationId, async (tx) => {
       const table = await this.loadTable(tx, staff, tableId);
+      const restaurant = await tx.restaurant.findUniqueOrThrow({
+        where: { id: table.restaurantId },
+      });
 
       await tx.table.update({ where: { id: table.id }, data: { blockedUntil: null } });
       await this.closeOpenCalls(tx, table.id, staff.staffId, 'open_table');
+
+      let session = await tx.tableSession.findFirst({
+        where: { tableId: table.id, status: { in: ['open', 'awaiting_settlement'] } },
+        orderBy: { openedAt: 'desc' },
+      });
+
+      if (!session) {
+        const businessDate = businessDateFor(
+          new Date(),
+          restaurant.timezone,
+          restaurant.businessDayStartHour,
+        );
+        session = await tx.tableSession.create({
+          data: {
+            organizationId: staff.organizationId,
+            restaurantId: restaurant.id,
+            tableId: table.id,
+            businessDate: toDateColumn(businessDate),
+            sessionNumber: await this.counters.next(tx, {
+              organizationId: staff.organizationId,
+              restaurantId: restaurant.id,
+              businessDate,
+              scope: 'table_session',
+            }),
+            openedBy: 'staff',
+            openedByStaffId: staff.staffId,
+            currency: restaurant.currency,
+          },
+        });
+      }
 
       await tx.auditLog.create({
         data: {
           organizationId: staff.organizationId,
           actorStaffId: staff.staffId,
-          action: 'table.unblocked',
+          action: 'table.opened',
           entity: 'Table',
           entityId: table.id,
+          payload: { tableSessionId: session.id } as Prisma.InputJsonValue,
         },
       });
 
-      return { id: table.id, label: table.label, blockedUntil: null };
+      return {
+        id: table.id,
+        label: table.label,
+        blockedUntil: null,
+        sessionId: session.id,
+        sessionNumber: session.sessionNumber,
+      };
     });
   }
 
