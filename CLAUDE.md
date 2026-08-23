@@ -29,6 +29,7 @@ Przed implementacją czegokolwiek przeczytaj odpowiedni dokument:
 
 | Dokument | Zakres |
 |---|---|
+| [docs/todo.md](docs/todo.md) | **Żywy plan realizacji MVP etapu 1** — aktualizowany na bieżąco przy każdej zmianie |
 | [docs/product.md](docs/product.md) | Wizja, persony, model biznesowy, zakres MVP, wymagania niefunkcjonalne |
 | [docs/architecture.md](docs/architecture.md) | Stack, monorepo, model danych, multi-tenancy, realtime, bezpieczeństwo |
 | [docs/01-landing-marketing.md](docs/01-landing-marketing.md) | System 1 — strona produktowa, cennik, zakup abonamentu |
