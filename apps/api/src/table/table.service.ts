@@ -88,8 +88,14 @@ export class TableService {
      * Sygnał leci po zatwierdzeniu transakcji — wysłany w środku wyprzedziłby
      * własny zapis i odbiorcy odświeżyliby listę, na której jeszcze go nie ma.
      * Dwa kanały, bo to dwie różne publiczności: host przy stoliku i panel.
+     *
+     * Warunek opisuje **zdarzenie**, nie stan: token wydajemy wyłącznie razem
+     * z nowym uczestnikiem, więc `guestToken` niepuste znaczy „ktoś właśnie
+     * dołączył", a ponowne wejście tym samym urządzeniem zwraca `null`.
+     * Sygnał na sam stan „ktoś czeka" zapętlał wszystkie telefony przy stoliku:
+     * każdy odbiorca wczytywał wizytę od nowa, a to wysyłało sygnał ponownie.
      */
-    if (entry.session.blockedReason === 'awaiting_host_approval') {
+    if (entry.session.blockedReason === 'awaiting_host_approval' && entry.guestToken !== null) {
       this.visits.publish(entry.session.id, { kind: 'access' });
       this.staffSignals.publishGuestWaiting(target.restaurant_id, {
         participantId: entry.participant.id,

@@ -136,3 +136,59 @@ test.describe('host wpuszcza do stolika', () => {
     }
   });
 });
+
+/**
+ * Trzech gości przy jednym stoliku, dwóch czeka na wpuszczenie.
+ *
+ * Ten test istnieje przez konkretną awarię: sygnał o oczekującym gościu był
+ * wysyłany przy **każdym** wczytaniu wizyty, a nie przy dołączeniu. Każdy sygnał
+ * kazał wszystkim telefonom wczytać wizytę od nowa, co wysyłało sygnał ponownie —
+ * ekrany migotały, aż baza przestawała wyrabiać i zwracała 500.
+ */
+test('dwóch czekających gości nie zapętla ekranów przy stoliku', async ({ browser }) => {
+  const fixture = await seedMenuAndTable();
+  await setHostApproval(true);
+
+  const konteksty = await Promise.all([
+    browser.newContext(),
+    browser.newContext(),
+    browser.newContext(),
+  ]);
+
+  try {
+    const [host, drugi, trzeci] = await Promise.all(konteksty.map((k) => k.newPage()));
+
+    await host!.goto(`${GUEST_URL}/t/${fixture.qrToken}`);
+    await expect(host!.getByText(fixture.dishName)).toBeVisible();
+
+    // Liczymy wczytania wizyty u hosta. W pętli szło ich kilkadziesiąt na sekundę.
+    let wczytania = 0;
+    host!.on('request', (request) => {
+      if (request.url().includes('/t/')) wczytania += 1;
+    });
+
+    await drugi!.goto(`${GUEST_URL}/t/${fixture.qrToken}`);
+    await trzeci!.goto(`${GUEST_URL}/t/${fixture.qrToken}`);
+
+    // Obaj pojawiają się u hosta sami.
+    await expect(host!.getByText(/Chętni do stolika/)).toBeVisible({ timeout: 20_000 });
+    await expect(host!.locator('section', { hasText: 'Chętni do stolika' }).locator('li')).toHaveCount(2);
+
+    // Cztery sekundy ciszy: bez pętli wczytań jest garstka, nie dziesiątki.
+    const poDolaczeniu = wczytania;
+    await host!.waitForTimeout(4000);
+    expect(wczytania - poDolaczeniu).toBeLessThan(5);
+
+    // Wpuszczenie jednego też nie rozkręca lawiny.
+    await host!.getByRole('button', { name: 'Wpuść' }).first().click();
+    await expect(drugi!.getByText(/musi Cię wpuścić/)).toHaveCount(0, { timeout: 20_000 });
+
+    const poWpuszczeniu = wczytania;
+    await host!.waitForTimeout(4000);
+    expect(wczytania - poWpuszczeniu).toBeLessThan(5);
+  } finally {
+    await setHostApproval(false);
+    await Promise.all(konteksty.map((k) => k.close()));
+    await fixture.cleanup();
+  }
+});

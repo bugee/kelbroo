@@ -23,9 +23,19 @@ import type { StaffContext } from '../src/auth/auth.types';
 
 const direct = new PrismaClient({ datasourceUrl: process.env.DIRECT_DATABASE_URL });
 const prisma = new PrismaService();
-const guestGateway = { publish: () => undefined } as unknown as GuestGateway;
+/**
+ * Atrapy liczące sygnały. Liczba wysłanych zdarzeń jest tu przedmiotem testu,
+ * nie skutkiem ubocznym: sygnał wysyłany raz za dużo zapętla całą aplikację
+ * gościa — każdy odbiorca wczytuje wizytę od nowa, a to wysyła sygnał ponownie.
+ */
+const sygnalyWizyty: string[] = [];
+const sygnalyPanelu: string[] = [];
+const guestGateway = {
+  publish: (_id: string, event: { kind: string }) => sygnalyWizyty.push(event.kind),
+} as unknown as GuestGateway;
 const staffSignals = {
-  publishGuestWaiting: () => undefined,
+  publishGuestWaiting: (_id: string, event: { participantId: string }) =>
+    sygnalyPanelu.push(event.participantId),
 } as unknown as StaffSignalsGateway;
 const access = new TableAccessService(prisma, guestGateway);
 
@@ -283,5 +293,48 @@ describe('host wpuszcza gości', () => {
     const drugi = await tables.enter(qrToken, {});
     expect(drugi.participant.approved).toBe(true);
     expect(drugi.session.orderingEnabled).toBe(true);
+  });
+});
+
+/**
+ * Sygnalizowanie oczekujących.
+ *
+ * Sygnał ma opisywać **zdarzenie** — „ktoś właśnie dołączył" — a nie **stan**
+ * „ktoś czeka". Różnica nie jest akademicka: aplikacja gościa na każdy sygnał
+ * wczytuje wizytę od nowa, więc sygnał wysyłany przy każdym wczytaniu zapętla
+ * wszystkie telefony przy stoliku w migoczącą pętlę, aż baza przestaje wyrabiać.
+ */
+describe('sygnały o oczekujących', () => {
+  it('wysyła sygnał raz — przy dołączeniu, a nie przy każdym wczytaniu strony', async () => {
+    const { qrToken } = await newTable();
+    await tables.enter(qrToken, {});
+
+    sygnalyWizyty.length = 0;
+    sygnalyPanelu.length = 0;
+
+    // Dołączenie: jeden sygnał do stolika i jeden do panelu.
+    const drugi = await tables.enter(qrToken, {});
+    const token = drugi.guestToken!;
+    expect(sygnalyWizyty).toEqual(['access']);
+    expect(sygnalyPanelu).toEqual([drugi.participant.id]);
+
+    // Odświeżenie strony przez czekającego gościa nie jest nowym zdarzeniem.
+    await tables.enter(qrToken, { existingGuestToken: token });
+    await tables.enter(qrToken, { existingGuestToken: token });
+
+    expect(sygnalyWizyty).toEqual(['access']);
+    expect(sygnalyPanelu).toEqual([drugi.participant.id]);
+  });
+
+  it('nie sygnalizuje wejścia gościa, który zgody nie potrzebuje', async () => {
+    const { qrToken } = await newTable();
+
+    sygnalyWizyty.length = 0;
+    sygnalyPanelu.length = 0;
+
+    // Host wchodzi bez zgody — nie ma o czym nikogo zawiadamiać.
+    await tables.enter(qrToken, {});
+    expect(sygnalyWizyty).toEqual([]);
+    expect(sygnalyPanelu).toEqual([]);
   });
 });

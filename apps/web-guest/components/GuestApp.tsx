@@ -124,11 +124,21 @@ export function GuestApp({ qrToken }: { qrToken: string }) {
       // wizytę od nowa, żeby gość dostał menu bez odświeżania strony.
       else if (kind === 'access') {
         void load();
-        void refreshPending();
+        // Kolejkę wpuszczania ma tylko host. Serwer i tak odsyła innym pustą
+        // listę, ale przy stoliku na kilka telefonów to kilka żądań na każde
+        // zdarzenie — bez powodu i akurat w chwili, gdy dzieje się najwięcej.
+        if (entry?.participant.isHost) void refreshPending();
       } else setCallTick((tick) => tick + 1);
     });
     return () => channel?.close();
-  }, [qrToken, entry?.participant.id, refreshOrders, refreshPending, load]);
+  }, [
+    qrToken,
+    entry?.participant.id,
+    entry?.participant.isHost,
+    refreshOrders,
+    refreshPending,
+    load,
+  ]);
 
   if (error) {
     return (
