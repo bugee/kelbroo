@@ -47,6 +47,24 @@ Ten plik jest **źródłem prawdy dla palety, typografii i tonu** przy budowie `
 
 Backend: **`apps/api`** (NestJS + Prisma + PostgreSQL + Redis).
 
+## Domeny produkcyjne
+
+Domena produktowa: **`kelbroo.com`**.
+
+| Adres | Co serwuje | Skąd |
+|---|---|---|
+| `kelbroo.com` | Strona produktowa (System 1) | `design/landing-page.html` przez Caddy; docelowo `apps/web-marketing` |
+| `www.kelbroo.com` | Przekierowanie 301 na apex | Caddy |
+| `panel.kelbroo.com` | Panel obsługi (System 2) | `apps/web-admin` |
+| `menu.kelbroo.com` | PWA gościa (System 3) | `apps/web-guest` |
+
+`/api` i `/socket.io` są serwowane **z tego samego originu co aplikacja**, nie z osobnej
+subdomeny — dzięki temu nie ma CORS-u i adres backendu nie jest wkompilowany w bundle.
+
+Wszystkie trzy adresy wskazują na jeden VPS; rozdziela je Caddy po nazwie hosta
+([deploy/Caddyfile](deploy/Caddyfile)). Zmiana `GUEST_DOMAIN` wymaga przebudowania
+`apps/web-admin` **i przedrukowania kodów QR** — adres jest wpisywany w kod w momencie budowania.
+
 ## Kluczowe decyzje projektowe
 
 - **Rynek:** Polska, z architekturą pod ekspansję (wielojęzyczność, wielowalutowość, wymienny provider płatności).

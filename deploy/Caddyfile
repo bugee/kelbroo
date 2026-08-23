@@ -12,6 +12,27 @@
 	email {$ACME_EMAIL}
 }
 
+# --- strona produktowa -----------------------------------------------------
+# Na razie jeden statyczny plik z `design/landing-page.html`, podmontowany jako
+# index.html. Gdy powstanie `apps/web-marketing`, wystarczy podmienić ten blok
+# na reverse_proxy — DNS i certyfikat zostają bez zmian.
+{$LANDING_DOMAIN} {
+	root * /srv/landing
+	file_server
+
+	encode zstd gzip
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+}
+
+# Jeden adres kanoniczny — apex. Inaczej Google indeksuje obie wersje osobno.
+www.{$LANDING_DOMAIN} {
+	redir https://{$LANDING_DOMAIN}{uri} permanent
+}
+
 # --- aplikacja gościa ------------------------------------------------------
 {$GUEST_DOMAIN} {
 	handle /api/* {

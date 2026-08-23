@@ -23,9 +23,15 @@ services:
     environment:
       GUEST_DOMAIN: ${GUEST_DOMAIN}
       ADMIN_DOMAIN: ${ADMIN_DOMAIN}
+      # Domyślna wartość jest nierozwiązywalna celowo: wdrożenie bez własnej
+      # domeny produktowej ma wstać normalnie, a nie wywrócić Caddy'ego na
+      # pustym adresie serwera. Certyfikat dla .localhost wystawia CA wewnętrzne.
+      LANDING_DOMAIN: ${LANDING_DOMAIN:-landing.localhost}
       ACME_EMAIL: ${ACME_EMAIL}
     volumes:
       - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      # Strona produktowa jest statyczna — nie potrzebuje własnego kontenera.
+      - ./design/landing-page.html:/srv/landing/index.html:ro
       - caddy-data:/data
       - caddy-config:/config
     depends_on:

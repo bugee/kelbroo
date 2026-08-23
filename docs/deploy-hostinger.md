@@ -3,9 +3,9 @@
 Instrukcja dla **VPS w Hostingerze**. Zwykły hosting współdzielony ani „Cloud hosting"
 **nie zadziała** — kelbroo potrzebuje Dockera, a ten jest dostępny wyłącznie na VPS.
 
-Efekt końcowy: dwie działające domeny z certyfikatem HTTPS —
-`menu.twojadomena.pl` (aplikacja gościa, do kodów QR) i
-`panel.twojadomena.pl` (panel obsługi: kuchnia, kelner, menu, stoliki).
+Efekt końcowy: trzy działające adresy z certyfikatem HTTPS —
+`kelbroo.com` (strona produktowa), `menu.kelbroo.com` (aplikacja gościa, do kodów QR)
+i `panel.kelbroo.com` (panel obsługi: kuchnia, kelner, menu, stoliki).
 
 Czas: **około 1 godziny**, z czego 20 minut to czekanie na instalację systemu i budowanie obrazów.
 
@@ -16,11 +16,13 @@ Czas: **około 1 godziny**, z czego 20 minut to czekanie na instalację systemu 
 
 ## Zanim zaczniesz — przygotuj dwie rzeczy
 
-1. **Domenę.** Może być kupiona w Hostingerze albo gdziekolwiek indziej.
-   Użyjemy dwóch subdomen, np. `menu.twojadomena.pl` i `panel.twojadomena.pl`.
+1. **Domenę `kelbroo.com`** — kupioną w Hostingerze albo gdziekolwiek indziej.
+   Wszystko stoi na jednym serwerze, rozdzielone nazwą hosta: apex na stronę produktową,
+   `menu.` na aplikację gościa, `panel.` na panel obsługi.
 2. **Kartę płatniczą** do zakupu VPS-a (od ok. 9 USD/mies.).
 
-W całej instrukcji zamiast `twojadomena.pl` wpisuj swoją domenę.
+Instrukcja używa `kelbroo.com`, bo to domena produkcyjna projektu. Wdrażając pod inną
+domenę, podmień ją wszędzie — poza tym nic się nie zmienia.
 
 ---
 
@@ -56,7 +58,17 @@ Po zakupie Hostinger uruchomi kreator konfiguracji. Jeśli go zamkniesz, wszystk
 
 ## Krok 3. Skieruj domeny na serwer
 
-Potrzebujesz **dwóch rekordów A** wskazujących na IP serwera.
+Potrzebujesz **czterech rekordów A**, wszystkie wskazujące na to samo IP serwera:
+
+| Type | Name | Points to | Co obsłuży |
+|---|---|---|---|
+| `A` | `@` | IP serwera | `kelbroo.com` — strona produktowa |
+| `A` | `www` | IP serwera | przekierowanie na apex |
+| `A` | `menu` | IP serwera | aplikacja gościa |
+| `A` | `panel` | IP serwera | panel obsługi |
+
+W polu **Name** wpisujesz **samo słowo** — `menu`, nie `menu.kelbroo.com`.
+`@` oznacza samą domenę, bez subdomeny.
 
 ### Jeśli domena jest w Hostingerze
 
@@ -64,13 +76,11 @@ Potrzebujesz **dwóch rekordów A** wskazujących na IP serwera.
 2. Kliknij swoją domenę.
 3. W lewym menu kliknij **DNS / Nameservers**.
 4. Zjedź do sekcji **Manage DNS records**.
-5. Dodaj **pierwszy** rekord:
-   - **Type:** `A`
-   - **Name:** `menu` &nbsp;← samo słowo, bez domeny
-   - **Points to:** IP twojego serwera
-   - **TTL:** `14400`
-   - Kliknij **Add Record**.
-6. Dodaj **drugi** rekord, tak samo, ale **Name:** `panel`.
+5. Dodaj kolejno **cztery** rekordy z tabeli powyżej. Dla każdego:
+   **Type** `A`, **Name** z tabeli, **Points to** IP serwera, **TTL** `14400`,
+   potem **Add Record**.
+6. Jeśli w liście jest już rekord `A` dla `@` albo `www` wskazujący gdzie indziej
+   (parking domeny, stara strona) — **usuń go**, inaczej będą dwa sprzeczne wpisy.
 
 ### Jeśli domena jest u innego operatora
 
@@ -82,11 +92,13 @@ Wejdź w panel DNS swojego operatora i dodaj te same dwa rekordy A
 Poczekaj 5–15 minut, potem na swoim komputerze (Terminal / PowerShell):
 
 ```bash
-nslookup menu.twojadomena.pl
-nslookup panel.twojadomena.pl
+nslookup kelbroo.com
+nslookup www.kelbroo.com
+nslookup menu.kelbroo.com
+nslookup panel.kelbroo.com
 ```
 
-Obie komendy muszą pokazać **IP twojego serwera**.
+Wszystkie cztery muszą pokazać **IP twojego serwera**.
 
 > ⚠️ **To jest warunek konieczny przed krokiem 7.** Certyfikat HTTPS jest pobierany
 > automatycznie z Let's Encrypt przy pierwszym uruchomieniu, a Let's Encrypt sprawdza
@@ -176,9 +188,10 @@ Aplikacja potrzebuje pliku `.env.prod` z domenami i sekretami.
 
 ```bash
 cat > .env.prod <<EOF
-GUEST_DOMAIN=menu.twojadomena.pl
-ADMIN_DOMAIN=panel.twojadomena.pl
-ACME_EMAIL=ty@twojadomena.pl
+LANDING_DOMAIN=kelbroo.com
+GUEST_DOMAIN=menu.kelbroo.com
+ADMIN_DOMAIN=panel.kelbroo.com
+ACME_EMAIL=kontakt@kelbroo.com
 
 POSTGRES_PASSWORD=$(openssl rand -base64 36 | tr -dc 'A-Za-z0-9' | cut -c1-32)
 APP_DB_PASSWORD=$(openssl rand -base64 36 | tr -dc 'A-Za-z0-9' | cut -c1-32)
@@ -195,8 +208,11 @@ cat .env.prod
 Ostatnia linia wyświetli gotowy plik — **sześć haseł zostało wylosowanych automatycznie**,
 nie musisz ich wymyślać ani zapamiętywać.
 
-Sprawdź, czy w pierwszych trzech liniach są twoje domeny i twój e-mail. Jeśli nie —
+Sprawdź, czy w pierwszych czterech liniach są twoje domeny i twój e-mail. Jeśli nie —
 popraw edytorem: `nano .env.prod` (zapis: `Ctrl+O`, `Enter`, wyjście: `Ctrl+X`).
+
+> `LANDING_DOMAIN` możesz zostawić puste, jeśli wdrażasz sam panel i aplikację gościa —
+> Caddy podstawi wtedy adres nierozwiązywalny i po prostu nie obsłuży strony produktowej.
 
 > **Nigdy nie wrzucaj `.env.prod` do gita ani nikomu nie wysyłaj.** To hasła do bazy
 > i klucze podpisujące sesje. Plik jest już wpisany w `.gitignore`.
@@ -240,7 +256,7 @@ Prawidłowy wynik:
 ## Krok 9. Sprawdź, czy żyje
 
 ```bash
-curl https://menu.twojadomena.pl/api/health
+curl https://menu.kelbroo.com/api/health
 ```
 
 Oczekiwana odpowiedź:
@@ -251,10 +267,12 @@ Oczekiwana odpowiedź:
 
 Potem otwórz w przeglądarce:
 
-- `https://menu.twojadomena.pl` — powinna pokazać się aplikacja gościa
-- `https://panel.twojadomena.pl` — ekran logowania do panelu
+- `https://kelbroo.com` — strona produktowa
+- `https://www.kelbroo.com` — musi przeskoczyć na `https://kelbroo.com`
+- `https://menu.kelbroo.com` — aplikacja gościa
+- `https://panel.kelbroo.com` — ekran logowania do panelu
 
-W obu przypadkach w pasku adresu musi być **kłódka** (certyfikat wystawił się sam).
+We wszystkich przypadkach w pasku adresu musi być **kłódka** (certyfikat wystawił się sam).
 
 > Jeśli przeglądarka krzyczy o certyfikacie, poczekaj 2 minuty i odśwież —
 > pobranie certyfikatu zajmuje chwilę po pierwszym wejściu.
@@ -277,7 +295,7 @@ i **publicznie znanym hasłem** — dlatego następny krok jest **obowiązkowy**
 
 ### 10b. Zmień hasło w panelu
 
-Wejdź na `https://panel.twojadomena.pl` i zaloguj się danymi demo:
+Wejdź na `https://panel.kelbroo.com` i zaloguj się danymi demo:
 
 | Pole | Wartość |
 |---|---|
@@ -300,7 +318,7 @@ Adresu e-mail nie da się jeszcze zmienić z panelu — to jedno polecenie w baz
 source .env.prod
 docker compose -f docker-compose.prod.yml --env-file .env.prod exec -T \
   -e PGPASSWORD="$POSTGRES_PASSWORD" postgres psql -U kelbroo -d kelbroo -c \
-  "UPDATE staff_member SET email='szef@twojadomena.pl', name='Twoje Imie' WHERE role='owner';
+  "UPDATE staff_member SET email='szef@kelbroo.com', name='Twoje Imie' WHERE role='owner';
    DELETE FROM staff_member WHERE email LIKE '%@demo.kelbroo.pl';"
 ```
 
@@ -340,9 +358,50 @@ Wszystko poniżej robisz już klikając w panelu:
 3. **Stoliki** — usuń niepotrzebne z ośmiu demo, dodaj własne, nadaj im nazwy zgodne z salą.
 4. **Kody QR** — przy każdym stoliku pobierz kod QR, wydrukuj i połóż na stoliku.
 
-> ⚠️ Kody QR zawierają adres `menu.twojadomena.pl` wpisany **na sztywno w momencie budowania**.
+> ⚠️ Kody QR zawierają adres `menu.kelbroo.com` wpisany **na sztywno w momencie budowania**.
 > Jeśli kiedykolwiek zmienisz domenę gościa w `.env.prod`, musisz **przebudować** aplikację
 > (`up -d --build`) **i wydrukować kody na nowo**.
+
+---
+
+## Strona produktowa na kelbroo.com
+
+Pod apeksem stoi **statyczny plik** [design/landing-page.html](../design/landing-page.html),
+podmontowany do Caddy'ego jako `index.html`. Nie ma osobnego kontenera ani procesu
+budowania — Caddy serwuje plik prosto z dysku.
+
+### Aktualizacja treści
+
+```bash
+cd /root/kelbroo && git pull
+```
+
+**I to wszystko.** Żadnego przebudowywania, żadnego restartu — sprawdziłem to:
+Caddy czyta plik przy każdym żądaniu, więc nowa wersja jest widoczna od razu po `git pull`.
+
+### Czego ta strona jeszcze nie robi
+
+Landing jest w tej chwili **wizualną wydmuszką**, nie działającym lejkiem sprzedażowym:
+
+| Element | Stan |
+|---|---|
+| „Zaloguj się" w nagłówku | **działa** — prowadzi na `https://panel.kelbroo.com` |
+| „Zacznij 14 dni za darmo", „Wybierz Starter" | przewijają do sekcji cennika; **nie ma rejestracji ani płatności** |
+| „Zobacz demo menu", „Porozmawiajmy" | odnośniki puste — brak sekcji docelowej |
+| Regulamin, Polityka prywatności, RODO | odnośniki puste — **te dokumenty nie istnieją** |
+| Segmenty (restauracje, kawiarnie, bary, hotele, sieci) | odnośniki puste |
+
+Zanim skierujesz na tę stronę płatny ruch, trzeba zamknąć co najmniej dwie rzeczy:
+**ścieżkę zakupu abonamentu** (System 1, zakres [docs/01-landing-marketing.md](01-landing-marketing.md))
+oraz **dokumenty prawne** — bez regulaminu i polityki prywatności strona zbierająca
+zapisy nie spełnia wymogów RODO.
+
+### Docelowo: apps/web-marketing
+
+Statyczny plik jest rozwiązaniem na teraz. Gdy powstanie `apps/web-marketing` (Next.js,
+SSG/ISR, z checkoutem abonamentu), podmienia się jeden blok w
+[deploy/Caddyfile](../deploy/Caddyfile) — `root` + `file_server` na `reverse_proxy` —
+a DNS, certyfikat i adres zostają bez zmian.
 
 ---
 
@@ -494,13 +553,14 @@ usuwa, a uprawnienia odtwarza migracja. Nie musisz nic nadawać ręcznie.
 
 | Objaw | Przyczyna | Co zrobić |
 |---|---|---|
-| Przeglądarka: „nie można połączyć" | DNS jeszcze nie wskazuje na serwer albo firewall blokuje 80/443 | `nslookup menu.twojadomena.pl` — sprawdź IP; sprawdź reguły z kroku 4 |
+| Przeglądarka: „nie można połączyć" | DNS jeszcze nie wskazuje na serwer albo firewall blokuje 80/443 | `nslookup menu.kelbroo.com` — sprawdź IP; sprawdź reguły z kroku 4 |
 | Błąd certyfikatu HTTPS | Aplikacja wystartowała, zanim DNS się rozpropagował | Napraw DNS, potem `docker compose -f docker-compose.prod.yml --env-file .env.prod restart caddy` |
 | `migrate` ma stan `Exited (1)` | Migracje padły — najczęściej literówka w `.env.prod` | `... logs migrate` i przeczytaj błąd |
 | `api` w pętli `Restarting` | API nie łączy się z bazą lub Redisem | `... logs api` — na dole będzie konkretny powód |
 | Budowanie przerywa się bez błędu | Zabrakło RAM-u (KVM 1) | Zrób [krok 5b](#krok-5b-tylko-kvm-1--dodaj-swap) i powtórz `up -d --build` |
+| `kelbroo.com` pokazuje parking domeny albo starą stronę | Został stary rekord `A` dla `@` lub `www` | Usuń go w **Manage DNS records**, zostaw tylko wpisy z kroku 3 |
 | Nie pamiętam hasła do panelu | — | [Odzyskiwanie dostępu](#odzyskiwanie-dostępu-do-panelu) poniżej |
-| Logowanie zwraca „Operacja się nie powiodła" | Odpowiedź nie pochodzi z API — panel pyta pod zły adres albo API leży | `curl -i -X POST https://panel.twojadomena.pl/api/auth/login -H 'content-type: application/json' -d '{}'` — jeśli to zwraca poprawny JSON, przebuduj panel: `up -d --build` |
+| Logowanie zwraca „Operacja się nie powiodła" | Odpowiedź nie pochodzi z API — panel pyta pod zły adres albo API leży | `curl -i -X POST https://panel.kelbroo.com/api/auth/login -H 'content-type: application/json' -d '{}'` — jeśli to zwraca poprawny JSON, przebuduj panel: `up -d --build` |
 
 Podgląd wszystkich logów naraz:
 
