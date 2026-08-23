@@ -46,11 +46,11 @@ test.describe('gość przy stoliku', () => {
       // Nazwa nie jest wypisana na ekranie, ale czytnik ekranu musi ją podać.
       await expect(znak).toHaveAttribute(
         'aria-label',
-        /(gwiazdka|serce|kwadrat|trójkąt|koło|domek|strzałka|księżyc|romb|błyskawica)/,
+        /(gwiazdka|serce|kwadrat|trójkąt|koło|domek|strzałka|samochodzik|romb|błyskawica)/,
       );
       await expect(
         naglowek.getByText(
-          /(gwiazdka|serce|kwadrat|trójkąt|koło|domek|strzałka|księżyc|romb|błyskawica)/,
+          /(gwiazdka|serce|kwadrat|trójkąt|koło|domek|strzałka|samochodzik|romb|błyskawica)/,
         ),
       ).toHaveCount(0);
     } finally {

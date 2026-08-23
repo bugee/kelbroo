@@ -1,0 +1,11 @@
+-- Półksiężyc zastąpiony samochodzikiem.
+--
+-- Jego ścieżka SVG nie rysowała nic: łuk powrotny miał promień 7, a musiał pokryć
+-- cięciwę o długości 18. Przeglądarka skalowała wtedy promień do 9, obie połówki
+-- się pokrywały i figura miała zerowe pole. Goście z tym symbolem widzieli u siebie
+-- zapasowe kółko — nie do odróżnienia od gościa z symbolem „koło", więc dwie osoby
+-- przy jednym stoliku mogły wyglądać identycznie.
+--
+-- Podmieniamy też wiersze historyczne: nikt nigdy nie zobaczył półksiężyca, więc
+-- nie ma czego zachowywać, a rachunek zostaje czytelny.
+UPDATE "table_participant" SET "symbol" = 'car' WHERE "symbol" = 'moon';

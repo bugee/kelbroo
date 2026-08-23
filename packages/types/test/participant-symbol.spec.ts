@@ -10,6 +10,7 @@ import {
   COLOR_LABEL,
   PARTICIPANT_COLORS,
   PARTICIPANT_SYMBOLS,
+  SYMBOL_PATH,
   SYMBOL_LABEL,
   describeIdentity,
 } from '../src/participant-symbol.js';
@@ -52,5 +53,22 @@ describe('opis znaku rozpoznawczego', () => {
       expect(COLOR_LABEL[color]).toBeTruthy();
       expect(COLOR_HEX[color]).toMatch(/^#[0-9A-F]{6}$/i);
     }
+  });
+
+  it('ma kształt dla każdego symbolu', () => {
+    for (const symbol of PARTICIPANT_SYMBOLS) {
+      const path = SYMBOL_PATH[symbol];
+      expect(path, `brak kształtu dla „${symbol}"`).toBeTruthy();
+      // Ścieżka musi się zamykać, inaczej wypełnienie bywa nieprzewidywalne.
+      expect(path.trim().toLowerCase().endsWith('z'), `„${symbol}" nie domyka ścieżki`).toBe(true);
+    }
+  });
+
+  it('nie zna już półksiężyca — jego kształt miał zerowe pole', () => {
+    // Łuk powrotny o promieniu 7 nie pokrywał cięciwy 18; przeglądarka skalowała
+    // promień do 9, obie połówki się znosiły i gość dostawał zapasowe kółko,
+    // nie do odróżnienia od gościa z symbolem „koło".
+    expect(PARTICIPANT_SYMBOLS).not.toContain('moon');
+    expect(PARTICIPANT_SYMBOLS).toContain('car');
   });
 });

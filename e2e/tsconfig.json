@@ -4,6 +4,10 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "types": ["node"],
+    // Testy uruchamiają kod w przeglądarce przez `page.evaluate`, więc muszą znać
+    // typy DOM. Sam zestaw testowy działa w Node — to biblioteka typów dla tych
+    // fragmentów, nie deklaracja środowiska.
+    "lib": ["ES2022", "DOM"],
     "noEmit": true
   },
   "include": ["**/*.ts"]

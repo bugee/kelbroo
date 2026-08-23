@@ -17,7 +17,7 @@ export const PARTICIPANT_SYMBOLS = [
   'circle',
   'house',
   'arrow',
-  'moon',
+  'car',
   'diamond',
   'bolt',
 ] as const;
@@ -33,7 +33,7 @@ export const SYMBOL_LABEL: Record<ParticipantSymbol, string> = {
   circle: 'koło',
   house: 'domek',
   arrow: 'strzałka',
-  moon: 'księżyc',
+  car: 'samochodzik',
   diamond: 'romb',
   bolt: 'błyskawica',
 };
@@ -108,7 +108,7 @@ const GENDER: Record<ParticipantSymbol, Gender> = {
   circle: 'n',
   house: 'm',
   arrow: 'f',
-  moon: 'm',
+  car: 'm',
   diamond: 'm',
   bolt: 'f',
 };
@@ -128,3 +128,33 @@ function adjective(color: ParticipantColor, gender: Gender): string {
   if (gender === 'f') return `${stem}a`;
   return base.endsWith('i') ? `${stem}ie` : `${stem}e`;
 }
+
+/**
+ * Kształty w układzie 24×24, wyśrodkowane.
+ *
+ * Leżą obok listy symboli, a nie przy komponencie, z jednego powodu: symbol bez
+ * kształtu to symbol niewidoczny, a rozdzielone listy nie dawały tego wykryć.
+ * Tak właśnie zniknął półksiężyc — miał wpis w zestawie i ścieżkę, której łuk
+ * powrotny był zbyt mały, żeby pokryć własną cięciwę. Przeglądarka skalowała mu
+ * promień, obie połówki się pokrywały i figura miała zerowe pole. Gość dostawał
+ * wtedy zapasowe kółko, nie do odróżnienia od gościa z symbolem „koło".
+ *
+ * Kształty są celowo proste i zwarte: ikona bywa wielkości paznokcia, a mimo to
+ * ma być rozpoznawalna z drugiej strony stolika.
+ */
+export const SYMBOL_PATH: Record<ParticipantSymbol, string> = {
+  star: 'M12 2.5l2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 17.6 6.1 20.7l1.2-6.6L2.5 9.5l6.6-.9z',
+  heart:
+    'M12 21l-1.45-1.32C5.4 15.36 2 12.28 2 8.5A4.5 4.5 0 016.5 4c1.74 0 3.41.81 4.5 2.09C12.09 4.81 13.76 4 15.5 4A4.5 4.5 0 0120 8.5c0 3.78-3.4 6.86-8.55 11.18z',
+  square: 'M4 4h16v16H4z',
+  triangle: 'M12 3l9 17H3z',
+  circle: 'M12 3a9 9 0 100 18 9 9 0 000-18z',
+  house: 'M12 3l9 8h-2.5v10h-5v-6h-3v6h-5V11H3z',
+  arrow: 'M12 2l7 8h-4v12h-6V10H5z',
+  // Promienie kół (2.2) z zapasem pokrywają swoje cięciwy (4.4) — łuk o promieniu
+  // mniejszym niż połowa cięciwy jest niewykonalny i przeglądarka po cichu skaluje
+  // go w górę. Na tym poległ półksiężyc.
+  car: 'M2 14l1.8-4.6A3 3 0 0 1 6.6 7.5h10.8a3 3 0 0 1 2.8 1.9L22 14v3.5h-2.2a2.2 2.2 0 1 1-4.4 0H8.6a2.2 2.2 0 1 1-4.4 0H2z',
+  diamond: 'M12 2l8 10-8 10-8-10z',
+  bolt: 'M13 2L4 14h6l-1 8 9-12h-6z',
+};

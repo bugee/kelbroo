@@ -197,7 +197,7 @@ export function GuestApp({ qrToken }: { qrToken: string }) {
         <div className="mt-2 flex items-center justify-between gap-3">
           {/*
             Sam kształt w kolorze — gość widzi go i nazywa własnymi słowami.
-            Podpis „żółty półksiężyc" byłby dopisywaniem oczywistości pod obrazkiem;
+            Podpis „żółty samochodzik" byłby dopisywaniem oczywistości pod obrazkiem;
             nazwa zostaje w `aria-label`, dla czytników ekranu.
           */}
           <span className="flex items-center gap-2 text-xs text-[var(--muted)]">

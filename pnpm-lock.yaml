@@ -215,6 +215,9 @@ importers:
       '@kelbroo/config':
         specifier: workspace:*
         version: link:../packages/config
+      '@kelbroo/types':
+        specifier: workspace:*
+        version: link:../packages/types
       '@playwright/test':
         specifier: ^1.50.0
         version: 1.62.1
