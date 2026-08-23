@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
   callWaiter,
+  connectVisit,
   enterTable,
   fetchActiveCalls,
   fetchOrders,
@@ -43,6 +44,9 @@ export function GuestApp({ qrToken }: { qrToken: string }) {
   const [cart, setCart] = useState<CartLine[]>([]);
   const [openDish, setOpenDish] = useState<Dish | null>(null);
   const [orders, setOrders] = useState<SessionOrders | null>(null);
+  // Licznik zmian z kanału wizyty. Przycisk kelnera nasłuchuje go bez własnego
+  // połączenia — jedno gniazdo na kartę, tak jak w panelu.
+  const [callTick, setCallTick] = useState(0);
   const [sending, setSending] = useState(false);
 
   const load = useCallback(
@@ -98,6 +102,15 @@ export function GuestApp({ qrToken }: { qrToken: string }) {
   const currency = entry.restaurant.currency;
   const cartTotal = cart.reduce((sum, line) => sum + lineTotal(line), 0);
   const canOrder = entry.session.orderingEnabled;
+
+  // Status zamówienia zmienia się na ekranie gościa sam, gdy kuchnia go przestawi.
+  useEffect(() => {
+    const channel = connectVisit(qrToken, (kind) => {
+      if (kind === 'orders') void refreshOrders();
+      else setCallTick((tick) => tick + 1);
+    });
+    return () => channel?.close();
+  }, [qrToken, refreshOrders]);
 
   const send = async () => {
     setSending(true);
@@ -196,7 +209,7 @@ export function GuestApp({ qrToken }: { qrToken: string }) {
           </button>
         ) : (
           <div className="flex gap-2">
-            <CallWaiterButton qrToken={qrToken} />
+            <CallWaiterButton qrToken={qrToken} tick={callTick} />
             <TabButton active={view === 'menu'} onClick={() => setView('menu')}>
               Menu
             </TabButton>
@@ -486,7 +499,7 @@ function BillRequest({ qrToken, currency }: { qrToken: string; currency: string 
  * Przycisk, który sam po chwili wraca do punktu wyjścia, kłamałby dwa razy —
  * najpierw obiecując, że ktoś idzie, potem gubiąc trwające zgłoszenie.
  */
-function CallWaiterButton({ qrToken }: { qrToken: string }) {
+function CallWaiterButton({ qrToken, tick }: { qrToken: string; tick: number }) {
   const [call, setCall] = useState<ActiveCall | null>(null);
   const [sending, setSending] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -500,23 +513,12 @@ function CallWaiterButton({ qrToken }: { qrToken: string }) {
     }
   }, [qrToken]);
 
-  // Stan początkowy: trwające zgłoszenie ma przetrwać przeładowanie strony.
+  // Stan początkowy przy wejściu, a potem po każdym zdarzeniu z kanału wizyty.
+  // `tick` rośnie, gdy kelner przyjmie albo zamknie zgłoszenie — polling zniknął
+  // razem z podłączeniem realtime.
   useEffect(() => {
     void refresh();
-  }, [refresh]);
-
-  // Odpytujemy tylko wtedy, gdy jest czego pilnować. Zależność jest boolowska,
-  // nie obiektem zgłoszenia — inaczej każde odświeżenie podmieniałoby referencję
-  // i uruchamiało efekt od nowa, w kółko.
-  const waiting = call !== null;
-  useEffect(() => {
-    if (!waiting) return;
-
-    // Realtime dla gościa czeka na osobne zadanie; do tego czasu krótki polling
-    // jest uczciwszy niż timer udający, że coś się wydarzyło.
-    const timer = setInterval(() => void refresh(), 5_000);
-    return () => clearInterval(timer);
-  }, [refresh, waiting]);
+  }, [refresh, tick]);
 
   const send = async () => {
     setSending(true);

@@ -25,6 +25,7 @@ import { BadgesService } from './staff/badges.service';
 import { GuestSignalsService } from './guest/guest-signals.service';
 import { GuestController } from './guest/guest.controller';
 import { StaffSignalsGateway } from './realtime/staff-signals.gateway';
+import { GuestGateway } from './realtime/guest.gateway';
 import { StaffSessionsService } from './staff/staff-sessions.service';
 import { OrdersGateway } from './realtime/orders.gateway';
 import { ManagementController } from './management/management.controller';
@@ -71,6 +72,7 @@ import { StaffAdminService } from './management/staff.admin.service';
     BadgesService,
     GuestSignalsService,
     StaffSignalsGateway,
+    GuestGateway,
     StaffSessionsService,
     OrdersGateway,
     MenuAdminService,

@@ -27,9 +27,10 @@ Czego brakuje do pełnego zakresu etapu 1: **Systemu 1 w całości** (rejestracj
 których modele istnieją w bazie, ale nie ma do nich ani linii kodu — `SettlementGroup`,
 `Review`, `WaiterCall`, `OrderItemShare`.
 
-**Najbliższa blokada: sekcja 4.** Gość umie już zawołać kelnera i poprosić o rachunek
-z wyborem podziału, a panel liczy czekającą pracę. Zostaje reszta ekranu gościa —
-na czele **status zamówienia na żywo**, bo zdejmie tymczasowy polling z przycisku wezwania.
+**Najbliższa blokada: sekcja 4.** Ekran gościa działa już na żywo — status zamówienia
+i stan wezwania zmieniają się same. Zostają cztery rzeczy: ocena dania, zestawienie
+na e-mail, wybór nicku i awatara oraz zmiana hosta wizyty. Do tego powrót do wizyty
+bez ponownego skanowania.
 
 ---
 
@@ -37,14 +38,6 @@ na czele **status zamówienia na żywo**, bo zdejmie tymczasowy polling z przyci
 
 Modele są w schemacie od pierwszej migracji i nie mają ani jednego odwołania w kodzie.
 
-- [ ] **Status zamówienia na żywo** — `orders.gateway.ts` istnieje, ale aplikacja gościa
-      nie używa Socket.IO, a Caddy proxuje `/socket.io` wyłącznie na domenie panelu.
-      Wymaga zmiany w [deploy/Caddyfile](../deploy/Caddyfile).
-
-      Zdejmie przy okazji **polling z przycisku wezwania kelnera** — dziś odpytuje
-      `GET /guest/calls` co 5 s, dopóki zgłoszenie jest otwarte. To rozwiązanie
-      tymczasowe, świadomie wpisane w kod z komentarzem; kanał realtime dla gościa
-      zastąpi je jednym zdarzeniem. Naturalny następny krok.
 - [ ] **Ocena dania po posiłku** (`Review`).
 - [ ] **Zestawienie rachunku na e-mail** — poczta przez SMTP Hostingera, nadawca
       `kontakt@kelbroo.com`. W projekcie nie ma jeszcze żadnej wysyłki, więc najpierw
@@ -190,6 +183,8 @@ Z [product.md §7](product.md#7-wymagania-niefunkcjonalne-dotyczą-wszystkich-tr
 - [x] Prośba o rachunek z wyborem podziału po stronie gościa — tą samą ścieżką co w panelu
 - [x] Liczniki czekającej pracy przy pozycjach menu panelu, zależne od roli, z wezwaniami
 - [x] Jedno połączenie realtime na kartę zamiast osobnego dla każdego ekranu
+- [x] Status zamówienia na żywo u gościa — osobny kanał wizyty, z proxy w Caddym
+- [x] Polling z przycisku wezwania kelnera zdjęty, zastąpiony zdarzeniem
 
 ---
 

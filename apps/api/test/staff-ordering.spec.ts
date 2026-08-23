@@ -14,6 +14,7 @@ import { MenuService } from '../src/menu/menu.service';
 import { DailyCounterService } from '../src/common/daily-counter.service';
 import { OrderPricingService } from '../src/orders/order-pricing.service';
 import { OrdersGateway } from '../src/realtime/orders.gateway';
+import type { GuestGateway } from '../src/realtime/guest.gateway';
 import { StaffOrderingService } from '../src/staff/staff-ordering.service';
 import type { StaffContext } from '../src/auth/auth.types';
 
@@ -22,12 +23,19 @@ const prisma = new PrismaService();
 
 // Gateway rozsyła po Socket.IO; w teście wystarczy, że wywołanie nie wybucha.
 const gateway = { publish: () => undefined } as unknown as OrdersGateway;
+// Zdarzenia do gościa notujemy, zamiast rozsyłać — sprawdzamy, że w ogóle lecą.
+const visitEvents: { tableSessionId: string; kind: string }[] = [];
+const guestGateway = {
+  publish: (tableSessionId: string, event: { kind: string }) =>
+    visitEvents.push({ tableSessionId, kind: event.kind }),
+} as unknown as GuestGateway;
 const ordering = new StaffOrderingService(
   prisma,
   new DailyCounterService(),
   new OrderPricingService(),
   new MenuService(),
   gateway,
+  guestGateway,
 );
 
 let organizationId: string;
@@ -167,6 +175,20 @@ describe('zamówienie złożone przez kelnera', () => {
       where: { tableSessionId: sesje[0]?.id },
     });
     expect(zamowienia.map((o) => o.id).sort()).toEqual([pierwsze.id, drugie.id].sort());
+  });
+
+  it('powiadamia telefon gościa, że coś się zmieniło w jego rachunku', async () => {
+    const order = await zamow(tableId);
+    const zamowienie = await direct.order.findUniqueOrThrow({ where: { id: order.id } });
+
+    visitEvents.length = 0;
+    await ordering.addItems(waiter, order.id, { items: [{ menuItemId: kawaId, quantity: 1 }] });
+
+    // Pozycja dołożona przez kelnera ma pojawić się u gościa bez odświeżania.
+    expect(visitEvents).toContainEqual({
+      tableSessionId: zamowienie.tableSessionId,
+      kind: 'orders',
+    });
   });
 
   it('oznacza pozycje jako dodane przez obsługę, z nazwiskiem', async () => {

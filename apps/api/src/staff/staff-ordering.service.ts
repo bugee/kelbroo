@@ -18,6 +18,7 @@ import {
   type RequestedItem,
 } from '../orders/order-pricing.service';
 import { OrdersGateway } from '../realtime/orders.gateway';
+import { GuestGateway } from '../realtime/guest.gateway';
 import type { StaffContext } from '../auth/auth.types';
 
 /**
@@ -37,6 +38,7 @@ export class StaffOrderingService {
     private readonly pricing: OrderPricingService,
     private readonly menu: MenuService,
     private readonly gateway: OrdersGateway,
+    private readonly guests: GuestGateway,
   ) {}
 
   private restaurantOf(staff: StaffContext): string {
@@ -471,6 +473,8 @@ export class StaffOrderingService {
   }
 
   private announce(order: Prisma.OrderGetPayload<{ include: typeof ORDER_DETAIL }>): void {
+    // Pozycja dołożona przez kelnera ma pojawić się na telefonie gościa sama.
+    this.guests.publish(order.tableSessionId, { kind: 'orders' });
     this.gateway.publish(order.restaurantId, {
       orderId: order.id,
       orderNumber: order.orderNumber,

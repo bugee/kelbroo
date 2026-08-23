@@ -1,5 +1,6 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { GuestGateway } from '../realtime/guest.gateway';
 import type { StaffContext } from '../auth/auth.types';
 
 /**
@@ -10,7 +11,10 @@ import type { StaffContext } from '../auth/auth.types';
  */
 @Injectable()
 export class WaiterCallsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly guests: GuestGateway,
+  ) {}
 
   private restaurantOf(staff: StaffContext): string {
     if (!staff.restaurantId) {
@@ -77,6 +81,11 @@ export class WaiterCallsService {
       }
 
       const updated = await tx.waiterCall.update({ where: { id: call.id }, data });
+
+      // Przycisk gościa zmienia napis na „Kelner idzie" bez czekania na odpytanie.
+      if (updated.tableSessionId) {
+        this.guests.publish(updated.tableSessionId, { kind: 'call' });
+      }
       return { id: updated.id, status: updated.status };
     });
   }

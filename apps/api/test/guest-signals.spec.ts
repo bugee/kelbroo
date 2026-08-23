@@ -12,6 +12,7 @@ import { SplitService } from '../src/staff/split.service';
 import { WaiterCallsService } from '../src/staff/waiter-calls.service';
 import { GuestSignalsService } from '../src/guest/guest-signals.service';
 import { StaffSignalsGateway } from '../src/realtime/staff-signals.gateway';
+import type { GuestGateway } from '../src/realtime/guest.gateway';
 import type { OrdersGateway } from '../src/realtime/orders.gateway';
 import type { StaffContext } from '../src/auth/auth.types';
 
@@ -28,7 +29,14 @@ signalsGateway.publishWaiterCall = (restaurantId, event) => {
 
 const split = new SplitService(prisma);
 const guestSignals = new GuestSignalsService(prisma, split, signalsGateway);
-const waiterCalls = new WaiterCallsService(prisma);
+// Kanał gościa notuje zdarzenia zamiast je rozsyłać — sprawdzamy, że lecą.
+const visitEvents: { tableSessionId: string; kind: string }[] = [];
+const guestGateway = {
+  publish: (tableSessionId: string, event: { kind: string }) =>
+    visitEvents.push({ tableSessionId, kind: event.kind }),
+} as unknown as GuestGateway;
+
+const waiterCalls = new WaiterCallsService(prisma, guestGateway);
 
 let organizationId: string;
 let restaurantId: string;
@@ -211,10 +219,13 @@ describe('wezwanie kelnera', () => {
     // „Wysłane" — zgłoszenie leży w kolejce, ale nikt go jeszcze nie przyjął.
     expect(poWyslaniu).toEqual([{ id: call.id, reason: 'help', status: 'open' }]);
 
+    visitEvents.length = 0;
     await waiterCalls.acknowledge(staff, call.id);
     const poPrzyjeciu = await guestSignals.activeCalls(organizationId, guestSession.id);
     // Dopiero teraz gościowi wolno powiedzieć, że kelner idzie.
     expect(poPrzyjeciu[0]?.status).toBe('acknowledged');
+    // I dowiaduje się o tym zdarzeniem, nie odpytywaniem.
+    expect(visitEvents).toEqual([{ tableSessionId: guestSession.tableSessionId, kind: 'call' }]);
 
     await waiterCalls.resolve(staff, call.id);
     expect(await guestSignals.activeCalls(organizationId, guestSession.id)).toEqual([]);

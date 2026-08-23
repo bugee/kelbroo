@@ -39,6 +39,13 @@ www.{$LANDING_DOMAIN} {
 		reverse_proxy api:4000
 	}
 
+	# Gość dostaje status zamówienia na żywo tym samym kanałem co panel, tylko
+	# w osobnej przestrzeni nazw. Bez tego bloku aplikacja gościa nie ma jak się
+	# połączyć i wraca do odpytywania.
+	handle /socket.io/* {
+		reverse_proxy api:4000
+	}
+
 	handle {
 		reverse_proxy web-guest:3000
 	}

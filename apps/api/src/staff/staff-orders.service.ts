@@ -14,6 +14,7 @@ import {
 } from '@kelbroo/types';
 import { PrismaService } from '../prisma/prisma.service';
 import { OrdersGateway } from '../realtime/orders.gateway';
+import { GuestGateway } from '../realtime/guest.gateway';
 import type { StaffContext } from '../auth/auth.types';
 
 const ORDER_VIEW = {
@@ -27,6 +28,7 @@ export class StaffOrdersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly gateway: OrdersGateway,
+    private readonly guests: GuestGateway,
   ) {}
 
   private restaurantOf(staff: StaffContext): string {
@@ -204,6 +206,8 @@ export class StaffOrdersService {
       tableLabel: updated.table.label,
       reason: eventType === 'canceled' ? 'status_changed' : eventType,
     });
+    // Gość przy stoliku widzi zmianę statusu bez odświeżania ekranu.
+    this.guests.publish(updated.tableSessionId, { kind: 'orders' });
 
     return toStaffView(updated);
   }

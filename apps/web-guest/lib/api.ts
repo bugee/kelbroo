@@ -5,6 +5,8 @@
  * urządzenie może odwiedzić kilka lokali, a wizyta przy stoliku jest osobna
  * dla każdego z nich.
  */
+import { io } from 'socket.io-client';
+
 /**
  * Adres API.
  *
@@ -20,6 +22,8 @@
 // zmiennej. Przy `??` bundle dostawał wtedy adres bazowy '' i przeglądarka pytała
 // o /auth/login zamiast /api/auth/login — czyli o stronę 404 aplikacji Next.
 const API = process.env.NEXT_PUBLIC_API_URL || '/api';
+/** Socket.IO nie wisi pod /api — to osobna ścieżka na tym samym originie. */
+const WS = API.replace(/\/api\/?$/, '');
 
 export interface Modifier {
   id: string;
@@ -272,4 +276,23 @@ async function request<T = void>(qrToken: string, path: string, body: unknown): 
     throw new Error(message);
   }
   return payload as T;
+}
+
+/**
+ * Kanał wizyty.
+ *
+ * Zdarzenie mówi tylko, że coś się zmieniło — dane dociągamy przez REST, więc
+ * zgubiona wiadomość nie zostawia gościa z nieaktualnym rachunkiem. Jedno
+ * połączenie na kartę, tak jak w panelu.
+ */
+export function connectVisit(
+  qrToken: string,
+  onChange: (kind: 'orders' | 'call') => void,
+): { close: () => void } | null {
+  const token = readToken(qrToken);
+  if (!token) return null;
+
+  const socket = io(`${WS}/guest`, { auth: { token }, transports: ['websocket', 'polling'] });
+  socket.on('visit.changed', (event: { kind: 'orders' | 'call' }) => onChange(event.kind));
+  return { close: () => socket.close() };
 }
