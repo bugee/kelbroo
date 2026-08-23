@@ -380,6 +380,13 @@ export class StaffController {
     return this.lifecycle.removeParticipant(staff, id, participantId);
   }
 
+  /** Wszyscy oczekujący w lokalu — kolejka „Do potwierdzenia" bierze ją stąd. */
+  @Get('pending-guests')
+  @Roles('owner', 'manager', 'waiter')
+  pendingGuestsInRestaurant(@Staff() staff: StaffContext) {
+    return this.access.pendingForRestaurant(staff);
+  }
+
   /** Kto czeka na wpuszczenie do wizyty — gdy lokal wymaga zgody hosta. */
   @Get('sessions/:id/pending-guests')
   @Roles('owner', 'manager', 'waiter')

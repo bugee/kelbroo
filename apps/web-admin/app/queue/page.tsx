@@ -7,6 +7,8 @@ import { useLiveData } from '@/components/useLiveData';
 import {
   acknowledgeCall,
   confirmOrder,
+  decidePendingGuest,
+  fetchPendingGuests,
   fetchQueue,
   fetchWaiterCalls,
   minutesSince,
@@ -42,6 +44,7 @@ function Queue() {
   if (orders.length === 0) {
     return (
       <>
+        <WaitingGuests />
         <Calls />
         <p className="mt-12 text-center text-[var(--muted)]">
           Brak zamówień czekających na potwierdzenie.
@@ -52,6 +55,7 @@ function Queue() {
 
   return (
     <>
+      <WaitingGuests />
       <Calls />
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {orders.map((order) => (
@@ -131,6 +135,73 @@ function Queue() {
         ))}
       </div>
     </>
+  );
+}
+
+/**
+ * Goście czekający na wpuszczenie do stolika.
+ *
+ * Nad wezwaniami, bo taki gość nie może zrobić nic — nawet obejrzeć rachunku —
+ * dopóki ktoś nie kliknie. Decyzja należy do hosta, ale host bywa zajęty
+ * jedzeniem albo w ogóle nie zauważył, że ktoś czeka.
+ */
+function WaitingGuests() {
+  const load = useCallback(() => fetchPendingGuests(), []);
+  const { data: guests, refresh } = useLiveData(load);
+  const [busy, setBusy] = useState<string | null>(null);
+
+  const decide = async (
+    sessionId: string,
+    participantId: string,
+    decision: 'approve' | 'reject',
+  ) => {
+    setBusy(participantId);
+    try {
+      await decidePendingGuest(sessionId, participantId, decision);
+      await refresh();
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  if (!guests || guests.length === 0) return null;
+
+  return (
+    <ul className="mb-4 flex flex-col gap-2">
+      {guests.map((guest) => (
+        <li
+          key={guest.id}
+          className="flex flex-wrap items-center gap-3 rounded-[var(--radius-card)] border border-[var(--teal)] bg-[var(--teal-wash)] p-3"
+        >
+          <GuestMark symbol={guest.symbol} color={guest.color} size={24} />
+          <span className="min-w-0 flex-1">
+            <span className="block font-semibold">
+              {guest.tableLabel} · czeka na wpuszczenie do stolika
+            </span>
+            <span className="mono text-sm text-[var(--muted)]">
+              {guest.displayName} · {minutesSince(guest.joinedAt)} min
+            </span>
+          </span>
+
+          <button
+            type="button"
+            disabled={busy === guest.id}
+            onClick={() => void decide(guest.sessionId, guest.id, 'approve')}
+            className="min-h-11 rounded-[var(--radius-control)] bg-[var(--orange)] px-4 text-sm font-semibold text-white disabled:opacity-50"
+          >
+            Wpuść
+          </button>
+          <button
+            type="button"
+            disabled={busy === guest.id}
+            onClick={() => void decide(guest.sessionId, guest.id, 'reject')}
+            className="mono min-h-11 px-3 text-xs text-[var(--muted)] disabled:opacity-50"
+          >
+            To nie u nas
+          </button>
+        </li>
+      ))}
+    </ul>
   );
 }
 

@@ -17,6 +17,12 @@ export interface PendingGuest {
   joinedAt: Date;
 }
 
+/** To samo, plus stolik — panel musi wiedzieć, gdzie ten gość siedzi. */
+export interface StaffPendingGuest extends PendingGuest {
+  sessionId: string;
+  tableLabel: string;
+}
+
 /**
  * Wpuszczanie gości do wizyty, gdy lokal włączył `hostApprovesGuests`.
  *
@@ -35,6 +41,46 @@ export class TableAccessService {
   /** Kolejka oczekujących — widoczna dla hosta i dla panelu. */
   async pending(organizationId: string, tableSessionId: string): Promise<PendingGuest[]> {
     return this.prisma.withTenant(organizationId, (tx) => this.pendingWithin(tx, tableSessionId));
+  }
+
+  /**
+   * Wszyscy oczekujący w lokalu — kolejka dla panelu.
+   *
+   * Panel nie ogląda pojedynczej wizyty, tylko całą salę: gość, który utknął,
+   * ma się pokazać obsłudze bez wchodzenia na ekran konkretnego stolika.
+   */
+  async pendingForRestaurant(staff: StaffContext): Promise<StaffPendingGuest[]> {
+    if (!staff.restaurantId) {
+      throw new ForbiddenException('Konto nie jest przypisane do lokalu.');
+    }
+    const restaurantId = staff.restaurantId;
+
+    return this.prisma.withTenant(staff.organizationId, async (tx) => {
+      const oczekujacy = await tx.tableParticipant.findMany({
+        where: {
+          leftAt: null,
+          approvedAt: null,
+          tableSession: {
+            restaurantId,
+            status: { in: ['open', 'awaiting_settlement'] },
+          },
+        },
+        orderBy: { joinedAt: 'asc' },
+        include: {
+          tableSession: { select: { id: true, table: { select: { label: true } } } },
+        },
+      });
+
+      return oczekujacy.map((p) => ({
+        id: p.id,
+        displayName: p.displayName,
+        symbol: p.symbol,
+        color: p.color,
+        joinedAt: p.joinedAt,
+        sessionId: p.tableSession.id,
+        tableLabel: p.tableSession.table.label,
+      }));
+    });
   }
 
   /** Kolejka dla gościa: wyłącznie host ją widzi i wyłącznie dla swojej wizyty. */

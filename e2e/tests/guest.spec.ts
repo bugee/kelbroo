@@ -119,9 +119,10 @@ test.describe('host wpuszcza do stolika', () => {
       await gosc.goto(`${GUEST_URL}/t/${fixture.qrToken}`);
       await expect(gosc.getByText(/musi Cię wpuścić/)).toBeVisible();
 
-      // Host dostaje kolejkę i wpuszcza.
-      await host.reload();
-      await expect(host.getByText(/chce dołączyć do stolika/)).toBeVisible();
+      // Kolejka pojawia się u hosta sama. Bez przeładowania — bo host trzyma
+      // telefon w ręce i nie ma powodu go odświeżać, a wcześniej właśnie tego
+      // wymagał: wejście gościa nie wysyłało żadnego sygnału.
+      await expect(host.getByText(/chce dołączyć do stolika/)).toBeVisible({ timeout: 20_000 });
       await host.getByRole('button', { name: 'Wpuść' }).click();
 
       // Ekran czekającego odblokowuje się bez odświeżania strony.

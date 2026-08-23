@@ -241,6 +241,20 @@ export const removeParticipant = (sessionId: string, participantId: string) =>
     method: 'DELETE',
   });
 
+export interface StaffPendingGuest {
+  id: string;
+  displayName: string;
+  symbol: string;
+  color: string;
+  joinedAt: string;
+  sessionId: string;
+  tableLabel: string;
+}
+
+/** Wszyscy czekający na wpuszczenie w lokalu — kolejka „Do potwierdzenia". */
+export const fetchPendingGuests = () =>
+  authorized<StaffPendingGuest[]>('/staff/pending-guests');
+
 /** Zgoda zastępcza na wejście gościa: host bywa zajęty albo odszedł od stolika. */
 export const decidePendingGuest = (
   sessionId: string,
@@ -568,12 +582,16 @@ export function connectRealtime(onChange: () => void): { close: () => void } | n
   socket.on('order.changed', onChange);
   // Wezwania kelnera lecą tym samym pokojem lokalu.
   socket.on('waiter.called', onChange);
+  // Gość czekający na wpuszczenie do stolika — nie prosi obsługi o nic, ale
+  // stoi w miejscu, więc panel ma go zobaczyć bez odświeżania strony.
+  socket.on('guest.waiting', onChange);
   socket.on('connect', onChange);
 
   return {
     close: () => {
       socket.off('order.changed', onChange);
       socket.off('waiter.called', onChange);
+      socket.off('guest.waiting', onChange);
       socket.off('connect', onChange);
 
       subscribers -= 1;

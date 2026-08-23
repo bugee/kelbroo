@@ -207,6 +207,8 @@ Z [product.md §7](product.md#7-wymagania-niefunkcjonalne-dotyczą-wszystkich-tr
 - [x] Sala pokazuje wszystkie stoliki lokalu, nie tylko te z otwartym rachunkiem
 - [x] Gość czekający na otwarcie prosi o nie przyciskiem, a ekran puszcza sam po otwarciu
 - [x] Odnośnik do karty gościa przy każdym stoliku na ekranie „Stoliki i QR" (poza wydrukiem)
+- [x] Wejście gościa do poczekalni wysyła sygnał: host widzi kolejkę bez przeładowania,
+      panel dostaje listę oczekujących w „Do potwierdzenia" i licznik przy pozycji menu
 
 ---
 

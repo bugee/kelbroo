@@ -41,15 +41,24 @@ export class BadgesService {
       if (staff.role !== 'kitchen') {
         // Wezwanie gościa to praca czekająca tak samo jak zamówienie, a pokazujemy
         // je nad kolejką potwierdzeń — więc doliczamy je do tego samego licznika.
-        const [orders, calls] = await Promise.all([
+        // Gość czekający na wpuszczenie też stoi w miejscu — i to przy stoliku,
+        // nie w kuchni. Liczymy go tam, gdzie widać jego zgłoszenie.
+        const [orders, calls, waiting] = await Promise.all([
           tx.order.count({
             where: { restaurantId, status: { in: AWAITING_CONFIRMATION } },
           }),
           tx.waiterCall.count({
             where: { restaurantId, status: { in: ['open', 'acknowledged'] } },
           }),
+          tx.tableParticipant.count({
+            where: {
+              leftAt: null,
+              approvedAt: null,
+              tableSession: { restaurantId, status: { in: ['open', 'awaiting_settlement'] } },
+            },
+          }),
         ]);
-        badges['/queue'] = orders + calls;
+        badges['/queue'] = orders + calls + waiting;
       }
 
       const kitchenStatuses = supervises

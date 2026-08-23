@@ -180,6 +180,38 @@ describe('wezwania kelnera', () => {
   });
 });
 
+describe('goście czekający na wpuszczenie', () => {
+  it('liczą się do kolejki potwierdzeń, a wpuszczenie zdejmuje ich z licznika', async () => {
+    const przed = (await badges.forStaff(asRole('waiter')))['/queue'] ?? 0;
+
+    const czekajacy = await direct.tableParticipant.create({
+      data: {
+        organizationId,
+        tableSessionId: sessionId,
+        displayName: 'Czekający',
+        symbol: 'star',
+        color: 'red',
+        createdBy: 'guest',
+        // `null` znaczy: czeka na zgodę hosta. Kolumna ma domyślnie `now()`,
+        // więc trzeba ją wyzerować jawnie.
+        approvedAt: null,
+      },
+    });
+
+    expect((await badges.forStaff(asRole('waiter')))['/queue']).toBe(przed + 1);
+
+    // Kuchnia nie wpuszcza gości do stolików i nie ma tego widzieć.
+    expect((await badges.forStaff(asRole('kitchen')))['/queue']).toBeUndefined();
+
+    await direct.tableParticipant.update({
+      where: { id: czekajacy.id },
+      data: { approvedAt: new Date() },
+    });
+
+    expect((await badges.forStaff(asRole('waiter')))['/queue']).toBe(przed);
+  });
+});
+
 describe('izolacja lokalu', () => {
   it('nie liczy pracy innej restauracji', async () => {
     const obcaOrganizacja = await direct.organization.create({

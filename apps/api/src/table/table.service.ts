@@ -6,6 +6,8 @@ import { MenuService, type MenuCategoryView } from '../menu/menu.service';
 import { DailyCounterService } from '../common/daily-counter.service';
 import { businessDateFor, toDateColumn } from '../common/business-date';
 import { GuestSessionService } from '../guest/guest-session.service';
+import { GuestGateway } from '../realtime/guest.gateway';
+import { StaffSignalsGateway } from '../realtime/staff-signals.gateway';
 import { generateIdentity } from '../guest/participant-identity';
 
 export interface EnterOptions {
@@ -60,6 +62,8 @@ export class TableService {
     private readonly menu: MenuService,
     private readonly counters: DailyCounterService,
     private readonly guests: GuestSessionService,
+    private readonly visits: GuestGateway,
+    private readonly staffSignals: StaffSignalsGateway,
   ) {}
 
   async enter(qrToken: string, options: EnterOptions): Promise<TableEntry> {
@@ -74,9 +78,26 @@ export class TableService {
       throw new NotFoundException('Nieaktywny lub nieznany kod QR.');
     }
 
-    return this.prisma.withTenant(target.organization_id, async (tx) =>
+    const entry = await this.prisma.withTenant(target.organization_id, async (tx) =>
       this.enterWithinTenant(tx, target, options),
     );
+
+    /**
+     * Gość czekający na zgodę musi się gdzieś pojawić sam.
+     *
+     * Sygnał leci po zatwierdzeniu transakcji — wysłany w środku wyprzedziłby
+     * własny zapis i odbiorcy odświeżyliby listę, na której jeszcze go nie ma.
+     * Dwa kanały, bo to dwie różne publiczności: host przy stoliku i panel.
+     */
+    if (entry.session.blockedReason === 'awaiting_host_approval') {
+      this.visits.publish(entry.session.id, { kind: 'access' });
+      this.staffSignals.publishGuestWaiting(target.restaurant_id, {
+        participantId: entry.participant.id,
+        tableLabel: entry.table.label,
+      });
+    }
+
+    return entry;
   }
 
   private async enterWithinTenant(

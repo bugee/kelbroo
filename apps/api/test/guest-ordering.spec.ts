@@ -14,14 +14,22 @@ import { GuestSessionService } from '../src/guest/guest-session.service';
 import { TableService } from '../src/table/table.service';
 import { OrdersService } from '../src/orders/orders.service';
 import { OrderPricingService } from '../src/orders/order-pricing.service';
+import type { GuestGateway } from '../src/realtime/guest.gateway';
+import type { StaffSignalsGateway } from '../src/realtime/staff-signals.gateway';
 
 const direct = new PrismaClient({ datasourceUrl: process.env.DIRECT_DATABASE_URL });
 const prisma = new PrismaService();
 
+/** Atrapy kanałów realtime — te testy sprawdzają zapis w bazie, nie transport. */
+const guestGateway = { publish: () => undefined } as unknown as GuestGateway;
+const staffSignals = {
+  publishGuestWaiting: () => undefined,
+} as unknown as StaffSignalsGateway;
+
 const menu = new MenuService();
 const counters = new DailyCounterService();
 const guests = new GuestSessionService(prisma);
-const tables = new TableService(prisma, menu, counters, guests);
+const tables = new TableService(prisma, menu, counters, guests, guestGateway, staffSignals);
 const orders = new OrdersService(prisma, counters, new OrderPricingService());
 
 let organizationId: string;

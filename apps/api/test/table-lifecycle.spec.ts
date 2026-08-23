@@ -15,16 +15,20 @@ import { MenuService } from '../src/menu/menu.service';
 import { DailyCounterService } from '../src/common/daily-counter.service';
 import { GuestSessionService } from '../src/guest/guest-session.service';
 import type { GuestGateway } from '../src/realtime/guest.gateway';
+import type { StaffSignalsGateway } from '../src/realtime/staff-signals.gateway';
 import type { StaffContext } from '../src/auth/auth.types';
 
 const direct = new PrismaClient({ datasourceUrl: process.env.DIRECT_DATABASE_URL });
 const prisma = new PrismaService();
 const guestGateway = { publish: () => undefined } as unknown as GuestGateway;
+const staffSignals = {
+  publishGuestWaiting: () => undefined,
+} as unknown as StaffSignalsGateway;
 const menu = new MenuService();
 const counters = new DailyCounterService();
 const lifecycle = new TableLifecycleService(prisma, guestGateway, counters);
 const guests = new GuestSessionService(prisma);
-const tables = new TableService(prisma, menu, counters, guests);
+const tables = new TableService(prisma, menu, counters, guests, guestGateway, staffSignals);
 
 let organizationId: string;
 let restaurantId: string;

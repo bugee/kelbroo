@@ -14,6 +14,8 @@ import { TablesAdminService } from '../src/management/tables.admin.service';
 import { RestaurantAdminService } from '../src/management/restaurant.admin.service';
 import { DailyCounterService } from '../src/common/daily-counter.service';
 import { GuestSessionService } from '../src/guest/guest-session.service';
+import type { GuestGateway } from '../src/realtime/guest.gateway';
+import type { StaffSignalsGateway } from '../src/realtime/staff-signals.gateway';
 import { TableService } from '../src/table/table.service';
 import type { StaffContext } from '../src/auth/auth.types';
 
@@ -29,6 +31,8 @@ const tableService = new TableService(
   menuService,
   new DailyCounterService(),
   new GuestSessionService(prisma),
+  { publish: () => undefined } as unknown as GuestGateway,
+  { publishGuestWaiting: () => undefined } as unknown as StaffSignalsGateway,
 );
 
 let staff: StaffContext;
