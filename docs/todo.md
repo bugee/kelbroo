@@ -14,27 +14,24 @@ Listę aktualizuję na bieżąco przy każdej zmianie w projekcie.
 ## Stan na dziś
 
 Działa produkcyjnie: API, panel obsługi i PWA gościa na `kelbroo.com`, z HTTPS,
-migracjami i izolacją danych przez RLS. Gość skanuje kod QR, przegląda menu i składa
-zamówienie; kelner potwierdza, kuchnia realizuje, kelner rozlicza stolik kwotą.
+migracjami i izolacją danych przez RLS. **Pełna ścieżka przeszła na produkcji** —
+skan QR, menu, koszyk, zamówienie, kolejka potwierdzeń, KDS, rozliczenie stolika.
+Kody QR drukują się, backupy bazy są ustawione.
+
+Ścieżka gościa jest potwierdzona **ręcznie, jednorazowo** — nie pilnuje jej żaden test.
+Pokrycie e2e tej drogi jest w sekcji 6 i to jest teraz najkrótsza droga do tego, żeby
+regresja nie wróciła niezauważona.
 
 Czego brakuje do pełnego zakresu etapu 1: **Systemu 1 w całości** (rejestracja i abonament),
 **podziału rachunku**, **zamawiania przez kelnera**, oraz czterech funkcji gościa,
 których modele istnieją w bazie, ale nie ma do nich ani linii kodu — `SettlementGroup`,
 `Review`, `WaiterCall`, `OrderItemShare`.
 
+**Najbliższa blokada: sekcja 1.** Konto kelnera i kuchni zakłada się dziś `INSERT`-em
+w bazie, więc panelu nie da się oddać nikomu poza właścicielem — a bez tego pilotaż
+nie wyjdzie poza jedną osobę.
+
 ---
-
-## 0. Domknięcie pilotażu
-
-Blokuje oddanie systemu pierwszej restauracji. Nic tu nie wymaga nowych funkcji.
-
-- [ ] **Przejść ścieżkę gościa na produkcji** — skan QR → menu → koszyk → zamówienie →
-      kolejka potwierdzeń → KDS → rozliczenie stolika. Ani razu nie zrobione end-to-end
-      na żywym wdrożeniu; aplikacja gościa nie była klikana po naprawie adresu `/api`.
-- [ ] **Backup bazy** — cotygodniowe kopie Hostingera (hPanel → VPS → Backups) plus
-      codzienny `pg_dump` z crona, kopiowany poza serwer. Dziś nie ma żadnego.
-- [ ] **Wydrukować kody QR** na stoliki — dopiero po ustaleniu ostatecznej domeny gościa,
-      bo adres jest wkompilowany w panel przy budowaniu.
 
 ## 1. Konta pracowników (System 2)
 
@@ -134,6 +131,9 @@ Z [product.md §7](product.md#7-wymagania-niefunkcjonalne-dotyczą-wszystkich-tr
 - [x] Testy e2e logowania i zmiany hasła (Playwright)
 - [x] Strona produktowa na `kelbroo.com` (statyczna, z pliku projektowego)
 - [x] [Instrukcja wdrożenia na Hostingerze](deploy-hostinger.md)
+- [x] Ścieżka gościa przeszła na produkcji end-to-end (2026-08-23, weryfikacja ręczna)
+- [x] Backup bazy ustawiony
+- [x] Wydruk kodów QR działa
 
 ---
 
