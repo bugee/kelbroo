@@ -67,3 +67,46 @@ describe('pusty stolik', () => {
     expect(describeIdentity(identity.symbol, identity.color)).toMatch(/\w+ \w+/);
   });
 });
+
+/**
+ * Człony nicka przy jednym stoliku.
+ *
+ * Goście mówią o sobie skrótem: „ten uparty", „Kruk". Dwa różne napisy nie
+ * wystarczą, jeśli oba skracają się do tego samego słowa.
+ */
+describe('człony nicka', () => {
+  const czlony = (identity: TakenIdentity) => {
+    const spacja = identity.displayName.indexOf(' ');
+    return {
+      przymiotnik: identity.displayName.slice(0, spacja),
+      zwierze: identity.displayName.slice(spacja + 1),
+    };
+  };
+
+  it('nie powtarza przymiotnika ani zwierzęcia, dopóki starcza słów', () => {
+    // 12 przymiotników × 12 zwierząt — dwunastu gości musi zmieścić się bez powtórki.
+    const stolik = fillTable(12);
+    const przymiotniki = stolik.map((identity) => czlony(identity).przymiotnik);
+    const zwierzeta = stolik.map((identity) => czlony(identity).zwierze);
+
+    expect(new Set(przymiotniki).size).toBe(12);
+    expect(new Set(zwierzeta).size).toBe(12);
+  });
+
+  it('po wyczerpaniu słów powtarza przymiotnik, a nie zwierzę', () => {
+    // Zwierzę jest rzeczownikiem i to ono zostaje w pamięci, więc ustępuje
+    // ostatnie. Przy trzynastym gościu przymiotników już nie ma.
+    const stolik = fillTable(13);
+    const zwierzeta = stolik.map((identity) => czlony(identity).zwierze);
+
+    // Zwierząt jest 12, więc przy trzynastym gościu dokładnie jedno się powtarza.
+    expect(new Set(zwierzeta).size).toBe(12);
+    // Nick i tak zostaje niepowtarzalny — inaczej rachunku nie da się przypisać.
+    expect(new Set(stolik.map((i) => i.displayName)).size).toBe(13);
+  });
+
+  it('trzyma nicki unikalne nawet po wyczerpaniu obu zestawów', () => {
+    const stolik = fillTable(40);
+    expect(new Set(stolik.map((identity) => identity.displayName)).size).toBe(40);
+  });
+});
