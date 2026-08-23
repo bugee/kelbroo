@@ -209,6 +209,8 @@ Z [product.md §7](product.md#7-wymagania-niefunkcjonalne-dotyczą-wszystkich-tr
 - [x] Odnośnik do karty gościa przy każdym stoliku na ekranie „Stoliki i QR" (poza wydrukiem)
 - [x] Wejście gościa do poczekalni wysyła sygnał: host widzi kolejkę bez przeładowania,
       panel dostaje listę oczekujących w „Do potwierdzenia" i licznik przy pozycji menu
+- [x] Skład stolika u gościa: licznik osób przy nazwie stolika, po kliknięciu lista
+      pozostałych wpuszczonych gości z oznaczeniem hosta; host widzi to też przy sobie
 - [x] Gość wycofuje wezwanie kelnera drugim stuknięciem, dopóki nikt go nie przyjął
       (status `canceled`, osobny od `resolved`)
 - [x] Zamawianie przeniesione na Salę — przycisk przy każdym stoliku, pozycja „Zamów"

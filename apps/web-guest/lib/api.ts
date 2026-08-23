@@ -92,6 +92,14 @@ export interface TableEntry {
     isHost: boolean;
     approved: boolean;
   };
+  /** Wszyscy wpuszczeni przy stoliku, razem z pytającym. Hostem od góry. */
+  participants: {
+    id: string;
+    displayName: string;
+    symbol: string;
+    color: string;
+    isHost: boolean;
+  }[];
   guestToken: string | null;
   menu: Category[];
 }

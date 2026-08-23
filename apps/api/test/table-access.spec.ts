@@ -326,15 +326,87 @@ describe('sygnały o oczekujących', () => {
     expect(sygnalyPanelu).toEqual([drugi.participant.id]);
   });
 
-  it('nie sygnalizuje wejścia gościa, który zgody nie potrzebuje', async () => {
-    const { qrToken } = await newTable();
+  it('dołączenie bez zgody rusza stolik, ale nie panel', async () => {
+    const otwarty = await direct.restaurant.create({
+      data: {
+        organizationId,
+        name: 'Bez zgody',
+        slug: `bezzgody-${randomUUID()}`,
+        currency: 'PLN',
+        hostApprovesGuests: false,
+      },
+    });
+    const qrToken = randomBytes(16).toString('base64url');
+    await direct.table.create({
+      data: { organizationId, restaurantId: otwarty.id, label: 'Bez zgody', qrToken },
+    });
+    await tables.enter(qrToken, {});
 
     sygnalyWizyty.length = 0;
     sygnalyPanelu.length = 0;
 
-    // Host wchodzi bez zgody — nie ma o czym nikogo zawiadamiać.
-    await tables.enter(qrToken, {});
-    expect(sygnalyWizyty).toEqual([]);
+    // Skład stolika zmienił się dla wszystkich, więc ich telefony muszą go
+    // dociągnąć. Obsługa nie ma tu nic do zrobienia, więc nic do niej nie leci.
+    const drugi = await tables.enter(qrToken, {});
+    expect(sygnalyWizyty).toEqual(['access']);
     expect(sygnalyPanelu).toEqual([]);
+
+    // I znowu: odświeżenie strony nie jest dołączeniem.
+    await tables.enter(qrToken, { existingGuestToken: drugi.guestToken! });
+    expect(sygnalyWizyty).toEqual(['access']);
+  });
+});
+
+/**
+ * Skład stolika widziany przez gościa.
+ *
+ * Rachunek jest wspólny, więc gość musi wiedzieć, z kim go dzieli — także z kimś,
+ * kto jeszcze nic nie zamówił i przez to nie pojawia się na żadnej pozycji.
+ */
+describe('skład stolika', () => {
+  it('pokazuje wszystkich wpuszczonych, hostem od góry', async () => {
+    const { qrToken } = await newTable();
+    const host = await tables.enter(qrToken, {});
+    const drugi = await tables.enter(qrToken, {});
+    await access.decideAsHost(
+      organizationId,
+      await guestSessionOf(host.participant.id),
+      drugi.participant.id,
+      'approve',
+    );
+
+    const widok = await tables.enter(qrToken, { existingGuestToken: host.guestToken! });
+
+    expect(widok.participants.map((p) => p.id)).toEqual([
+      host.participant.id,
+      drugi.participant.id,
+    ]);
+    expect(widok.participants[0]!.isHost).toBe(true);
+    expect(widok.participants[1]!.isHost).toBe(false);
+  });
+
+  it('nie pokazuje czekających na zgodę ani tych, którzy wyszli', async () => {
+    const { qrToken } = await newTable();
+    const host = await tables.enter(qrToken, {});
+    const wpuszczony = await tables.enter(qrToken, {});
+    await access.decideAsHost(
+      organizationId,
+      await guestSessionOf(host.participant.id),
+      wpuszczony.participant.id,
+      'approve',
+    );
+    // Trzeci czeka w poczekalni — nie siedzi jeszcze przy stole.
+    const czekajacy = await tables.enter(qrToken, {});
+
+    let widok = await tables.enter(qrToken, { existingGuestToken: host.guestToken! });
+    expect(widok.participants.map((p) => p.id)).not.toContain(czekajacy.participant.id);
+
+    // Wyprowadzony przez kelnera znika ze składu, choć jego pozycje zostają.
+    await direct.tableParticipant.update({
+      where: { id: wpuszczony.participant.id },
+      data: { leftAt: new Date() },
+    });
+    widok = await tables.enter(qrToken, { existingGuestToken: host.guestToken! });
+    expect(widok.participants.map((p) => p.id)).toEqual([host.participant.id]);
   });
 });

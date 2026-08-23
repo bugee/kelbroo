@@ -243,3 +243,53 @@ test('dwóch czekających gości nie zapętla ekranów przy stoliku', async ({ b
     await fixture.cleanup();
   }
 });
+
+/**
+ * Skład stolika na ekranie gościa.
+ *
+ * Rachunek jest wspólny, więc gość musi wiedzieć, z kim go dzieli — także z kimś,
+ * kto jeszcze nic nie zamówił i przez to nie pojawia się przy żadnej pozycji.
+ */
+test('gość widzi, kto jeszcze siedzi przy jego stoliku', async ({ browser }) => {
+  const fixture = await seedMenuAndTable();
+  const konteksty = await Promise.all([browser.newContext(), browser.newContext()]);
+
+  try {
+    const [host, drugi] = await Promise.all(konteksty.map((k) => k.newPage()));
+
+    await host!.goto(`${GUEST_URL}/t/${fixture.qrToken}`);
+    await expect(host!.getByText(fixture.dishName)).toBeVisible();
+
+    // Sam przy stoliku — nie ma czego rozwijać.
+    await expect(host!.getByRole('button', { name: /Przy stoliku/ })).toHaveCount(0);
+
+    // Host jest oznaczony przy swojej nazwie w nagłówku.
+    await expect(host!.locator('header').getByText('host')).toBeVisible();
+
+    await drugi!.goto(`${GUEST_URL}/t/${fixture.qrToken}`);
+    await expect(drugi!.getByText(fixture.dishName)).toBeVisible();
+
+    // Licznik u hosta rośnie sam, bez przeładowania strony.
+    const licznik = host!.getByRole('button', { name: 'Przy stoliku: 2' });
+    await expect(licznik).toBeVisible({ timeout: 20_000 });
+
+    await licznik.click();
+    const lista = host!.getByRole('dialog', { name: 'Przy stoliku' });
+    // Widać drugiego gościa, a siebie nie — własny znak stoi w nagłówku obok.
+    await expect(lista.locator('li')).toHaveCount(1);
+
+    // Drugi gość hostem nie jest, więc przy swojej nazwie tej etykiety nie ma.
+    // Sprawdzamy przed rozwinięciem listy: lista wychodzi z tego samego nagłówka
+    // i sama zawiera etykietę hosta — przy kimś innym.
+    await expect(drugi!.locator('header').getByText('host')).toHaveCount(0);
+
+    // Po rozwinięciu widzi hosta, oznaczonego jako host.
+    await drugi!.getByRole('button', { name: 'Przy stoliku: 2' }).click();
+    const listaDrugiego = drugi!.getByRole('dialog', { name: 'Przy stoliku' });
+    await expect(listaDrugiego.locator('li')).toHaveCount(1);
+    await expect(listaDrugiego.getByText('host')).toBeVisible();
+  } finally {
+    await Promise.all(konteksty.map((k) => k.close()));
+    await fixture.cleanup();
+  }
+});

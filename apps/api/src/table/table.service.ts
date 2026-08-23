@@ -51,6 +51,20 @@ export interface TableEntry {
     /// `false` znaczy: host jeszcze nie wpuścił. Gość widzi menu, ale nie zamawia.
     approved: boolean;
   };
+  /**
+   * Wszyscy wpuszczeni przy stoliku, razem z samym pytającym.
+   *
+   * Rachunek jest wspólny, więc gość musi wiedzieć, z kim go dzieli — także
+   * z kimś, kto jeszcze nic nie zamówił. Kto siedzi przy stole, i tak widać
+   * gołym okiem; ukrywanie tego przed aplikacją niczego nie chroni.
+   */
+  participants: {
+    id: string;
+    displayName: string;
+    symbol: string;
+    color: string;
+    isHost: boolean;
+  }[];
   guestToken: string | null;
   menu: MenuCategoryView[];
 }
@@ -83,11 +97,10 @@ export class TableService {
     );
 
     /**
-     * Gość czekający na zgodę musi się gdzieś pojawić sam.
+     * Ktoś właśnie dołączył do stolika — pozostali muszą to zobaczyć sami.
      *
      * Sygnał leci po zatwierdzeniu transakcji — wysłany w środku wyprzedziłby
-     * własny zapis i odbiorcy odświeżyliby listę, na której jeszcze go nie ma.
-     * Dwa kanały, bo to dwie różne publiczności: host przy stoliku i panel.
+     * własny zapis i odbiorcy odświeżyliby skład, w którym jeszcze go nie ma.
      *
      * Warunek opisuje **zdarzenie**, nie stan: token wydajemy wyłącznie razem
      * z nowym uczestnikiem, więc `guestToken` niepuste znaczy „ktoś właśnie
@@ -95,12 +108,17 @@ export class TableService {
      * Sygnał na sam stan „ktoś czeka" zapętlał wszystkie telefony przy stoliku:
      * każdy odbiorca wczytywał wizytę od nowa, a to wysyłało sygnał ponownie.
      */
-    if (entry.session.blockedReason === 'awaiting_host_approval' && entry.guestToken !== null) {
+    if (entry.guestToken !== null) {
       this.visits.publish(entry.session.id, { kind: 'access' });
-      this.staffSignals.publishGuestWaiting(target.restaurant_id, {
-        participantId: entry.participant.id,
-        tableLabel: entry.table.label,
-      });
+
+      // Do panelu trafia wyłącznie ten, kto utknął w poczekalni — reszta nie
+      // wymaga od obsługi żadnej decyzji.
+      if (entry.session.blockedReason === 'awaiting_host_approval') {
+        this.staffSignals.publishGuestWaiting(target.restaurant_id, {
+          participantId: entry.participant.id,
+          tableLabel: entry.table.label,
+        });
+      }
     }
 
     return entry;
@@ -204,6 +222,7 @@ export class TableService {
               : 'awaiting_host_approval',
         },
         participant: reused.participant,
+        participants: await this.approvedParticipants(tx, openSession.id),
         guestToken: null, // token gościa pozostaje ten, którym przyszedł
       };
     }
@@ -275,6 +294,7 @@ export class TableService {
         isHost: participant.isHost,
         approved: !awaitsApproval,
       },
+      participants: await this.approvedParticipants(tx, openSession.id),
       guestToken: token,
     };
   }
@@ -301,6 +321,20 @@ export class TableService {
 
     const status = guestSession?.tableSession.status;
     return status === 'closed' || status === 'settled' || status === 'abandoned';
+  }
+
+  /**
+   * Wpuszczeni i wciąż obecni, hostem od góry.
+   *
+   * Czekających na zgodę tu nie ma: nie są jeszcze przy stoliku, a kolejkę
+   * wpuszczania widzi wyłącznie host, osobną drogą.
+   */
+  private async approvedParticipants(tx: Prisma.TransactionClient, tableSessionId: string) {
+    return tx.tableParticipant.findMany({
+      where: { tableSessionId, leftAt: null, approvedAt: { not: null } },
+      orderBy: [{ isHost: 'desc' }, { joinedAt: 'asc' }],
+      select: { id: true, displayName: true, symbol: true, color: true, isHost: true },
+    });
   }
 
   /** Ponowny skan tym samym urządzeniem nie tworzy drugiego uczestnika. */
@@ -390,6 +424,7 @@ export class TableService {
         isHost: false,
         approved: false,
       },
+      participants: [],
       guestToken: null,
     };
   }

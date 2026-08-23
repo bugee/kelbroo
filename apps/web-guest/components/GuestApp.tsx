@@ -191,8 +191,9 @@ export function GuestApp({ qrToken }: { qrToken: string }) {
       <header className="sticky top-0 z-20 border-b border-[var(--line)] bg-[var(--surface)]/95 px-4 py-3 backdrop-blur">
         <div className="flex items-baseline justify-between gap-3">
           <h1 className="truncate text-lg">{entry.restaurant.name}</h1>
-          <span className="mono shrink-0 text-xs text-[var(--muted)]">
+          <span className="mono flex shrink-0 items-center gap-2 text-xs text-[var(--muted)]">
             {entry.table.label} · #{entry.session.number}
+            <TableRoster participants={entry.participants} meId={entry.participant.id} />
           </span>
         </div>
         <div className="mt-2 flex items-center justify-between gap-3">
@@ -208,6 +209,13 @@ export function GuestApp({ qrToken }: { qrToken: string }) {
               size={22}
             />
             {entry.participant.displayName}
+            {/* Host płaci domyślnie i do niego trafia nierozdzielony grosz przy
+                podziale — powinien o tym wiedzieć, zanim przyjdzie rachunek. */}
+            {entry.participant.isHost && (
+              <span className="mono rounded-full bg-[var(--teal-wash)] px-2 py-0.5 text-[10px] text-[var(--teal)]">
+                host
+              </span>
+            )}
           </span>
           <div className="flex items-center gap-1">
             <ThemeToggle />
@@ -681,6 +689,101 @@ function CallWaiterButton({ qrToken, tick }: { qrToken: string; tick: number }) 
     >
       {label}
     </button>
+  );
+}
+
+/**
+ * Skład stolika: ile osób i kto.
+ *
+ * Rachunek jest wspólny, więc gość musi wiedzieć, z kim go dzieli — także
+ * z kimś, kto jeszcze nic nie zamówił i nie pojawia się przy żadnej pozycji.
+ *
+ * Siebie na liście nie ma: własny znak stoi w nagłówku obok, a powtórzenie go
+ * tutaj kazałoby gościowi szukać, który z nich jest jego.
+ */
+function TableRoster({
+  participants,
+  meId,
+}: {
+  participants: TableEntry['participants'];
+  meId: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const pozostali = participants.filter((p) => p.id !== meId);
+
+  /**
+   * Zamknięcie kliknięciem obok i klawiszem Escape.
+   *
+   * Hook stoi PRZED wczesnym `return` poniżej — po nim liczba hooków zmieniałaby
+   * się między renderami i wywracała cały ekran (React #310, już raz tu było).
+   */
+  useEffect(() => {
+    if (!open) return;
+    const zamknij = () => setOpen(false);
+    const naKlawisz = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false);
+    };
+    // `click` bąbelkuje z przycisku, więc bez opóźnienia zamknęlibyśmy listę
+    // tym samym stuknięciem, które ją otworzyło.
+    const timer = setTimeout(() => document.addEventListener('click', zamknij), 0);
+    document.addEventListener('keydown', naKlawisz);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener('click', zamknij);
+      document.removeEventListener('keydown', naKlawisz);
+    };
+  }, [open]);
+
+  // Sam przy stoliku: licznik pokazywałby jedynkę i nie otwierał niczego.
+  if (participants.length < 2) return null;
+
+  return (
+    <span className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((czy) => !czy)}
+        aria-expanded={open}
+        aria-label={`Przy stoliku: ${participants.length}`}
+        className="mono flex min-h-8 items-center gap-1 rounded-full border border-[var(--line)] px-2 py-0.5 text-[var(--muted)]"
+      >
+        <PeopleIcon />
+        {participants.length}
+      </button>
+
+      {open && (
+        <div
+          className="absolute right-0 z-30 mt-2 w-56 rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface)] p-3 shadow-lg"
+          onClick={(event) => event.stopPropagation()}
+          role="dialog"
+          aria-label="Przy stoliku"
+        >
+          <p className="text-xs font-semibold text-[var(--ink)]">Przy stoliku</p>
+          <ul className="mt-2 flex flex-col gap-2">
+            {pozostali.map((osoba) => (
+              <li key={osoba.id} className="flex items-center gap-2 text-xs">
+                <GuestMark symbol={osoba.symbol} color={osoba.color} size={18} />
+                <span className="truncate">{osoba.displayName}</span>
+                {osoba.isHost && (
+                  <span className="mono ml-auto shrink-0 rounded-full bg-[var(--teal-wash)] px-2 py-0.5 text-[10px] text-[var(--teal)]">
+                    host
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </span>
+  );
+}
+
+/** Dwie sylwetki — ikona grupy, bez podpisu. Nazwę niesie `aria-label` przycisku. */
+function PeopleIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true">
+      <path d="M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zm0 1.6c-3 0-6 1.5-6 3.4V19h12v-3c0-1.9-3-3.4-6-3.4z" />
+      <path d="M16.5 11.5a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 1.4c-.6 0-1.2.07-1.75.2 1.35.85 2.25 2 2.25 3.4V19H22v-2.7c0-1.7-2.6-3-5.5-3z" />
+    </svg>
   );
 }
 
