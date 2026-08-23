@@ -203,6 +203,13 @@ model Organization {
   name           String
   nip            String?
   billingEmail   String   @map("billing_email")
+
+  /// Zgody z formularza rejestracji. Trzymamy moment **i wersję dokumentu** —
+  /// samo „zaakceptował" nie broni się przy sporze, gdy regulamin się zmieniał.
+  termsAcceptedAt   DateTime? @map("terms_accepted_at")
+  termsVersion      String?   @map("terms_version")
+  privacyAcceptedAt DateTime? @map("privacy_accepted_at")
+  privacyVersion    String?   @map("privacy_version")
   stripeCustomerId String? @unique @map("stripe_customer_id")
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
@@ -327,7 +334,11 @@ model StaffMember {
   acknowledgedCalls  WaiterCall[]
   auditLogs          AuditLog[]
 
+  /// Para w obrębie organizacji — dla czytelności modelu.
   @@unique([organizationId, email])
+  /// Globalnie, bo logowanie szuka konta po samym adresie: dwa konta z tym samym
+  /// e-mailem w różnych organizacjach dałyby logowanie, które trafia losowo.
+  @@unique([email], name: "staff_member_email_global")
   @@index([restaurantId])
   @@map("staff_member")
 }

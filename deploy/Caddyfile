@@ -17,7 +17,16 @@
 # podmontowany plik `design/landing-page.html`; ten plik zostaje w repozytorium
 # jako referencja wizualna, ale nie jest już niczemu serwowany.
 {$LANDING_DOMAIN} {
-	reverse_proxy web-marketing:3000
+	# Formularz rejestracji woła API z tego samego originu, więc nie ma CORS-u
+	# i adres backendu nie jest wkompilowany w stronę — tak samo jak w panelu
+	# i w aplikacji gościa.
+	handle /api/* {
+		reverse_proxy api:4000
+	}
+
+	handle {
+		reverse_proxy web-marketing:3000
+	}
 
 	encode zstd gzip
 	header {

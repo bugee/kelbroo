@@ -8,8 +8,17 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { IsEmail, IsOptional, IsString, Length, MaxLength, MinLength } from 'class-validator';
+import {
+  Equals,
+  IsEmail,
+  IsOptional,
+  IsString,
+  Length,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 import { AuthService, type LoginResult } from './auth.service';
+import { RegistrationService } from './registration.service';
 import { Staff, StaffAuthGuard } from './staff.guard';
 import type { StaffContext } from './auth.types';
 
@@ -20,6 +29,45 @@ class LoginDto {
   @IsString()
   @MinLength(8)
   password!: string;
+}
+
+/**
+ * Rejestracja restauracji.
+ *
+ * Zgody są `Equals(true)`, nie `IsBoolean()` — pole odznaczone ma odrzucić
+ * żądanie, a nie zapisać się jako „nie zgadza się". Wersje dokumentów przychodzą
+ * z formularza, żeby dało się później udowodnić, na co dokładnie ktoś przystał.
+ */
+class RegisterDto {
+  @IsString()
+  @Length(2, 120)
+  restaurantName!: string;
+
+  @IsString()
+  @Length(2, 120)
+  ownerName!: string;
+
+  @IsEmail()
+  email!: string;
+
+  @IsString()
+  @MinLength(8)
+  @MaxLength(200)
+  password!: string;
+
+  @Equals(true)
+  acceptTerms!: boolean;
+
+  @Equals(true)
+  acceptPrivacy!: boolean;
+
+  @IsString()
+  @Length(1, 40)
+  termsVersion!: string;
+
+  @IsString()
+  @Length(1, 40)
+  privacyVersion!: string;
 }
 
 class RefreshDto {
@@ -53,7 +101,26 @@ class ChangePasswordDto {
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly auth: AuthService) {}
+  constructor(
+    private readonly auth: AuthService,
+    private readonly registration: RegistrationService,
+  ) {}
+
+  /**
+   * Założenie konta restauracji. Zbudowane, ale zamknięte do czasu, aż będą
+   * regulamin i polityka prywatności — patrz `RegistrationService.enabled`.
+   */
+  @Post('register')
+  async register(@Body() dto: RegisterDto) {
+    return this.registration.register({
+      restaurantName: dto.restaurantName,
+      ownerName: dto.ownerName,
+      email: dto.email,
+      password: dto.password,
+      termsVersion: dto.termsVersion,
+      privacyVersion: dto.privacyVersion,
+    });
+  }
 
   @Post('login')
   async login(@Body() dto: LoginDto): Promise<LoginResult> {

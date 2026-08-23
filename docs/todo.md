@@ -91,11 +91,14 @@ Sekcja `#trial` obiecuje wprost: *„14 dni planu Pro bez opłat i bez podawania
 Nie stoi za tym żaden formularz ani endpoint — przycisk **„Zacznij za darmo"** prowadzi
 do `#rejestracja`, którego nie ma.
 
-- [ ] **Formularz rejestracji** (`#rejestracja`) — dane restauracji, e-mail właściciela, hasło.
-- [ ] **Endpoint zakładający konto** — `Organization` + `Restaurant` + `StaffMember(owner)`
-      + `Subscription`, w jednej transakcji, bez udziału administratora.
-- [ ] **Okres próbny 14 dni** — `status = trialing`, `currentPeriodEnd = teraz + 14 dni`.
-      Schemat już to obsługuje, migracja niepotrzebna.
+- [x] **Formularz rejestracji** — `apps/web-marketing/app/rejestracja`. Strona istnieje,
+      ale **nie jest podlinkowana** z żadnego CTA; przyciski wciąż prowadzą do `#trial`.
+- [x] **Endpoint zakładający konto** — `POST /auth/register`, wszystko w jednej transakcji.
+- [x] **Okres próbny 14 dni** — plan `pro`, `status = trialing`.
+- [ ] **Otworzyć rejestrację** — `REGISTRATION_ENABLED=true` w `.env.prod` i podpięcie CTA.
+      **Blokuje to sekcja 5c:** formularz zbiera zgodę na regulamin i politykę, których
+      jeszcze nie ma. Zgody zapisują się z wersją dokumentu, więc wersje trzeba ustawić
+      na prawdziwe (`TERMS_VERSION` i `PRIVACY_VERSION` w `apps/web-marketing/lib/api.ts`).
 - [ ] **Weryfikacja adresu e-mail** — zależy od dostawcy poczty (sekcja 4, ta sama blokada
       co zestawienie rachunku).
 - [ ] **Wygaśnięcie abonamentu wyłącza zamawianie**, ale nigdy nie kasuje danych restauracji.

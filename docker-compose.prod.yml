@@ -87,6 +87,9 @@ services:
       JWT_REFRESH_TTL: ${JWT_REFRESH_TTL:-30d}
       GUEST_SESSION_SECRET: ${GUEST_SESSION_SECRET}
       GUEST_SESSION_TTL_HOURS: ${GUEST_SESSION_TTL_HOURS:-6}
+      # Rejestracja jest zbudowana, ale domyślnie zamknięta — otwarcie wymaga
+      # regulaminu i polityki prywatności, na które zgadza się formularz.
+      REGISTRATION_ENABLED: ${REGISTRATION_ENABLED:-false}
       # Za proxy przeglądarka i tak nie przekracza originu, ale nagłówek Origin
       # przychodzi — musi być na liście, inaczej API odrzuci własne aplikacje.
       CORS_ORIGINS: https://${GUEST_DOMAIN},https://${ADMIN_DOMAIN}

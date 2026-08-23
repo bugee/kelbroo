@@ -15,6 +15,7 @@ import { GuestAuthGuard } from './guest/guest.guard';
 import { DailyCounterService } from './common/daily-counter.service';
 import { AuthController } from './auth/auth.controller';
 import { AuthService } from './auth/auth.service';
+import { RegistrationService } from './auth/registration.service';
 import { StaffAuthGuard } from './auth/staff.guard';
 import { StaffController } from './staff/staff.controller';
 import { StaffOrdersService } from './staff/staff-orders.service';
@@ -67,6 +68,7 @@ import { StaffAdminService } from './management/staff.admin.service';
     GuestAuthGuard,
     DailyCounterService,
     AuthService,
+    RegistrationService,
     StaffAuthGuard,
     StaffOrdersService,
     StaffOrderingService,
