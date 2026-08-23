@@ -13,6 +13,7 @@ import { DailyCounterService } from '../src/common/daily-counter.service';
 import { GuestSessionService } from '../src/guest/guest-session.service';
 import { TableService } from '../src/table/table.service';
 import { OrdersService } from '../src/orders/orders.service';
+import { OrderPricingService } from '../src/orders/order-pricing.service';
 
 const direct = new PrismaClient({ datasourceUrl: process.env.DIRECT_DATABASE_URL });
 const prisma = new PrismaService();
@@ -21,7 +22,7 @@ const menu = new MenuService();
 const counters = new DailyCounterService();
 const guests = new GuestSessionService(prisma);
 const tables = new TableService(prisma, menu, counters, guests);
-const orders = new OrdersService(prisma, counters);
+const orders = new OrdersService(prisma, counters, new OrderPricingService());
 
 let organizationId: string;
 let qrToken: string;

@@ -151,3 +151,81 @@ async function insertStaff(
     ],
   );
 }
+
+/**
+ * Stolik i jedna pozycja karty na potrzeby ścieżki kelnera.
+ *
+ * Restauracja testowa startuje bez menu i bez stolików, a zamawianie potrzebuje
+ * obu. Zwracany `cleanup` kasuje tylko to, co ten fixture dodał — reszta danych
+ * testowych zostaje dla równolegle biegnących plików.
+ */
+export async function seedMenuAndTable(): Promise<{
+  tableId: string;
+  tableLabel: string;
+  dishName: string;
+  cleanup: () => Promise<void>;
+}> {
+  const tableLabel = `Stolik ${randomUUID().slice(0, 4)}`;
+  const dishName = `Danie ${randomUUID().slice(0, 4)}`;
+
+  return withClient(async (client) => {
+    const { rows } = await client.query<{ id: string; organization_id: string }>(
+      'SELECT id, organization_id FROM restaurant WHERE slug = $1',
+      [E2E_SLUG],
+    );
+    const restaurant = rows[0];
+    if (!restaurant) {
+      throw new Error(`Brak restauracji testowej (${E2E_SLUG}) — global setup nie wykonał się.`);
+    }
+
+    const organizationId = restaurant.organization_id;
+    const tableId = randomUUID();
+    const categoryId = randomUUID();
+    const dishId = randomUUID();
+
+    await client.query(
+      `INSERT INTO restaurant_table (id, organization_id, restaurant_id, label, qr_token, updated_at)
+       VALUES ($1, $2, $3, $4, $5, now())`,
+      [tableId, organizationId, restaurant.id, tableLabel, randomUUID().replace(/-/g, '')],
+    );
+
+    await client.query(
+      `INSERT INTO menu_category (id, organization_id, restaurant_id, updated_at)
+       VALUES ($1, $2, $3, now())`,
+      [categoryId, organizationId, restaurant.id],
+    );
+    await client.query(
+      `INSERT INTO menu_category_translation (id, organization_id, category_id, locale, name)
+       VALUES ($1, $2, $3, 'pl', 'Karta testowa')`,
+      [randomUUID(), organizationId, categoryId],
+    );
+
+    await client.query(
+      `INSERT INTO menu_item (id, organization_id, restaurant_id, category_id, price_cents, currency, vat_rate, updated_at)
+       VALUES ($1, $2, $3, $4, 2500, 'PLN', 0.0800, now())`,
+      [dishId, organizationId, restaurant.id, categoryId],
+    );
+    await client.query(
+      `INSERT INTO menu_item_translation (id, organization_id, menu_item_id, locale, name)
+       VALUES ($1, $2, $3, 'pl', $4)`,
+      [randomUUID(), organizationId, dishId, dishName],
+    );
+
+    return {
+      tableId,
+      tableLabel,
+      dishName,
+      cleanup: async () => {
+        await withClient(async (inner) => {
+          // Kolejność jest istotna: `table_session` trzyma stolik kluczem RESTRICT,
+          // a `menu_item` tak samo trzyma kategorię. Kasowanie od góry pada.
+          // Zamówienia i pozycje znikają kaskadą po wizycie.
+          await inner.query('DELETE FROM table_session WHERE table_id = $1', [tableId]);
+          await inner.query('DELETE FROM restaurant_table WHERE id = $1', [tableId]);
+          await inner.query('DELETE FROM menu_item WHERE category_id = $1', [categoryId]);
+          await inner.query('DELETE FROM menu_category WHERE id = $1', [categoryId]);
+        });
+      },
+    };
+  });
+}

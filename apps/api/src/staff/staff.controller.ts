@@ -1,10 +1,34 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Post, UseGuards } from '@nestjs/common';
-import { IsIn, IsInt, IsOptional, IsString, MaxLength, Min } from 'class-validator';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
+import { Type } from 'class-transformer';
+import {
+  ArrayMinSize,
+  IsArray,
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Max,
+  MaxLength,
+  Min,
+  ValidateNested,
+} from 'class-validator';
 import type { OrderStatus } from '@kelbroo/types';
 import { Roles, Staff, StaffAuthGuard } from '../auth/staff.guard';
 import type { StaffContext } from '../auth/auth.types';
 import { StaffOrdersService } from './staff-orders.service';
 import { StaffSessionsService, type OfflineMethod } from './staff-sessions.service';
+import { StaffOrderingService } from './staff-ordering.service';
 
 class ReasonDto {
   @IsString()
@@ -31,12 +55,76 @@ class SettleDto {
   reason?: string;
 }
 
+class OrderedItemDto {
+  @IsUUID()
+  menuItemId!: string;
+
+  @IsInt()
+  @Min(1)
+  @Max(99)
+  quantity!: number;
+
+  @IsArray()
+  @IsUUID('4', { each: true })
+  @IsOptional()
+  modifierIds?: string[];
+
+  @IsString()
+  @MaxLength(200)
+  @IsOptional()
+  note?: string;
+}
+
+class StaffOrderDto {
+  @IsUUID()
+  tableId!: string;
+
+  /** Dla kogo jest zamówienie — podstawa późniejszego podziału rachunku. */
+  @IsUUID()
+  @IsOptional()
+  forParticipantId?: string;
+
+  @IsString()
+  @MaxLength(300)
+  @IsOptional()
+  note?: string;
+
+  @IsArray()
+  @ArrayMinSize(1)
+  @ValidateNested({ each: true })
+  @Type(() => OrderedItemDto)
+  items!: OrderedItemDto[];
+}
+
+class AddItemsDto {
+  @IsArray()
+  @ArrayMinSize(1)
+  @ValidateNested({ each: true })
+  @Type(() => OrderedItemDto)
+  items!: OrderedItemDto[];
+}
+
+class QuantityDto {
+  @IsInt()
+  @Min(1)
+  @Max(99)
+  quantity!: number;
+}
+
+class RemoveItemDto {
+  @IsString()
+  @MaxLength(300)
+  @IsOptional()
+  reason?: string;
+}
+
 @Controller('staff')
 @UseGuards(StaffAuthGuard)
 export class StaffController {
   constructor(
     private readonly orders: StaffOrdersService,
     private readonly sessions: StaffSessionsService,
+    private readonly ordering: StaffOrderingService,
   ) {}
 
   /** Kolejka „Do potwierdzenia" — kelner i wyżej. Kuchnia jej nie widzi. */
@@ -100,5 +188,66 @@ export class StaffController {
     @Body() dto: SettleDto,
   ) {
     return this.sessions.settle(staff, id, dto.method, dto.amountCents, dto.reason);
+  }
+
+  // --- zamawianie w imieniu gościa -----------------------------------------
+
+  /** Stoliki z otwartą wizytą i jej uczestnikami — wybór celu zamówienia. */
+  @Get('tables')
+  @Roles('owner', 'manager', 'waiter')
+  orderingTables(@Staff() staff: StaffContext) {
+    return this.ordering.tables(staff);
+  }
+
+  /** Ta sama karta co u gościa. Kuchnia jej tędy nie potrzebuje. */
+  @Get('menu')
+  @Roles('owner', 'manager', 'waiter')
+  orderingMenu(@Staff() staff: StaffContext) {
+    return this.ordering.menuForOrdering(staff);
+  }
+
+  @Post('orders')
+  @Roles('owner', 'manager', 'waiter')
+  createOnBehalf(@Staff() staff: StaffContext, @Body() dto: StaffOrderDto) {
+    return this.ordering.createOnBehalf(staff, dto);
+  }
+
+  @Post('orders/:id/items')
+  @Roles('owner', 'manager', 'waiter')
+  addItems(
+    @Staff() staff: StaffContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: AddItemsDto,
+  ) {
+    return this.ordering.addItems(staff, id, dto);
+  }
+
+  @Patch('orders/:id/items/:itemId')
+  @Roles('owner', 'manager', 'waiter')
+  changeQuantity(
+    @Staff() staff: StaffContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('itemId', ParseUUIDPipe) itemId: string,
+    @Body() dto: QuantityDto,
+  ) {
+    return this.ordering.changeQuantity(staff, id, itemId, dto.quantity);
+  }
+
+  @Delete('orders/:id/items/:itemId')
+  @Roles('owner', 'manager', 'waiter')
+  removeItem(
+    @Staff() staff: StaffContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('itemId', ParseUUIDPipe) itemId: string,
+    @Body() dto: RemoveItemDto,
+  ) {
+    return this.ordering.removeItem(staff, id, itemId, dto.reason);
+  }
+
+  /** Kto co zmienił i kiedy — append-only źródło prawdy. */
+  @Get('orders/:id/history')
+  @Roles('owner', 'manager', 'waiter')
+  history(@Staff() staff: StaffContext, @Param('id', ParseUUIDPipe) id: string) {
+    return this.ordering.history(staff, id);
   }
 }

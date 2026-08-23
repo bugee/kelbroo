@@ -67,6 +67,110 @@ export interface StaffSession {
   participants: { id: string; displayName: string; color: string; isHost: boolean }[];
 }
 
+export interface OrderingTable {
+  id: string;
+  label: string;
+  zone: string | null;
+  openSession: {
+    id: string;
+    number: number;
+    totalCents: number;
+    participants: { id: string; displayName: string; color: string; isHost: boolean }[];
+  } | null;
+}
+
+export interface OrderingMenuItem {
+  id: string;
+  name: string;
+  description: string | null;
+  priceCents: number;
+  isAvailable: boolean;
+}
+
+export interface OrderingMenu {
+  currency: string;
+  categories: { id: string; name: string; items: OrderingMenuItem[] }[];
+}
+
+export interface StaffOrderItem {
+  id: string;
+  name: string;
+  quantity: number;
+  unitPriceCents: number;
+  lineTotalCents: number;
+  note: string | null;
+  modifiers: string[];
+  /** Trzy niezależne atrybucje — zwykle trzy różne osoby. */
+  addedByStaff: boolean;
+  addedByName: string | null;
+  forGuestName: string | null;
+  lastEditedByName: string | null;
+  lastEditedAt: string | null;
+}
+
+export interface StaffOrderDetail {
+  id: string;
+  orderNumber: number;
+  status: string;
+  paymentStatus: string;
+  tableLabel: string;
+  source: string;
+  placedByStaffName: string | null;
+  guestName: string | null;
+  subtotalCents: number;
+  vatCents: number;
+  totalCents: number;
+  currency: string;
+  createdAt: string;
+  items: StaffOrderItem[];
+}
+
+export interface OrderEventView {
+  id: string;
+  type: string;
+  at: string;
+  actorType: string;
+  actorName: string | null;
+  before: unknown;
+  after: unknown;
+  reason: string | null;
+}
+
+export const fetchOrderingTables = () => authorized<OrderingTable[]>('/staff/tables');
+export const fetchOrderingMenu = () => authorized<OrderingMenu>('/staff/menu');
+
+export const placeOrderForGuest = (payload: {
+  tableId: string;
+  forParticipantId?: string;
+  note?: string;
+  items: { menuItemId: string; quantity: number }[];
+}) =>
+  authorized<StaffOrderDetail>('/staff/orders', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+
+export const addOrderItems = (orderId: string, items: { menuItemId: string; quantity: number }[]) =>
+  authorized<StaffOrderDetail>(`/staff/orders/${orderId}/items`, {
+    method: 'POST',
+    body: JSON.stringify({ items }),
+  });
+
+export const changeOrderItemQuantity = (orderId: string, itemId: string, quantity: number) =>
+  authorized<StaffOrderDetail>(`/staff/orders/${orderId}/items/${itemId}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ quantity }),
+  });
+
+export const removeOrderItem = (orderId: string, itemId: string, reason?: string) =>
+  authorized<StaffOrderDetail>(`/staff/orders/${orderId}/items/${itemId}`, {
+    method: 'DELETE',
+    body: JSON.stringify({ reason }),
+  });
+
+export const fetchOrderHistory = (orderId: string) =>
+  authorized<OrderEventView[]>(`/staff/orders/${orderId}/history`);
+
 const ACCESS = 'kelbroo.staff.access';
 const REFRESH = 'kelbroo.staff.refresh';
 // Flaga wymuszonej zmiany hasła przychodzi tylko przy logowaniu — `me()` czyta

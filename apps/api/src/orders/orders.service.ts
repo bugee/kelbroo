@@ -5,12 +5,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { DailyCounterService } from '../common/daily-counter.service';
 import { businessDateFor, toDateColumn } from '../common/business-date';
 import type { CreateOrderDto } from './dto';
-
-interface ModifierSnapshot {
-  id: string;
-  name: string;
-  priceDeltaCents: number;
-}
+import { OrderPricingService, type ModifierSnapshot } from './order-pricing.service';
 
 export interface OrderView {
   id: string;
@@ -39,6 +34,7 @@ export class OrdersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly counters: DailyCounterService,
+    private readonly pricing: OrderPricingService,
   ) {}
 
   async createForGuest(
@@ -64,14 +60,13 @@ export class OrdersService {
         where: { id: guestSession.restaurantId },
       });
 
-      const priced = await this.priceItems(
-        tx,
-        restaurant.id,
-        restaurant.currency,
-        guestSession.locale,
-        restaurant.defaultLocale,
-        dto,
-      );
+      const priced = await this.pricing.price(tx, {
+        restaurantId: restaurant.id,
+        currency: restaurant.currency,
+        locale: guestSession.locale,
+        defaultLocale: restaurant.defaultLocale,
+        items: dto.items,
+      });
 
       if (priced.subtotalCents < restaurant.minOrderCents) {
         throw new BadRequestException(
@@ -134,6 +129,7 @@ export class OrdersService {
               nameSnapshot: item.name,
               quantity: item.quantity,
               unitPriceCents: item.unitPriceCents,
+              vatRate: item.vatRate,
               modifiersSnapshot: item.modifiers as unknown as Prisma.InputJsonValue,
               itemNote: item.note,
               forParticipantId: guestSession.participantId,
@@ -245,102 +241,6 @@ export class OrdersService {
   }
 
   /**
-   * Wycena po stronie serwera, zawsze od nowa.
-   *
-   * Klient przysyła wyłącznie identyfikatory — cena z żądania nigdy nie jest
-   * brana pod uwagę. To, co trafia do OrderItem, jest snapshotem: późniejsza
-   * zmiana cennika nie może zmienić historycznego rachunku.
-   */
-  private async priceItems(
-    tx: Prisma.TransactionClient,
-    restaurantId: string,
-    currency: string,
-    locale: string,
-    defaultLocale: string,
-    dto: CreateOrderDto,
-  ) {
-    const menuItemIds = [...new Set(dto.items.map((item) => item.menuItemId))];
-    const menuItems = await tx.menuItem.findMany({
-      where: { id: { in: menuItemIds }, restaurantId },
-      include: {
-        translations: true,
-        modifierGroups: { include: { modifiers: { include: { translations: true } } } },
-      },
-    });
-
-    const byId = new Map(menuItems.map((item) => [item.id, item]));
-
-    const name = (translations: { locale: string; name: string }[]): string =>
-      translations.find((t) => t.locale === locale)?.name ??
-      translations.find((t) => t.locale === defaultLocale)?.name ??
-      translations[0]?.name ??
-      '';
-
-    let subtotalCents = 0;
-    let vatCents = 0;
-    const items = dto.items.map((requested) => {
-      const menuItem = byId.get(requested.menuItemId);
-      if (!menuItem) {
-        throw new BadRequestException('Pozycja nie należy do menu tej restauracji.');
-      }
-      if (!menuItem.isAvailable) {
-        throw new ConflictException(`„${name(menuItem.translations)}" jest chwilowo niedostępne.`);
-      }
-      if (menuItem.currency !== currency) {
-        throw new ConflictException('Niespójna waluta w menu restauracji.');
-      }
-
-      const selected = new Set(requested.modifierIds ?? []);
-      const modifiers: ModifierSnapshot[] = [];
-
-      for (const group of menuItem.modifierGroups) {
-        const chosen = group.modifiers.filter((modifier) => selected.has(modifier.id));
-
-        if (chosen.length < group.minSelect || (group.isRequired && chosen.length === 0)) {
-          throw new BadRequestException('Nie wybrano wymaganych dodatków.');
-        }
-        if (chosen.length > group.maxSelect) {
-          throw new BadRequestException('Wybrano za dużo dodatków.');
-        }
-        for (const modifier of chosen) {
-          if (!modifier.isAvailable) {
-            throw new ConflictException('Wybrany dodatek jest chwilowo niedostępny.');
-          }
-          selected.delete(modifier.id);
-          modifiers.push({
-            id: modifier.id,
-            name: name(modifier.translations),
-            priceDeltaCents: modifier.priceDeltaCents,
-          });
-        }
-      }
-
-      if (selected.size > 0) {
-        throw new BadRequestException('Wybrano dodatek spoza tego dania.');
-      }
-
-      const unitPriceCents =
-        menuItem.priceCents + modifiers.reduce((sum, m) => sum + m.priceDeltaCents, 0);
-      const lineTotal = unitPriceCents * requested.quantity;
-
-      subtotalCents += lineTotal;
-      // Ceny w menu są brutto, więc VAT wyliczamy z kwoty brutto, nie doliczamy.
-      vatCents += vatFromGross(lineTotal, menuItem.vatRate);
-
-      return {
-        menuItemId: menuItem.id,
-        name: name(menuItem.translations),
-        quantity: requested.quantity,
-        unitPriceCents,
-        modifiers,
-        note: requested.note ?? null,
-      };
-    });
-
-    return { items, subtotalCents, vatCents };
-  }
-
-  /**
    * Kwoty wizyty to suma zamówień innych niż odrzucone i anulowane.
    * TableSession jest jednostką rachunku, więc liczy się tu, nie na Order.
    */
@@ -367,13 +267,4 @@ export class OrdersService {
       paidCents: updated.paidCents,
     };
   }
-}
-
-/**
- * VAT zawarty w kwocie brutto: brutto × stawka / (1 + stawka).
- * Liczone na liczbach całkowitych, zaokrąglane raz, na całej pozycji.
- */
-export function vatFromGross(grossCents: number, rate: Prisma.Decimal): number {
-  const numerator = rate.toNumber();
-  return Math.round((grossCents * numerator) / (1 + numerator));
 }

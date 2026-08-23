@@ -63,6 +63,11 @@ function Queue() {
               <li key={item.id} className="text-sm">
                 <span className="mono font-semibold">{item.quantity}× </span>
                 {item.name}
+                {item.addedByStaff && (
+                  <span className="mono ml-2 rounded-[var(--radius-control)] bg-[var(--teal-wash)] px-2 text-xs text-[var(--teal)]">
+                    obsługa
+                  </span>
+                )}
                 {item.modifiers.length > 0 && (
                   <span className="text-[var(--muted)]"> · {item.modifiers.join(', ')}</span>
                 )}

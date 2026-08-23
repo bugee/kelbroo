@@ -27,24 +27,11 @@ Czego brakuje do pełnego zakresu etapu 1: **Systemu 1 w całości** (rejestracj
 których modele istnieją w bazie, ale nie ma do nich ani linii kodu — `SettlementGroup`,
 `Review`, `WaiterCall`, `OrderItemShare`.
 
-**Najbliższa blokada: sekcja 2.** Kelner nie może złożyć ani poprawić zamówienia
-w imieniu gościa, a to wymóg zakresu etapu 1 — gość bez telefonu albo taki, który woli
-zamówić ustnie, dziś nie ma jak. Panel ma już konta i role, więc jest gdzie to podpiąć.
+**Najbliższa blokada: sekcja 3.** Podział rachunku jest ostatnim dużym brakiem po
+stronie obsługi. Arytmetyka jest gotowa i przetestowana w `packages/types`, ale nie woła
+jej ani jeden endpoint, a model `SettlementGroup` nadal nie ma odwołań w kodzie.
 
 ---
-
-## 2. Zamawianie przez kelnera (System 2)
-
-Wymóg z [product.md §5](product.md), dziś nieobsłużony — `staff.controller.ts` ma tylko
-potwierdzanie, odrzucanie i zmianę statusu.
-
-- [ ] **Kelner składa zamówienie w imieniu gościa** — wybór stolika, uczestnika i pozycji.
-- [ ] **Kelner edytuje złożone zamówienie** — dodanie i usunięcie pozycji, zmiana ilości.
-- [ ] **Trzy atrybucje na pozycji** — `added_by`, `for_participant_id`, `last_edited_by`;
-      kolumny istnieją, trzeba je zacząć wypełniać z panelu.
-- [ ] **Widoczne rozróżnienie gość / obsługa** na rachunku i w historii — podstawa rozliczania
-      kelnera i rozstrzygania sporów.
-- [ ] **Każda zmiana do `OrderEvent`** — append-only, nigdy nadpisywanie.
 
 ## 3. Podział rachunku (System 2 + 3)
 
@@ -172,6 +159,11 @@ Z [product.md §7](product.md#7-wymagania-niefunkcjonalne-dotyczą-wszystkich-tr
 - [x] Konta pracowników z panelu: lista, zakładanie, role, wyłączanie, reset hasła
 - [x] Zmiana własnego adresu e-mail i nazwy z panelu (koniec z `INSERT`-em w bazie)
 - [x] Testy e2e zespołu (Playwright) i 12 testów jednostkowych granic uprawnień
+- [x] Kelner składa i edytuje zamówienie w imieniu gościa, z wyborem stolika i uczestnika
+- [x] Trzy atrybucje na pozycji (`added_by`, `for_participant_id`, `last_edited_by`) widoczne w panelu
+- [x] Oznaczenie „obsługa" przy pozycjach w kolejce potwierdzeń i na KDS
+- [x] Historia zmian zamówienia z `OrderEvent`, append-only, z aktorem
+- [x] Stawka VAT w snapshocie pozycji — edycja przelicza podatek z niej, nie z bieżącego cennika
 
 ---
 

@@ -713,6 +713,10 @@ model OrderItem {
   nameSnapshot      String @map("name_snapshot")
   quantity          Int
   unitPriceCents    Int    @map("unit_price_cents")
+  /// Stawka VAT z chwili zamówienia — snapshot, tak samo jak nazwa i cena.
+  /// Bez niej edycja pozycji przez kelnera nie miałaby z czego przeliczyć
+  /// podatku, a sięgnięcie po bieżącą stawkę z menu zmieniałoby historyczny rachunek.
+  vatRate           Decimal @default(0) @map("vat_rate") @db.Decimal(5, 4)
   modifiersSnapshot Json   @default("[]") @map("modifiers_snapshot")
   itemNote          String? @map("item_note")
 

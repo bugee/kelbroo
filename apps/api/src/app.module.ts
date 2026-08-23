@@ -8,6 +8,7 @@ import { TableController } from './table/table.controller';
 import { TableService } from './table/table.service';
 import { OrdersController } from './orders/orders.controller';
 import { OrdersService } from './orders/orders.service';
+import { OrderPricingService } from './orders/order-pricing.service';
 import { MenuService } from './menu/menu.service';
 import { GuestSessionService } from './guest/guest-session.service';
 import { GuestAuthGuard } from './guest/guest.guard';
@@ -17,6 +18,7 @@ import { AuthService } from './auth/auth.service';
 import { StaffAuthGuard } from './auth/staff.guard';
 import { StaffController } from './staff/staff.controller';
 import { StaffOrdersService } from './staff/staff-orders.service';
+import { StaffOrderingService } from './staff/staff-ordering.service';
 import { StaffSessionsService } from './staff/staff-sessions.service';
 import { OrdersGateway } from './realtime/orders.gateway';
 import { ManagementController } from './management/management.controller';
@@ -48,6 +50,7 @@ import { StaffAdminService } from './management/staff.admin.service';
   providers: [
     TableService,
     OrdersService,
+    OrderPricingService,
     MenuService,
     GuestSessionService,
     GuestAuthGuard,
@@ -55,6 +58,7 @@ import { StaffAdminService } from './management/staff.admin.service';
     AuthService,
     StaffAuthGuard,
     StaffOrdersService,
+    StaffOrderingService,
     StaffSessionsService,
     OrdersGateway,
     MenuAdminService,

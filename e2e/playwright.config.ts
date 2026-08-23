@@ -19,12 +19,23 @@ export default defineConfig({
   globalSetup: './global-setup.ts',
   globalTeardown: './global-teardown.ts',
 
-  timeout: 30_000,
+  // Next w trybie deweloperskim kompiluje trasę przy pierwszym wejściu — pierwszy
+  // test, który na nią trafi, płaci za to kilkanaście sekund.
+  timeout: 60_000,
   expect: { timeout: 10_000 },
-  fullyParallel: true,
+
+  /**
+   * Sekwencyjnie, świadomie.
+   *
+   * Wszystkie pliki dzielą jedną restaurację w jednej bazie i mutują te same
+   * tabele — równoległe przebiegi kończyły się `deadlock detected` przy
+   * sprzątaniu i listami, które zmieniały się w trakcie asercji. Zysk z pięciu
+   * workerów to kilkanaście sekund; koszt to testy, którym nie można wierzyć.
+   */
+  fullyParallel: false,
+  workers: 1,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
   reporter: [['list'], ['html', { open: 'never' }]],
 
   use: {

@@ -78,6 +78,10 @@ function Board() {
                         <li key={item.id} className="leading-tight">
                           <span className="mono text-lg font-semibold">{item.quantity}× </span>
                           <span className="font-semibold">{item.name}</span>
+                          {/* Kuchnia widzi, że pozycję wprowadził kelner, a nie gość. */}
+                          {item.addedByStaff && (
+                            <span className="mono ml-2 text-sm text-[var(--ink-2)]">obsługa</span>
+                          )}
                           {item.modifiers.length > 0 && (
                             <span className="block pl-7 text-sm text-[var(--ink-2)]">
                               + {item.modifiers.join(', ')}

@@ -7,6 +7,7 @@ import { ThemeToggle } from '@kelbroo/ui/theme';
 import { clearSession, me, readAccess, type Staff, type StaffRole } from '@/lib/api';
 
 const NAV: { href: string; label: string; roles: StaffRole[] }[] = [
+  { href: '/order', label: 'Zamów', roles: ['owner', 'manager', 'waiter'] },
   { href: '/queue', label: 'Do potwierdzenia', roles: ['owner', 'manager', 'waiter'] },
   { href: '/kds', label: 'Kuchnia', roles: ['owner', 'manager', 'waiter', 'kitchen'] },
   { href: '/tables', label: 'Sala', roles: ['owner', 'manager', 'waiter'] },
