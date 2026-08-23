@@ -34,7 +34,7 @@ test.describe('logowanie do panelu', () => {
     await page.getByRole('button', { name: 'Zaloguj' }).click();
 
     await expect(page).toHaveURL(/\/queue$/);
-    await expect(page.getByRole('link', { name: /Ewa Właścicielka/ })).toBeVisible();
+    await expect(page.getByText(/Ewa Właścicielka/)).toBeVisible();
   });
 
   test('kuchnia ląduje od razu na KDS', async ({ page }) => {

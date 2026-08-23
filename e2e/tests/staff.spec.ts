@@ -151,9 +151,35 @@ test.describe('zespół', () => {
     }
   });
 
-  test('kuchnia nie widzi zespołu w nawigacji', async ({ page }) => {
+  test('kuchnia ma w ustawieniach wyłącznie zmianę hasła', async ({ page }) => {
     await logIn(page, ACCOUNTS.kitchen);
     await expect(page).toHaveURL(/\/kds$/);
-    await expect(page.getByRole('link', { name: 'Zespół' })).toHaveCount(0);
+
+    // Zespół siedzi w rozwijanym menu, więc samo „nie widać" nic nie dowodzi —
+    // trzeba je otworzyć i sprawdzić zawartość.
+    await page.getByRole('button', { name: 'Ustawienia' }).click();
+    const menu = page.getByRole('menu');
+    await expect(menu.getByRole('menuitem', { name: 'Zmień hasło' })).toBeVisible();
+    await expect(menu.getByRole('menuitem', { name: 'Zespół' })).toHaveCount(0);
+    await expect(menu.getByRole('menuitem', { name: 'Menu' })).toHaveCount(0);
+    await expect(menu.getByRole('menuitem', { name: 'Lokale i abonament' })).toHaveCount(0);
+  });
+
+  test('właściciel ma w ustawieniach komplet pozycji', async ({ page }) => {
+    await logInAsOwner(page);
+    await page.getByRole('button', { name: 'Ustawienia' }).click();
+
+    const menu = page.getByRole('menu');
+    for (const label of ['Menu', 'Stoliki i QR', 'Zespół', 'Zmień hasło', 'Lokale i abonament']) {
+      await expect(menu.getByRole('menuitem', { name: label })).toBeVisible();
+    }
+
+    // Ekrany serwisu zostają w głównym pasku, nie chowają się pod przyciskiem.
+    await expect(menu.getByRole('menuitem', { name: 'Zamów' })).toHaveCount(0);
+
+    await menu.getByRole('menuitem', { name: 'Zespół' }).click();
+    await expect(page).toHaveURL(/\/staff$/);
+    // Wybór ekranu zamyka menu.
+    await expect(page.getByRole('menu')).toHaveCount(0);
   });
 });
