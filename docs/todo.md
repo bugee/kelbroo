@@ -19,7 +19,7 @@ skan QR, menu, koszyk, zamówienie, kolejka potwierdzeń, KDS, rozliczenie stoli
 Kody QR drukują się, backupy bazy są ustawione.
 
 Ścieżka gościa jest potwierdzona **ręcznie, jednorazowo** — nie pilnuje jej żaden test.
-Pokrycie e2e tej drogi jest w sekcji 6 i to jest teraz najkrótsza droga do tego, żeby
+Pokrycie e2e tej drogi jest w sekcji 7 i to jest teraz najkrótsza droga do tego, żeby
 regresja nie wróciła niezauważona.
 
 Czego brakuje do pełnego zakresu etapu 1: **Systemu 1 w całości** (rejestracja i abonament),
@@ -28,8 +28,9 @@ których modele istnieją w bazie, ale nie ma do nich ani linii kodu — `Settle
 `Review`, `WaiterCall`, `OrderItemShare`.
 
 **Najbliższa blokada: sekcja 4.** Gość umie już zawołać kelnera i poprosić o rachunek
-z wyborem podziału. Zostaje status zamówienia na żywo, ocena dania, zestawienie na e-mail,
-wybór nicku oraz zmiana hosta wizyty.
+z wyborem podziału. Zostaje reszta jego ekranu — na czele **status zamówienia na żywo**,
+bo zdejmie przy okazji tymczasowy polling z przycisku wezwania i odblokuje liczniki
+zdarzeń w panelu (sekcja 5).
 
 ---
 
@@ -40,6 +41,11 @@ Modele są w schemacie od pierwszej migracji i nie mają ani jednego odwołania 
 - [ ] **Status zamówienia na żywo** — `orders.gateway.ts` istnieje, ale aplikacja gościa
       nie używa Socket.IO, a Caddy proxuje `/socket.io` wyłącznie na domenie panelu.
       Wymaga zmiany w [deploy/Caddyfile](../deploy/Caddyfile).
+
+      Zdejmie przy okazji **polling z przycisku wezwania kelnera** — dziś odpytuje
+      `GET /guest/calls` co 5 s, dopóki zgłoszenie jest otwarte. To rozwiązanie
+      tymczasowe, świadomie wpisane w kod z komentarzem; kanał realtime dla gościa
+      zastąpi je jednym zdarzeniem. Naturalny następny krok.
 - [ ] **Ocena dania po posiłku** (`Review`).
 - [ ] **Zestawienie rachunku na e-mail** — poczta przez SMTP Hostingera, nadawca
       `kontakt@kelbroo.com`. W projekcie nie ma jeszcze żadnej wysyłki, więc najpierw
@@ -60,7 +66,7 @@ Modele są w schemacie od pierwszej migracji i nie mają ani jednego odwołania 
       - **ciasteczko zamiast (albo obok) `localStorage`** — ciasteczko czyta serwer, więc
         przekierowanie dzieje się przed wyrenderowaniem strony, bez migotania. Techniczne,
         niezbędne do działania usługi, więc nie wymaga banera zgody; trzeba je opisać
-        w polityce prywatności (§5c).
+        w polityce prywatności (§6c).
       - **wygasanie** — sesja gościa żyje `GUEST_SESSION_TTL_HOURS` (domyślnie 6 h),
         a wizyta kończy się zamknięciem rachunku. Powrót po zamkniętym rachunku ma
         prowadzić do ekranu „Zeskanuj kod QR", nie do cudzego stolika.
@@ -74,14 +80,36 @@ Modele są w schemacie od pierwszej migracji i nie mają ani jednego odwołania 
       Host jest domyślnym płatnikiem i to do niego trafia nierozdzielony grosz przy
       podziale, więc pomyłka zostaje na rachunku.
 
-## 5. System 1 — strona produktowa i sprzedaż
+## 5. Panel obsługi — sygnalizacja zdarzeń
+
+Dziś kelner i kuchnia muszą patrzeć na właściwy ekran, żeby cokolwiek zauważyć.
+Realtime działa, ale odświeża wyłącznie widok, na którym ktoś akurat stoi.
+
+- [ ] **Liczniki przy pozycjach menu** — kropka z liczbą zdarzeń czekających na obsługę,
+      widoczna z każdego ekranu panelu, aktualizowana zdarzeniem, nie odświeżaniem strony.
+      Liczba mówi **ile czeka**, nie „coś się zmieniło".
+- [ ] **Kelner, manager, właściciel:**
+      - `Do potwierdzenia` — zamówienia czekające na potwierdzenie przy stoliku,
+      - `Kuchnia` — zamówienia **gotowe do wydania**, czyli to, po co kelner ma pójść.
+- [ ] **Kuchnia, manager, właściciel:**
+      - `Kuchnia` — zamówienia w statusach **innych niż gotowe do wydania**, czyli to,
+        co kuchnia ma jeszcze zrobić.
+- [ ] **Ten sam odnośnik, różne liczby** — `Kuchnia` znaczy co innego dla kelnera
+      („odbierz") i dla kuchni („zrób"). Licznik musi zależeć od roli, inaczej jedna
+      z nich będzie widziała cudzą robotę.
+- [ ] **Otwarte wezwania kelnera wliczone do licznika** — zgłoszenie gościa to praca
+      czekająca tak samo jak zamówienie. Doliczane do `Do potwierdzenia`, bo tam są dziś
+      pokazywane, nad kolejką zamówień. Dotyczy kelnera, managera i właściciela; kuchnia
+      wezwań nie obsługuje, więc jej licznika nie ruszają.
+
+## 6. System 1 — strona produktowa i sprzedaż
 
 Pod `kelbroo.com` stoi statyczny [design/landing-page.html](../design/landing-page.html)
 serwowany przez Caddy. Strona wygląda na gotową, ale **12 z 20 odnośników nie ma celu** —
 klikając cokolwiek poza nawigacją i logowaniem, użytkownik zostaje na miejscu.
 Poniższe zadania to dokładnie ta lista braków.
 
-### 5a. Rejestracja i okres próbny
+### 6a. Rejestracja i okres próbny
 
 Sekcja `#trial` obiecuje wprost: *„14 dni planu Pro bez opłat i bez podawania karty"*.
 Nie stoi za tym żaden formularz ani endpoint — przycisk **„Zacznij za darmo"** prowadzi
@@ -99,7 +127,7 @@ do `#rejestracja`, którego nie ma.
 - [ ] **Podpiąć CTA do rejestracji** — „Zacznij 14 dni za darmo", „Załóż konto",
       „Wybierz Starter", „Testuj 14 dni" prowadzą dziś tylko do sekcji z opisem.
 
-### 5b. Kontakt i prezentacja
+### 6b. Kontakt i prezentacja
 
 Sekcja `#kontakt` nie istnieje, a wskazują na nią **trzy** przyciski: „Porozmawiajmy",
 „Umów prezentację" i „Kontakt" w stopce.
@@ -109,7 +137,7 @@ Sekcja `#kontakt` nie istnieje, a wskazują na nią **trzy** przyciski: „Poroz
       dla większych lokali i sieci, które nie założą konta samodzielnie.
 - [ ] **Dane firmy** — nazwa, adres, NIP, e-mail. Przy sprzedaży B2B to wymóg, nie ozdobnik.
 
-### 5c. Treści prawne w stopce
+### 6c. Treści prawne w stopce
 
 Trzy odnośniki w stopce prowadzą donikąd. **Bez tych dokumentów strona zbierająca
 rejestracje jest niezgodna z prawem** — to blokuje uruchomienie 5a, nie tylko estetykę.
@@ -124,7 +152,7 @@ rejestracje jest niezgodna z prawem** — to blokuje uruchomienie 5a, nie tylko 
 > Te trzy dokumenty wymagają prawnika. Szablon z internetu nie obroni się przy kontroli,
 > a przy modelu SaaS dochodzi powierzenie przetwarzania danych gości restauracji.
 
-### 5d. Pozostałe treści z odnośników
+### 6d. Pozostałe treści z odnośników
 
 - [ ] **Demo menu** (`#demo`) — wskazują na nie dwa CTA i stopka. Potrzebna publiczna
       restauracja demonstracyjna, oddzielona od danych klientów.
@@ -134,13 +162,13 @@ rejestracje jest niezgodna z prawem** — to blokuje uruchomienie 5a, nie tylko 
       hotele, sieci i food courty. Do rozważenia, czy budować wszystkie — może wystarczy
       jedna strona z sekcjami, a odnośniki poprowadzić do kotwic.
 
-### 5e. Aplikacja marketingowa
+### 6e. Aplikacja marketingowa
 
 - [ ] **`apps/web-marketing`** — Next.js SSG/ISR. Tokeny i komponenty przenieść z pliku
       projektowego, nie projektować od nowa. Dopiero to daje miejsce na formularze
       z 5a i 5b — statyczny plik ich nie obsłuży.
 
-## 6. Jakość i wymagania niefunkcjonalne
+## 7. Jakość i wymagania niefunkcjonalne
 
 Z [product.md §7](product.md#7-wymagania-niefunkcjonalne-dotyczą-wszystkich-trzech-systemów).
 
@@ -190,7 +218,7 @@ Z [product.md §7](product.md#7-wymagania-niefunkcjonalne-dotyczą-wszystkich-tr
 
 Blokują zadania powyżej — wymagają twojej decyzji, nie kodu.
 
-- [ ] **Czy plan Menu (0 zł) wchodzi do oferty** — wpływa na zakres rejestracji i abonamentu (§5).
+- [ ] **Czy plan Menu (0 zł) wchodzi do oferty** — wpływa na zakres rejestracji i abonamentu (§6).
 - [ ] **Walidacja cennika** rozmowami z 5–10 restauratorami przed publikacją strony.
 - [ ] **Czy gość w trybie `pay_at_table` widzi bieżący rachunek stolika** — ryzyko, że goście
       przy jednym stoliku zobaczą nawzajem swoje zamówienia.
