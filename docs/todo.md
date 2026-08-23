@@ -208,7 +208,7 @@ Z [product.md §7](product.md#7-wymagania-niefunkcjonalne-dotyczą-wszystkich-tr
 - [x] Gość czekający na otwarcie prosi o nie przyciskiem, a ekran puszcza sam po otwarciu
 - [x] Odnośnik do karty gościa przy każdym stoliku na ekranie „Stoliki i QR" (poza wydrukiem)
 - [x] Wejście gościa do poczekalni wysyła sygnał: host widzi kolejkę bez przeładowania,
-      panel dostaje listę oczekujących w „Do potwierdzenia" i licznik przy pozycji menu
+      panel dostaje listę oczekujących w „Powiadomieniach" i licznik przy pozycji menu
 - [x] Podgląd zamówień stolika w panelu: pozycje ze statusem widzianym przez gościa,
       w dwóch widokach — po gościach i po kategoriach z rozbiciem na dania
 - [x] Prośba o rachunek pyta o formę płatności (karta / gotówka / obie przy podziale)

@@ -79,7 +79,7 @@ Najważniejszy ekran konfiguracyjny lokalu — determinuje wygląd aplikacji go�
   - **Płatność u kelnera** (`pay_at_table`) — brak płatności w aplikacji, gość tylko zamawia, rachunek rozliczany po konsumpcji na kasie lokalu.
   - **Gość wybiera** (`guest_choice`) — obie opcje dostępne przy składaniu zamówienia.
 - Przy każdym trybie widoczna informacja o skutkach: opłaty transakcyjne, wymogi fiskalizacji, ryzyko nieopłaconych rachunków.
-- **Potwierdzanie zamówień przez obsługę** (`require_staff_confirmation`) — przełącznik niezależny od trybu. Włączony: zamówienie gościa trafia najpierw do kolejki „Do potwierdzenia" w panelu kelnera. Domyślnie włączony dla `pay_at_table`, wyłączony dla `prepaid`; przy zmianie trybu panel proponuje domyślną wartość, ale nie nadpisuje decyzji managera bez pytania.
+- **Potwierdzanie zamówień przez obsługę** (`require_staff_confirmation`) — przełącznik niezależny od trybu. Włączony: zamówienie gościa trafia najpierw na ekran „Powiadomienia" w panelu kelnera. Domyślnie włączony dla `pay_at_table`, wyłączony dla `prepaid`; przy zmianie trybu panel proponuje domyślną wartość, ale nie nadpisuje decyzji managera bez pytania.
 - **Otwieranie stolika przez obsługę** (`table_activation_required`) — gość może zamawiać dopiero po otwarciu wizyty przez kelnera. Opcja dla lokali o podwyższonym ryzyku.
 - **Limit otwartego rachunku** (`open_bill_limit_cents`) — po przekroczeniu progu kolejne zamówienia zawsze wymagają potwierdzenia.
 - **Napiwki** — włączone/wyłączone, sugerowane wartości procentowe. Niedostępne w trybie `pay_at_table` (napiwek zostawiany kelnerowi bezpośrednio) — panel jasno to komunikuje zamiast ukrywać opcję bez wyjaśnienia.
@@ -130,7 +130,7 @@ Ekran zaprojektowany pod tablet w orientacji poziomej, obsługę w rękawiczkach
 
 - **Mapa/lista stolików** z kolorowym statusem: wolny, wizyta otwarta, **zamówienie do potwierdzenia**, w przygotowaniu, **gotowe do wydania**, przywołanie kelnera, **rachunek do rozliczenia**.
 - Na kaflu stolika: czas trwania wizyty, liczba zamówień, **bieżąca kwota rachunku** — kelner musi widzieć wartość otwartego rachunku bez wchodzenia w szczegóły.
-- **Kolejka „Do potwierdzenia"** (gdy `require_staff_confirmation` włączone) — zamówienia oczekujące na weryfikację przy stoliku:
+- **Ekran „Powiadomienia"** (gdy `require_staff_confirmation` włączone) — zamówienia oczekujące na weryfikację przy stoliku:
   - Karta z numerem stolika, pozycjami, modyfikatorami, uwagami gościa i kwotą.
   - Akcje: `Potwierdź` (→ zamówienie idzie na kuchnię), `Edytuj i potwierdź` (korekta ilości/pozycji po rozmowie z gościem), `Odrzuć` z obowiązkowym powodem.
   - Licznik czasu oczekiwania — gość widzi w aplikacji „czeka na potwierdzenie" i każda minuta zwłoki to zła obsługa. Alert po przekroczeniu progu (domyślnie 2 min).
@@ -151,7 +151,7 @@ Kelner musi móc zrobić wszystko to, co gość, i więcej. Model atrybucji i up
 - **Wybór uczestnika** — dla kogo jest to zamówienie. Lista uczestników wizyty z nickami i awatarami; przycisk `Dodaj osobę bez telefonu` tworzy uczestnika po stronie obsługi. Bez tego kroku podział rachunku dla gości niekorzystających z aplikacji jest niemożliwy.
 - Interfejs menu zoptymalizowany pod szybkie wprowadzanie: wyszukiwarka, ostatnio zamawiane, ulubione kuchni, klawiatura numeryczna do ilości. Kelner przyjmuje zamówienie **stojąc przy stoliku**, często pod presją czasu — liczba dotknięć na pozycję jest kluczową metryką tego ekranu.
 - Modyfikatory i uwagi tak samo jak u gościa.
-- Zamówienie kelnerskie **pomija kolejkę „Do potwierdzenia"** — kelner stoi przy stoliku i już je potwierdził.
+- Zamówienie kelnerskie **pomija ekran „Powiadomienia"** — kelner stoi przy stoliku i już je potwierdził.
 - Widoczne oznaczenie na wszystkich widokach: pozycja dodana przez obsługę ma ikonę i nazwisko kelnera.
 
 #### Edycja istniejącego zamówienia

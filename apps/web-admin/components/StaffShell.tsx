@@ -17,7 +17,7 @@ type NavItem = { href: string; label: string; roles: StaffRole[] };
  * i bez gości — czyli bez tego, po czym kelner ten stolik rozpoznaje.
  */
 const NAV: NavItem[] = [
-  { href: '/queue', label: 'Do potwierdzenia', roles: ['owner', 'manager', 'waiter'] },
+  { href: '/queue', label: 'Powiadomienia', roles: ['owner', 'manager', 'waiter'] },
   { href: '/kds', label: 'Kuchnia', roles: ['owner', 'manager', 'waiter', 'kitchen'] },
   { href: '/tables', label: 'Sala', roles: ['owner', 'manager', 'waiter'] },
 ];

@@ -116,7 +116,7 @@ Restauracja decyduje, w jakim modelu działa jej lokal. To ustawienie konfigurow
 | **`guest_choice`** — gość wybiera | Przy składaniu zamówienia gość decyduje: zapłacić teraz czy przy wyjściu u kelnera | Lokale mieszane — obiady biznesowe vs. szybka kawa |
 
 **Niezależne ustawienie: potwierdzenie zamówienia przez obsługę** (`require_staff_confirmation`).
-Gdy włączone, zamówienie gościa nie trafia od razu do kuchni, tylko do kolejki „Do potwierdzenia" w panelu kelnera. Kelner podchodzi do stolika, weryfikuje zamówienie i zatwierdza. Dopiero wtedy idzie na kuchnię.
+Gdy włączone, zamówienie gościa nie trafia od razu do kuchni, tylko na ekran „Powiadomienia" w panelu kelnera. Kelner podchodzi do stolika, weryfikuje zamówienie i zatwierdza. Dopiero wtedy idzie na kuchnię.
 
 - Domyślnie **włączone** dla `pay_at_table` (nie ma płatności, więc potwierdzenie obsługi jest zabezpieczeniem przed fałszywymi zamówieniami).
 - Domyślnie **wyłączone** dla `prepaid` (płatność już potwierdziła intencję gościa).
@@ -159,7 +159,7 @@ Kelner musi móc złożyć zamówienie w imieniu gościa (gość woli zamówić 
 Świadomie startujemy od trybu **bez płatności online**. Eliminuje to z pierwszego wydania zarówno integrację płatniczą, jak i fiskalizację — czyli dwie najbardziej ryzykowne i najdłuższe zależności. Produkt daje realną wartość (cyfrowe menu wielojęzyczne + zamawianie do stolika + KDS) już w tym kształcie i można go wdrożyć u pilotażowego klienta w kilka tygodni.
 
 - System 1: strona z cennikiem, rejestracja, zakup abonamentu (Starter + Pro wystarczą na start).
-- System 2: 1 lokal, stoliki + generowanie QR, menu w min. 2 językach, role Manager/Kelner/Kuchnia, panel realizacji zamówień + kolejka „Do potwierdzenia", **składanie i edycja zamówień przez kelnera z pełną historią zmian**, rachunek stolika z podziałem (każdy za siebie / po równo / grupami) i jego zamykanie przez kelnera.
+- System 2: 1 lokal, stoliki + generowanie QR, menu w min. 2 językach, role Manager/Kelner/Kuchnia, panel realizacji zamówień + ekran „Powiadomienia", **składanie i edycja zamówień przez kelnera z pełną historią zmian**, rachunek stolika z podziałem (każdy za siebie / po równo / grupami) i jego zamykanie przez kelnera.
 - System 3: PWA — menu, koszyk, **uczestnicy wizyty (nick + awatar)**, zamówienie na rachunek stolika, status zamówienia live, prośba o rachunek z wyborem podziału, zestawienie na e-mail, ocena dania po posiłku.
 
 **MVP — etap 2 (płatności online):**

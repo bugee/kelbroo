@@ -45,7 +45,7 @@ test.describe('logowanie do panelu', () => {
 
     // Kuchnia nie ma po co oglądać kolejki potwierdzeń ani rachunków.
     await expect(page).toHaveURL(/\/kds$/);
-    await expect(page.getByRole('link', { name: 'Do potwierdzenia' })).toHaveCount(0);
+    await expect(page.getByRole('link', { name: 'Powiadomienia' })).toHaveCount(0);
   });
 
   test('bez sesji panel przekierowuje na logowanie', async ({ page }) => {

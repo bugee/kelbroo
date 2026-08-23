@@ -184,7 +184,7 @@ export class StaffController {
     private readonly access: TableAccessService,
   ) {}
 
-  /** Kolejka „Do potwierdzenia" — kelner i wyżej. Kuchnia jej nie widzi. */
+  /** Ekran „Powiadomienia" — kelner i wyżej. Kuchnia go nie widzi. */
   @Get('orders/queue')
   @Roles('owner', 'manager', 'waiter')
   queue(@Staff() staff: StaffContext) {
@@ -387,7 +387,7 @@ export class StaffController {
     return this.lifecycle.removeParticipant(staff, id, participantId);
   }
 
-  /** Wszyscy oczekujący w lokalu — kolejka „Do potwierdzenia" bierze ją stąd. */
+  /** Wszyscy oczekujący w lokalu — ekran „Powiadomienia" bierze listę stąd. */
   @Get('pending-guests')
   @Roles('owner', 'manager', 'waiter')
   pendingGuestsInRestaurant(@Staff() staff: StaffContext) {

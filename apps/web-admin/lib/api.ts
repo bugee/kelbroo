@@ -266,7 +266,7 @@ export interface StaffPendingGuest {
   tableLabel: string;
 }
 
-/** Wszyscy czekający na wpuszczenie w lokalu — kolejka „Do potwierdzenia". */
+/** Wszyscy czekający na wpuszczenie w lokalu — kolejka „Powiadomienia". */
 export const fetchPendingGuests = () =>
   authorized<StaffPendingGuest[]>('/staff/pending-guests');
 
