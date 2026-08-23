@@ -33,6 +33,7 @@ import { SplitService } from './split.service';
 import { WaiterCallsService } from './waiter-calls.service';
 import { BadgesService } from './badges.service';
 import { TableLifecycleService } from './table-lifecycle.service';
+import { TableAccessService } from '../guest/table-access.service';
 
 class ReasonDto {
   @IsString()
@@ -147,6 +148,11 @@ class BlockDto {
   reason?: string;
 }
 
+class AccessDecisionDto {
+  @IsIn(['approve', 'reject'])
+  decision!: 'approve' | 'reject';
+}
+
 class GroupSettleDto {
   @IsIn(['cash', 'card_terminal'])
   method!: OfflineMethod;
@@ -175,6 +181,7 @@ export class StaffController {
     private readonly calls: WaiterCallsService,
     private readonly badges: BadgesService,
     private readonly lifecycle: TableLifecycleService,
+    private readonly access: TableAccessService,
   ) {}
 
   /** Kolejka „Do potwierdzenia" — kelner i wyżej. Kuchnia jej nie widzi. */
@@ -368,6 +375,25 @@ export class StaffController {
     @Param('participantId', ParseUUIDPipe) participantId: string,
   ) {
     return this.lifecycle.removeParticipant(staff, id, participantId);
+  }
+
+  /** Kto czeka na wpuszczenie do wizyty — gdy lokal wymaga zgody hosta. */
+  @Get('sessions/:id/pending-guests')
+  @Roles('owner', 'manager', 'waiter')
+  pendingGuests(@Staff() staff: StaffContext, @Param('id', ParseUUIDPipe) id: string) {
+    return this.access.pending(staff.organizationId, id);
+  }
+
+  /** Zgoda zastępcza: host bywa zajęty jedzeniem albo odszedł od stolika. */
+  @Post('sessions/:id/pending-guests/:participantId')
+  @Roles('owner', 'manager', 'waiter')
+  decideGuest(
+    @Staff() staff: StaffContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('participantId', ParseUUIDPipe) participantId: string,
+    @Body() dto: AccessDecisionDto,
+  ) {
+    return this.access.decideAsStaff(staff, id, participantId, dto.decision);
   }
 
   // --- wezwania kelnera ----------------------------------------------------

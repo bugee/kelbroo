@@ -34,7 +34,18 @@ export class StaffSessionsService {
         include: {
           table: { select: { label: true, zone: true } },
           participants: {
-            select: { id: true, displayName: true, symbol: true, color: true, isHost: true },
+            // Usunięci goście znikają z listy — inaczej kelner widziałby przy
+            // stoliku kogoś, kogo sam stamtąd wyprowadził.
+            where: { leftAt: null },
+            orderBy: [{ isHost: 'desc' }, { joinedAt: 'asc' }],
+            select: {
+              id: true,
+              displayName: true,
+              symbol: true,
+              color: true,
+              isHost: true,
+              approvedAt: true,
+            },
           },
           _count: { select: { orders: true } },
         },
@@ -54,7 +65,15 @@ export class StaffSessionsService {
         dueCents: session.totalCents - session.paidCents,
         currency: session.currency,
         orderCount: session._count.orders,
-        participants: session.participants,
+        participants: session.participants.map((p) => ({
+          id: p.id,
+          displayName: p.displayName,
+          symbol: p.symbol,
+          color: p.color,
+          isHost: p.isHost,
+          /// `false` znaczy: czeka, aż host go wpuści.
+          approved: p.approvedAt !== null,
+        })),
       }));
     });
   }

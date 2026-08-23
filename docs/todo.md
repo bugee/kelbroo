@@ -27,10 +27,10 @@ Czego brakuje do pełnego zakresu etapu 1: **Systemu 1 w całości** (rejestracj
 których modele istnieją w bazie, ale nie ma do nich ani linii kodu — `SettlementGroup`,
 `Review`, `WaiterCall`, `OrderItemShare`.
 
-**Najbliższa blokada: sekcja 4.** Ekran gościa działa już na żywo — status zamówienia
-i stan wezwania zmieniają się same. Zostają cztery rzeczy: ocena dania, zestawienie
-na e-mail, wybór nicku i awatara oraz zmiana hosta wizyty. Do tego powrót do wizyty
-bez ponownego skanowania.
+**Najbliższa blokada: sekcja 4.** Ekran gościa działa już na żywo — status zamówienia,
+stan wezwania i wpuszczenie do stolika zmieniają się same. Zostają cztery rzeczy: ocena
+dania, zestawienie na e-mail, wybór nicku oraz zmiana hosta wizyty. Do tego powrót
+do wizyty bez ponownego skanowania.
 
 ---
 
@@ -69,6 +69,12 @@ Modele są w schemacie od pierwszej migracji i nie mają ani jednego odwołania 
 - [ ] **Zmiana hosta wizyty** — dwa wejścia: host wskazuje następcę spośród uczestników,
       a kelner może go zmienić z panelu. Dziś hostem zostaje na stałe pierwszy skanujący,
       co psuje się, gdy wychodzi wcześniej albo skanował ktoś przypadkowy.
+
+      **Część już działa:** rola przechodzi automatycznie na kolejnego uczestnika, gdy
+      host zostanie usunięty ze stolika, a przy pustym stoliku hostem zostaje następny
+      skanujący. Brakuje świadomego wskazania następcy — dziś decyduje kolejność wejścia.
+      Waga tego rośnie z włączonym `host_approves_guests`: host jest wtedy nie tylko
+      płatnikiem, ale i bramkarzem.
       Host jest domyślnym płatnikiem i to do niego trafia nierozdzielony grosz przy
       podziale, więc pomyłka zostaje na rachunku.
 
@@ -192,6 +198,10 @@ Z [product.md §7](product.md#7-wymagania-niefunkcjonalne-dotyczą-wszystkich-tr
 - [x] Cykl życia stolika: sprzątanie wizyty, usuwanie gościa, blokada na 2 minuty
       (ręczna i automatyczna po rozliczeniu), prośba gościa o otwarcie stolika
 - [x] Odświeżenie po zapłaceniu nie otwiera nowej wizyty — token rozpoznaje swój rachunek
+- [x] Host wpuszcza gości do stolika (przełącznik lokalu `host_approves_guests`), zgoda
+      zastępcza przez obsługę, oczekujący nie zamówi — bariera po stronie serwera
+- [x] Rozliczanie po jednym gościu jako przełącznik lokalu (`partial_settlement_enabled`)
+- [x] Każda pozycja rachunku podpisana znakiem swojego właściciela, także cudza
 
 ---
 
@@ -201,7 +211,12 @@ Blokują zadania powyżej — wymagają twojej decyzji, nie kodu.
 
 - [ ] **Czy plan Menu (0 zł) wchodzi do oferty** — wpływa na zakres rejestracji i abonamentu (§5).
 - [ ] **Walidacja cennika** rozmowami z 5–10 restauratorami przed publikacją strony.
-- [ ] **Czy gość w trybie `pay_at_table` widzi bieżący rachunek stolika** — ryzyko, że goście
-      przy jednym stoliku zobaczą nawzajem swoje zamówienia.
+- [x] **Czy gość w trybie `pay_at_table` widzi bieżący rachunek stolika** — tak, cały,
+      z podpisem właściciela przy każdej pozycji (2026-08-23). Rachunek stolika jest wspólny
+      i jedna osoba za niego płaci, więc ukrywanie jego części przed współbiesiadnikami
+      uniemożliwiałoby sprawdzenie, za co się płaci. Prywatność chroni co innego:
+      uczestnik nie jest kontem, a znak żyje tylko przez jedną wizytę.
+      Do rozważenia w Fazie 2, jeśli restauracje zgłoszą potrzebę: przełącznik zawężający
+      widok do własnych pozycji.
 - [ ] **Kto pisze dokumenty prawne** — regulamin i polityka prywatności wymagają prawnika,
       nie szablonu z internetu.

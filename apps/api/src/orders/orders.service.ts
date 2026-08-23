@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { statusAfterSubmission } from '@kelbroo/types';
 import { PrismaService } from '../prisma/prisma.service';
@@ -45,10 +45,16 @@ export class OrdersService {
     return this.prisma.withTenant(organizationId, async (tx) => {
       const guestSession = await tx.guestSession.findUnique({
         where: { id: guestSessionId },
-        include: { tableSession: true },
+        include: { tableSession: true, participant: true },
       });
       if (!guestSession) {
         throw new BadRequestException('Sesja gościa wygasła — zeskanuj kod QR ponownie.');
+      }
+
+      // Bariera po stronie serwera, nie tylko wygaszony przycisk: bez niej gość
+      // czekający na zgodę hosta dopisałby się do rachunku zwykłym żądaniem.
+      if (guestSession.participant && guestSession.participant.approvedAt === null) {
+        throw new ForbiddenException('Poczekaj, aż host wpuści Cię do stolika.');
       }
 
       const { tableSession } = guestSession;
@@ -198,14 +204,23 @@ export class OrdersService {
         throw new BadRequestException('Sesja gościa wygasła — zeskanuj kod QR ponownie.');
       }
 
-      const [session, orders] = await Promise.all([
+      const [session, orders, participants] = await Promise.all([
         tx.tableSession.findUniqueOrThrow({ where: { id: guestSession.tableSessionId } }),
         tx.order.findMany({
           where: { tableSessionId: guestSession.tableSessionId },
           orderBy: { createdAt: 'asc' },
           include: { items: true },
         }),
+        tx.tableParticipant.findMany({
+          where: { tableSessionId: guestSession.tableSessionId },
+          select: { id: true, displayName: true, symbol: true, color: true },
+        }),
       ]);
+
+      // Rachunek stolika jest wspólny, więc „nie moje" to za mało: przy dzieleniu
+      // rachunku ktoś musi umieć wskazać, czyja jest która pozycja. Podpisujemy
+      // je znakiem gościa — tym samym, którym przedstawia się kelnerowi.
+      const znaki = new Map(participants.map((p) => [p.id, p]));
 
       return {
         session: {
@@ -234,6 +249,9 @@ export class OrdersService {
             status: item.status,
             addedByStaff: item.addedBy === 'staff',
             isMine: item.forParticipantId === guestSession.participantId,
+            forParticipant: item.forParticipantId
+              ? (znaki.get(item.forParticipantId) ?? null)
+              : null,
           })),
         })),
       };

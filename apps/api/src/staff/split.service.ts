@@ -193,6 +193,20 @@ export class SplitService {
         throw new ConflictException('Ta grupa jest już rozliczona.');
       }
 
+      // Lokal może nie chcieć rachunków rozliczanych po kawałku: przy jednej
+      // kasie zostawia to otwarty rachunek, o którym nikt potem nie pamięta.
+      // Podział wtedy nadal działa — służy do policzenia, kto ile daje — ale
+      // pieniądze przyjmuje się raz, przez rozliczenie całej wizyty.
+      const restaurant = await tx.restaurant.findUniqueOrThrow({
+        where: { id: session.restaurantId },
+        select: { partialSettlementEnabled: true },
+      });
+      if (!restaurant.partialSettlementEnabled) {
+        throw new ConflictException(
+          'Ten lokal rozlicza rachunek w całości — zamknij całą wizytę zamiast pojedynczej grupy.',
+        );
+      }
+
       await tx.payment.create({
         data: {
           organizationId: staff.organizationId,

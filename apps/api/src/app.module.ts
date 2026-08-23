@@ -24,6 +24,7 @@ import { WaiterCallsService } from './staff/waiter-calls.service';
 import { BadgesService } from './staff/badges.service';
 import { TableLifecycleService } from './staff/table-lifecycle.service';
 import { GuestSignalsService } from './guest/guest-signals.service';
+import { TableAccessService } from './guest/table-access.service';
 import { GuestController, GuestOpenTableController } from './guest/guest.controller';
 import { StaffSignalsGateway } from './realtime/staff-signals.gateway';
 import { GuestGateway } from './realtime/guest.gateway';
@@ -74,6 +75,7 @@ import { StaffAdminService } from './management/staff.admin.service';
     BadgesService,
     TableLifecycleService,
     GuestSignalsService,
+    TableAccessService,
     StaffSignalsGateway,
     GuestGateway,
     StaffSessionsService,

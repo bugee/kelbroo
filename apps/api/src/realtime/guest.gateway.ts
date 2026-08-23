@@ -8,8 +8,8 @@ import { GuestSessionService } from '../guest/guest-session.service';
 export const sessionRoom = (tableSessionId: string) => `session:${tableSessionId}`;
 
 export interface GuestVisitEvent {
-  /** Co się zmieniło: zamówienia albo wezwanie kelnera. */
-  kind: 'orders' | 'call';
+  /** Co się zmieniło: zamówienia, wezwanie kelnera albo wstęp do wizyty. */
+  kind: 'orders' | 'call' | 'access';
 }
 
 /**

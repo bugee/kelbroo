@@ -103,6 +103,20 @@ function Settings() {
           onChange={(value) => void save({ tableActivationRequired: value })}
         />
 
+        <Toggle
+          label="Host wpuszcza gości do stolika"
+          hint="Pierwszy skanujący decyduje, kto dołącza do jego rachunku. Kod QR leży na stoliku na widoku — bez tego dołączy każdy, kto go zobaczy. Obsługa może wpuścić zastępczo."
+          checked={settings.hostApprovesGuests}
+          onChange={(value) => void save({ hostApprovesGuests: value })}
+        />
+
+        <Toggle
+          label="Rozliczanie po jednym gościu"
+          hint="Pozwala przyjąć zapłatę od części stolika i zostawić resztę rachunku otwartą. Wyłączone: rachunek zamyka się w całości."
+          checked={settings.partialSettlementEnabled}
+          onChange={(value) => void save({ partialSettlementEnabled: value })}
+        />
+
         <Row label="Minimalne zamówienie">
           <MoneyInput
             cents={settings.minOrderCents}

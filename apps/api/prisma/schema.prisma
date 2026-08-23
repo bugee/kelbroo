@@ -243,6 +243,13 @@ model Restaurant {
   requireStaffConfirmation Boolean      @default(true) @map("require_staff_confirmation")
   /// Gość nie może zamawiać, dopóki obsługa nie otworzy wizyty przy stoliku.
   tableActivationRequired  Boolean      @default(false) @map("table_activation_required")
+  /// Host wpuszcza kolejnych gości do wizyty. Pierwszy skanujący wchodzi zawsze —
+  /// inaczej nikt nie mógłby otworzyć stolika. Obsługa akceptuje zastępczo, gdy
+  /// host wyjdzie z telefonem albo odmówi ruszania ekranu.
+  hostApprovesGuests       Boolean      @default(false) @map("host_approves_guests")
+  /// Czy wolno rozliczyć część stolika i zostawić resztę otwartą. Wyłączone
+  /// znaczy: rachunek zamyka się w całości albo wcale.
+  partialSettlementEnabled Boolean      @default(true)  @map("partial_settlement_enabled")
 
   tippingEnabled Boolean @default(false) @map("tipping_enabled")
   tipPresets     Int[]   @default([]) @map("tip_presets")
@@ -602,6 +609,16 @@ model TableParticipant {
   createdByStaffId String?   @map("created_by_staff_id") @db.Uuid
 
   settlementGroupId String? @map("settlement_group_id") @db.Uuid
+
+  /// Moment wpuszczenia do wizyty. `null` znaczy: czeka na zgodę hosta.
+  /// Osobna kolumna zamiast flagi, bo „kiedy wpuszczono" jest częścią historii
+  /// rachunku — kto przy nim siedział i od kiedy.
+  ///
+  /// Domyślnie wypełniona: oczekiwanie na zgodę jest wyjątkiem, który włącza
+  /// lokal, więc uczestnik utworzony jakąkolwiek inną drogą jest przy stoliku
+  /// od razu. Bez tego domyślnie każdy dopisany poza skanem QR byłby niewidoczny
+  /// dla kelnera.
+  approvedAt DateTime? @default(now()) @map("approved_at")
 
   joinedAt DateTime  @default(now()) @map("joined_at")
   leftAt   DateTime? @map("left_at")

@@ -211,6 +211,38 @@ describe('składanie zamówienia', () => {
     expect(order.paymentStatus).toBe('awaiting_settlement');
   });
 
+  it('podpisuje każdą pozycję rachunku znakiem jej właściciela', async () => {
+    // Rachunek stolika jest wspólny: każdy gość widzi cudze zamówienia. Samo
+    // „nie moje" nie wystarczy — przy dzieleniu rachunku ktoś musi umieć
+    // wskazać, czyja jest która pozycja.
+    const pierwszy = await tables.enter(qrToken, { requestedLocale: 'pl' });
+    const drugi = await tables.enter(qrToken, { requestedLocale: 'pl' });
+    const g1 = await guests.resolve(pierwszy.guestToken!);
+    const g2 = await guests.resolve(drugi.guestToken!);
+
+    await orders.createForGuest(organizationId, g1!.guestSessionId, {
+      items: [{ menuItemId: dishId(pierwszy, 'Zupa'), quantity: 1 }],
+    });
+    await orders.createForGuest(organizationId, g2!.guestSessionId, {
+      items: [{ menuItemId: dishId(drugi, 'Nalewka'), quantity: 1 }],
+    });
+
+    const widok = await orders.listForSession(organizationId, g1!.guestSessionId);
+    const pozycje = widok.orders.flatMap((order) => order.items);
+
+    // Wizyta jest wspólna dla całego pliku, więc szukamy po uczestniku,
+    // a nie po „pierwsza pozycja, która nie jest moja".
+    const moja = pozycje.find((item) => item.forParticipant?.id === pierwszy.participant.id);
+    const cudza = pozycje.find((item) => item.forParticipant?.id === drugi.participant.id);
+    expect(moja?.isMine).toBe(true);
+    expect(cudza?.isMine).toBe(false);
+    expect(moja?.forParticipant?.id).toBe(pierwszy.participant.id);
+    // Cudza pozycja też niesie znak — i to jest cały sens tego testu.
+    expect(cudza?.forParticipant?.id).toBe(drugi.participant.id);
+    expect(cudza?.forParticipant?.symbol).toBe(drugi.participant.symbol);
+    expect(cudza?.forParticipant?.color).toBe(drugi.participant.color);
+  });
+
   it('dopisuje zdarzenie do append-only historii', async () => {
     const entry = await tables.enter(qrToken, { requestedLocale: 'pl' });
     const guest = await guests.resolve(entry.guestToken!);

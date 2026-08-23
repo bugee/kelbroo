@@ -36,6 +36,8 @@ export class RestaurantAdminService {
         orderingMode: restaurant.orderingMode,
         requireStaffConfirmation: restaurant.requireStaffConfirmation,
         tableActivationRequired: restaurant.tableActivationRequired,
+        hostApprovesGuests: restaurant.hostApprovesGuests,
+        partialSettlementEnabled: restaurant.partialSettlementEnabled,
         minOrderCents: restaurant.minOrderCents,
         openBillLimitCents: restaurant.openBillLimitCents,
         businessDayStartHour: restaurant.businessDayStartHour,
@@ -98,6 +100,12 @@ export class RestaurantAdminService {
             : {}),
           ...(dto.tableActivationRequired !== undefined
             ? { tableActivationRequired: dto.tableActivationRequired }
+            : {}),
+          ...(dto.hostApprovesGuests !== undefined
+            ? { hostApprovesGuests: dto.hostApprovesGuests }
+            : {}),
+          ...(dto.partialSettlementEnabled !== undefined
+            ? { partialSettlementEnabled: dto.partialSettlementEnabled }
             : {}),
           ...(dto.minOrderCents !== undefined ? { minOrderCents: dto.minOrderCents } : {}),
           ...(dto.openBillLimitCents !== undefined

@@ -81,6 +81,7 @@ export interface TableEntry {
       | 'awaiting_staff_activation'
       | 'table_blocked'
       | 'visit_finished'
+      | 'awaiting_host_approval'
       | null;
   };
   participant: {
@@ -89,6 +90,7 @@ export interface TableEntry {
     symbol: string;
     color: string;
     isHost: boolean;
+    approved: boolean;
   };
   guestToken: string | null;
   menu: Category[];
@@ -117,6 +119,8 @@ export interface SessionOrders {
       status: string;
       addedByStaff: boolean;
       isMine: boolean;
+      /** Czyja to pozycja — znak gościa, ten sam, którym przedstawia się kelnerowi. */
+      forParticipant: { id: string; displayName: string; symbol: string; color: string } | null;
     }[];
   }[];
 }
@@ -292,13 +296,15 @@ async function request<T = void>(qrToken: string, path: string, body: unknown): 
  */
 export function connectVisit(
   qrToken: string,
-  onChange: (kind: 'orders' | 'call') => void,
+  onChange: (kind: 'orders' | 'call' | 'access') => void,
 ): { close: () => void } | null {
   const token = readToken(qrToken);
   if (!token) return null;
 
   const socket = io(`${WS}/guest`, { auth: { token }, transports: ['websocket', 'polling'] });
-  socket.on('visit.changed', (event: { kind: 'orders' | 'call' }) => onChange(event.kind));
+  socket.on('visit.changed', (event: { kind: 'orders' | 'call' | 'access' }) =>
+    onChange(event.kind),
+  );
   return { close: () => socket.close() };
 }
 
@@ -314,6 +320,37 @@ export async function requestTableOpen(qrToken: string): Promise<{ status: strin
     cache: 'no-store',
   });
   return parse<{ status: string }>(response);
+}
+
+export interface PendingGuest {
+  id: string;
+  displayName: string;
+  symbol: string;
+  color: string;
+  joinedAt: string;
+}
+
+/** Kto czeka na wpuszczenie. Serwer odsyła pustą listę każdemu poza hostem. */
+export async function fetchPendingGuests(qrToken: string): Promise<PendingGuest[]> {
+  const token = readToken(qrToken);
+  const response = await fetch(`${API}/guest/pending-guests`, {
+    headers: token ? { 'x-guest-token': token } : undefined,
+    cache: 'no-store',
+  });
+  return parse<PendingGuest[]>(response);
+}
+
+/** Decyzja hosta o oczekującym gościu. */
+export async function decidePendingGuest(
+  qrToken: string,
+  participantId: string,
+  decision: 'approve' | 'reject',
+): Promise<{ id: string; approved: boolean }> {
+  return request<{ id: string; approved: boolean }>(
+    qrToken,
+    `/guest/pending-guests/${participantId}`,
+    { decision },
+  );
 }
 
 /** Zapomnienie wizyty — gość świadomie zaczyna nową przy tym samym stoliku. */

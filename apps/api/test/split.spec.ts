@@ -311,6 +311,31 @@ describe('rozliczanie grup', () => {
     );
   });
 
+  it('nie rozlicza pojedynczej grupy, gdy lokal wyłączył rozliczanie po jednym', async () => {
+    const { session } = await visit(
+      [{ name: 'Ala', isHost: true }, { name: 'Bo' }],
+      [{ amountCents: 4000 }],
+    );
+    const plan = await split.setMode(waiter, session.id, { splitMode: 'equal' });
+
+    // Podział zostaje — służy do policzenia, kto ile daje. Znika tylko możliwość
+    // przyjęcia pieniędzy od części stolika i zostawienia reszty otwartej.
+    await direct.restaurant.update({
+      where: { id: restaurantId },
+      data: { partialSettlementEnabled: false },
+    });
+    try {
+      await expect(split.settleGroup(waiter, session.id, plan.groups[0]!.id, 'cash')).rejects.toThrow(
+        /w całości/,
+      );
+    } finally {
+      await direct.restaurant.update({
+        where: { id: restaurantId },
+        data: { partialSettlementEnabled: true },
+      });
+    }
+  });
+
   it('zamraża podział po pierwszej płatności', async () => {
     const { session } = await visit(
       [{ name: 'Ala', isHost: true }, { name: 'Bo' }],

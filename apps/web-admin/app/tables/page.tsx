@@ -10,6 +10,7 @@ import {
   fetchSessions,
   minutesSince,
   money,
+  decidePendingGuest,
   removeParticipant,
   resetTable,
   settleSession,
@@ -71,12 +72,32 @@ function Room() {
               {session.participants.map((participant) => (
                 <li
                   key={participant.id}
-                  className="flex items-center gap-1.5 rounded-full bg-[var(--surface-2)] px-2 py-1 text-xs"
+                  className={`flex items-center gap-1.5 rounded-full px-2 py-1 text-xs ${
+                    participant.approved
+                      ? 'bg-[var(--surface-2)]'
+                      : 'bg-[var(--orange-wash)] opacity-80'
+                  }`}
                 >
                   {/* Ten sam znak, który gość widzi u siebie i wypowie kelnerowi. */}
                   <GuestMark symbol={participant.symbol} color={participant.color} size={14} />
                   {participant.displayName}
                   {participant.isHost && <span className="text-[var(--muted)]">·host</span>}
+                  {/* Czeka, aż host go wpuści. Kelner stoi przy stoliku i widzi,
+                      kto przy nim siedzi, więc może zdecydować zamiast hosta. */}
+                  {!participant.approved && (
+                    <button
+                      type="button"
+                      disabled={busy === session.id}
+                      onClick={() =>
+                        void act(session.id, () =>
+                          decidePendingGuest(session.id, participant.id, 'approve'),
+                        )
+                      }
+                      className="mono rounded-full bg-[var(--orange)] px-2 py-0.5 text-[10px] text-white"
+                    >
+                      wpuść
+                    </button>
+                  )}
                   {/* Ktoś kliknął kod przez przypadek i wyszedł. Jego pozycje
                       na rachunku zostają — znika tylko z listy wizyty. */}
                   <button

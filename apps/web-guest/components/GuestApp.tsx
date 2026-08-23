@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   callWaiter,
   connectVisit,
+  decidePendingGuest,
+  fetchPendingGuests,
   enterTable,
   forgetVisit,
   fetchActiveCalls,
@@ -18,6 +20,7 @@ import {
   type CartLine,
   type Dish,
   type GuestSplitMode,
+  type PendingGuest,
   type SessionOrders,
   type TableEntry,
 } from '@/lib/api';
@@ -51,6 +54,8 @@ export function GuestApp({ qrToken }: { qrToken: string }) {
   // połączenia — jedno gniazdo na kartę, tak jak w panelu.
   const [callTick, setCallTick] = useState(0);
   const [sending, setSending] = useState(false);
+  // Kolejka wpuszczania widoczna wyłącznie u hosta — serwer i tak odsyła innym pustą listę.
+  const [pending, setPending] = useState<PendingGuest[]>([]);
 
   const load = useCallback(
     async (lang?: string) => {
@@ -85,20 +90,45 @@ export function GuestApp({ qrToken }: { qrToken: string }) {
     return () => clearInterval(timer);
   }, [view, refreshOrders]);
 
+  const refreshPending = useCallback(async () => {
+    try {
+      setPending(await fetchPendingGuests(qrToken));
+    } catch {
+      /* brak kolejki znaczy tyle, że nie ma kogo wpuszczać */
+    }
+  }, [qrToken]);
+
+  useEffect(() => {
+    if (!entry?.participant.isHost) return;
+    void refreshPending();
+  }, [entry?.participant.isHost, refreshPending]);
+
   /**
    * Status zamówienia zmienia się na ekranie gościa sam, gdy kuchnia go przestawi.
    *
    * Hook stoi TU, a nie niżej: pod spodem są wczesne `return` dla błędu i dla
    * jeszcze niewczytanej wizyty. Wywołanie po nich zmieniałoby liczbę hooków
    * między renderami i wywracało cały ekran (React #310).
+   *
+   * Zależy od `entry.participant.id`, bo `connectVisit` czyta token gościa
+   * z pamięci przeglądarki, a ten zapisuje się dopiero z odpowiedzią na skan —
+   * czyli po pierwszym przebiegu efektów. Bez tej zależności gość przy pierwszym
+   * skanie nie dostawał gniazda w ogóle i żył wyłącznie odpytywaniem co 10 s.
    */
   useEffect(() => {
+    if (!entry?.participant.id) return;
+
     const channel = connectVisit(qrToken, (kind) => {
       if (kind === 'orders') void refreshOrders();
-      else setCallTick((tick) => tick + 1);
+      // Wpuszczenie zmienia uprawnienia, nie dane na ekranie — trzeba wczytać
+      // wizytę od nowa, żeby gość dostał menu bez odświeżania strony.
+      else if (kind === 'access') {
+        void load();
+        void refreshPending();
+      } else setCallTick((tick) => tick + 1);
     });
     return () => channel?.close();
-  }, [qrToken, refreshOrders]);
+  }, [qrToken, entry?.participant.id, refreshOrders, refreshPending, load]);
 
   if (error) {
     return (
@@ -193,8 +223,20 @@ export function GuestApp({ qrToken }: { qrToken: string }) {
         <p className="m-4 rounded-[var(--radius-control)] bg-[var(--orange-wash)] p-4 text-sm">
           {entry.session.blockedReason === 'awaiting_staff_activation'
             ? 'Poproś obsługę o otwarcie stolika — menu możesz przeglądać już teraz.'
-            : 'Zamawianie jest chwilowo niedostępne. Poproś obsługę.'}
+            : entry.session.blockedReason === 'awaiting_host_approval'
+              ? 'Osoba, która otworzyła stolik, musi Cię wpuścić. Pokaż jej swój znak z góry ekranu — menu możesz przeglądać już teraz.'
+              : 'Zamawianie jest chwilowo niedostępne. Poproś obsługę.'}
         </p>
+      )}
+
+      {pending.length > 0 && (
+        <PendingGuests
+          guests={pending}
+          onDecide={async (id, decision) => {
+            await decidePendingGuest(qrToken, id, decision);
+            await refreshPending();
+          }}
+        />
       )}
 
       {view === 'menu' && <MenuView entry={entry} onPick={setOpenDish} canOrder={canOrder} />}
@@ -399,16 +441,28 @@ function StatusView({
             <ul className="mt-2 flex flex-col gap-1">
               {order.items.map((item) => (
                 <li key={item.id} className="flex justify-between gap-3 text-sm">
-                  <span>
-                    <span className="mono">{item.quantity}× </span>
-                    {item.name}
+                  <span className="flex items-center gap-2">
+                    {/* Rachunek stolika jest wspólny, więc każda pozycja niesie znak
+                        swojego właściciela — bez tego nie da się jej nikomu przypisać
+                        przy dzieleniu rachunku. */}
+                    {item.forParticipant && (
+                      <GuestMark
+                        symbol={item.forParticipant.symbol}
+                        color={item.forParticipant.color}
+                        size={16}
+                      />
+                    )}
+                    <span>
+                      <span className="mono">{item.quantity}× </span>
+                      {item.name}
                     {/* Gość musi widzieć, że coś na jego rachunku pojawiło się
                         nie z jego ręki — inaczej rachunek jest nieweryfikowalny. */}
-                    {item.addedByStaff && (
-                      <span className="mono ml-2 text-xs text-[var(--muted)]">
-                        dodane przez obsługę
-                      </span>
-                    )}
+                      {item.addedByStaff && (
+                        <span className="mono ml-2 text-xs text-[var(--muted)]">
+                          dodane przez obsługę
+                        </span>
+                      )}
+                    </span>
                   </span>
                   <span className="mono shrink-0">
                     {formatMoney(item.unitPriceCents * item.quantity, currency)}
@@ -587,6 +641,68 @@ function CallWaiterButton({ qrToken, tick }: { qrToken: string; tick: number }) 
  * obsługę. Jedyna droga dalej prowadzi przez kogoś z obsługi, więc jedyny
  * przycisk o to prosi.
  */
+/**
+ * Kolejka wpuszczania u hosta.
+ *
+ * Kod QR leży na stoliku na widoku — przy stoliku pod oknem odczyta go ktoś
+ * z chodnika. Host jest jedyną osobą, która wie, kto naprawdę siedzi przy stole,
+ * więc rozpoznaje czekających po znaku, nie po nicku.
+ */
+function PendingGuests({
+  guests,
+  onDecide,
+}: {
+  guests: PendingGuest[];
+  onDecide: (id: string, decision: 'approve' | 'reject') => Promise<void>;
+}) {
+  const [busy, setBusy] = useState<string | null>(null);
+
+  const decide = async (id: string, decision: 'approve' | 'reject') => {
+    setBusy(id);
+    try {
+      await onDecide(id, decision);
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  return (
+    <section className="m-4 rounded-[var(--radius-card)] border border-[var(--teal)] bg-[var(--teal-wash)] p-4">
+      <h2 className="text-sm">
+        {guests.length === 1 ? 'Ktoś chce dołączyć do stolika' : 'Chętni do stolika'}
+      </h2>
+      <ul className="mt-3 flex flex-col gap-2">
+        {guests.map((guest) => (
+          <li key={guest.id} className="flex items-center justify-between gap-3">
+            <span className="flex items-center gap-2 text-sm">
+              <GuestMark symbol={guest.symbol} color={guest.color} size={24} />
+              {guest.displayName}
+            </span>
+            <span className="flex shrink-0 gap-2">
+              <button
+                type="button"
+                disabled={busy === guest.id}
+                onClick={() => void decide(guest.id, 'approve')}
+                className="rounded-[var(--radius-control)] bg-[var(--orange)] px-3 py-1.5 text-sm text-white disabled:opacity-50"
+              >
+                Wpuść
+              </button>
+              <button
+                type="button"
+                disabled={busy === guest.id}
+                onClick={() => void decide(guest.id, 'reject')}
+                className="mono rounded-[var(--radius-control)] px-3 py-1.5 text-xs text-[var(--muted)] disabled:opacity-50"
+              >
+                To nie u nas
+              </button>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 function BlockedTable({ qrToken, tableLabel }: { qrToken: string; tableLabel: string }) {
   const [state, setState] = useState<'idle' | 'sending' | 'sent' | 'failed'>('idle');
 

@@ -72,6 +72,8 @@ export interface StaffSession {
     symbol: string;
     color: string;
     isHost: boolean;
+    /** `false` znaczy: czeka, aż host go wpuści do wizyty. */
+    approved: boolean;
   }[];
 }
 
@@ -215,6 +217,17 @@ export const removeParticipant = (sessionId: string, participantId: string) =>
   authorized<{ sessionId: string }>(`/staff/sessions/${sessionId}/participants/${participantId}`, {
     method: 'DELETE',
   });
+
+/** Zgoda zastępcza na wejście gościa: host bywa zajęty albo odszedł od stolika. */
+export const decidePendingGuest = (
+  sessionId: string,
+  participantId: string,
+  decision: 'approve' | 'reject',
+) =>
+  authorized<{ id: string; approved: boolean }>(
+    `/staff/sessions/${sessionId}/pending-guests/${participantId}`,
+    { method: 'POST', body: JSON.stringify({ decision }) },
+  );
 
 export const fetchWaiterCalls = () => authorized<WaiterCall[]>('/staff/calls');
 
@@ -640,6 +653,8 @@ export interface RestaurantSettings {
   orderingMode: string;
   requireStaffConfirmation: boolean;
   tableActivationRequired: boolean;
+  hostApprovesGuests: boolean;
+  partialSettlementEnabled: boolean;
   minOrderCents: number;
   openBillLimitCents: number | null;
   businessDayStartHour: number;

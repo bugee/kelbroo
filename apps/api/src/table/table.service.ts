@@ -37,6 +37,7 @@ export interface TableEntry {
       | 'awaiting_staff_activation'
       | 'table_blocked'
       | 'visit_finished'
+      | 'awaiting_host_approval'
       | null;
   };
   participant: {
@@ -45,6 +46,8 @@ export interface TableEntry {
     symbol: string;
     color: string;
     isHost: boolean;
+    /// `false` znaczy: host jeszcze nie wpuścił. Gość widzi menu, ale nie zamawia.
+    approved: boolean;
   };
   guestToken: string | null;
   menu: MenuCategoryView[];
@@ -166,8 +169,12 @@ export class TableService {
         session: {
           id: openSession.id,
           number: openSession.sessionNumber,
-          orderingEnabled: subscriptionActive,
-          blockedReason: subscriptionActive ? null : 'subscription_inactive',
+          orderingEnabled: subscriptionActive && reused.participant.approved,
+          blockedReason: !subscriptionActive
+            ? 'subscription_inactive'
+            : reused.participant.approved
+              ? null
+              : 'awaiting_host_approval',
         },
         participant: reused.participant,
         guestToken: null, // token gościa pozostaje ten, którym przyszedł
@@ -181,6 +188,13 @@ export class TableService {
       select: { displayName: true, symbol: true, color: true },
     });
     const identity = generateIdentity(existing);
+    // Zgody musi mieć kto udzielić. Jeśli przy stoliku nie siedzi już nikt
+    // wpuszczony, kolejny skanujący wchodzi jako host — inaczej czekałby
+    // w nieskończoność na osobę, która wyszła.
+    const obecni = await tx.tableParticipant.count({
+      where: { tableSessionId: openSession.id, leftAt: null, approvedAt: { not: null } },
+    });
+    const awaitsApproval = restaurant.hostApprovesGuests && obecni > 0;
 
     const participant = await tx.tableParticipant.create({
       data: {
@@ -191,7 +205,10 @@ export class TableService {
         color: identity.color,
         // Pierwszy skanujący jest hostem: domyślnym płatnikiem i adresatem
         // nierozdzielonych groszy przy podziale rachunku.
-        isHost: existing.length === 0,
+        isHost: obecni === 0,
+        // Host wchodzi zawsze — gdyby czekał na zgodę, nie miałby jej od kogo
+        // dostać i stolik nie dałby się otworzyć.
+        approvedAt: awaitsApproval ? null : new Date(),
         createdBy: 'guest',
       },
     });
@@ -216,8 +233,12 @@ export class TableService {
       session: {
         id: openSession.id,
         number: openSession.sessionNumber,
-        orderingEnabled: subscriptionActive,
-        blockedReason: subscriptionActive ? null : 'subscription_inactive',
+        orderingEnabled: subscriptionActive && !awaitsApproval,
+        blockedReason: !subscriptionActive
+          ? 'subscription_inactive'
+          : awaitsApproval
+            ? 'awaiting_host_approval'
+            : null,
       },
       participant: {
         id: participant.id,
@@ -225,6 +246,7 @@ export class TableService {
         symbol: participant.symbol,
         color: participant.color,
         isHost: participant.isHost,
+        approved: !awaitsApproval,
       },
       guestToken: token,
     };
@@ -286,6 +308,7 @@ export class TableService {
         symbol: participant.symbol,
         color: participant.color,
         isHost: participant.isHost,
+        approved: participant.approvedAt !== null,
       },
     };
   }
@@ -332,7 +355,14 @@ export class TableService {
     return {
       ...this.baseEntry(restaurant, table, locale, menu),
       session: { id: '', number: 0, orderingEnabled: false, blockedReason: reason },
-      participant: { id: '', displayName: '', symbol: '', color: '', isHost: false },
+      participant: {
+        id: '',
+        displayName: '',
+        symbol: '',
+        color: '',
+        isHost: false,
+        approved: false,
+      },
       guestToken: null,
     };
   }

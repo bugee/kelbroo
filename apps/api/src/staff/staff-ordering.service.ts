@@ -61,6 +61,10 @@ export class StaffOrderingService {
             take: 1,
             include: {
               participants: {
+                // Kelner zamawia za tych, którzy siedzą przy stoliku, nie za
+                // tych, którzy już wyszli albo czekają na wpuszczenie.
+                where: { leftAt: null, approvedAt: { not: null } },
+                orderBy: [{ isHost: 'desc' }, { joinedAt: 'asc' }],
                 select: { id: true, displayName: true, symbol: true, color: true, isHost: true },
               },
             },

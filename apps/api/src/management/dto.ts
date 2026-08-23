@@ -202,6 +202,14 @@ export class RestaurantSettingsDto {
   @IsOptional()
   tableActivationRequired?: boolean;
 
+  @IsBoolean()
+  @IsOptional()
+  hostApprovesGuests?: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  partialSettlementEnabled?: boolean;
+
   @IsInt()
   @Min(0)
   @IsOptional()

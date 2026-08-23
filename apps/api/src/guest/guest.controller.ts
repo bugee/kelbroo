@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { IsIn } from 'class-validator';
+import { TableAccessService } from './table-access.service';
 import type { SplitMode } from '@kelbroo/types';
 import { Guest, GuestAuthGuard } from './guest.guard';
 import type { ResolvedGuest } from './guest-session.service';
@@ -8,6 +9,11 @@ import { GuestSignalsService, type CallReason } from './guest-signals.service';
 class CallDto {
   @IsIn(['help', 'water', 'other'])
   reason!: Exclude<CallReason, 'bill'>;
+}
+
+class AccessDecisionDto {
+  @IsIn(['approve', 'reject'])
+  decision!: 'approve' | 'reject';
 }
 
 class BillRequestDto {
@@ -36,7 +42,30 @@ export class GuestOpenTableController {
 @Controller('guest')
 @UseGuards(GuestAuthGuard)
 export class GuestController {
-  constructor(private readonly signals: GuestSignalsService) {}
+  constructor(
+    private readonly signals: GuestSignalsService,
+    private readonly access: TableAccessService,
+  ) {}
+
+  /** Kto czeka na wpuszczenie. Pusta lista dla każdego poza hostem. */
+  @Get('pending-guests')
+  pendingGuests(@Guest() guest: ResolvedGuest) {
+    return this.access.pendingForGuest(guest.organizationId, guest.guestSessionId);
+  }
+
+  @Post('pending-guests/:participantId')
+  decide(
+    @Guest() guest: ResolvedGuest,
+    @Param('participantId') participantId: string,
+    @Body() dto: AccessDecisionDto,
+  ) {
+    return this.access.decideAsHost(
+      guest.organizationId,
+      guest.guestSessionId,
+      participantId,
+      dto.decision,
+    );
+  }
 
   /** Stan wezwań tego stolika — przycisk gościa czyta go, zamiast zgadywać. */
   @Get('calls')

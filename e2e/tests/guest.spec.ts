@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { GUEST_URL } from '../playwright.config';
-import { blockTable, seedMenuAndTable } from '../fixtures/db';
+import { blockTable, seedMenuAndTable, setHostApproval } from '../fixtures/db';
 
 /**
  * Ścieżka gościa od skanu kodu QR.
@@ -88,6 +88,49 @@ test.describe('gość przy stoliku', () => {
       await page.getByRole('button', { name: 'Poproś o otwarcie stolika' }).click();
       await expect(page.getByText(/Obsługa już wie/)).toBeVisible();
     } finally {
+      await fixture.cleanup();
+    }
+  });
+});
+
+/**
+ * Wpuszczanie gości przez hosta.
+ *
+ * Kod QR leży na stoliku na widoku, więc bez tej bramki do rachunku dopisze się
+ * każdy, kto go zobaczy. Test przechodzi całą pętlę na dwóch osobnych
+ * przeglądarkach, bo pamięć wizyty jest per urządzenie.
+ */
+test.describe('host wpuszcza do stolika', () => {
+  test('drugi gość czeka, aż host go wpuści', async ({ browser }) => {
+    const fixture = await seedMenuAndTable();
+    await setHostApproval(true);
+
+    const hostContext = await browser.newContext();
+    const goscContext = await browser.newContext();
+
+    try {
+      // Host — pierwszy skan otwiera wizytę i nie czeka na nikogo.
+      const host = await hostContext.newPage();
+      await host.goto(`${GUEST_URL}/t/${fixture.qrToken}`);
+      await expect(host.getByText(fixture.dishName)).toBeVisible();
+
+      // Drugie urządzenie: menu widać, ale zamówić nie można.
+      const gosc = await goscContext.newPage();
+      await gosc.goto(`${GUEST_URL}/t/${fixture.qrToken}`);
+      await expect(gosc.getByText(/musi Cię wpuścić/)).toBeVisible();
+
+      // Host dostaje kolejkę i wpuszcza.
+      await host.reload();
+      await expect(host.getByText(/chce dołączyć do stolika/)).toBeVisible();
+      await host.getByRole('button', { name: 'Wpuść' }).click();
+
+      // Ekran czekającego odblokowuje się bez odświeżania strony.
+      await expect(gosc.getByText(/musi Cię wpuścić/)).toHaveCount(0, { timeout: 15_000 });
+      await expect(gosc.getByText(fixture.dishName)).toBeVisible();
+    } finally {
+      await setHostApproval(false);
+      await hostContext.close();
+      await goscContext.close();
       await fixture.cleanup();
     }
   });

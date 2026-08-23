@@ -343,3 +343,19 @@ export async function blockTable(tableId: string, minutes = 2): Promise<void> {
     );
   });
 }
+
+/**
+ * Włącza albo wyłącza zgodę hosta na dołączanie gości.
+ *
+ * Ustawienie jest wspólne dla całego lokalu testowego, więc test musi je po
+ * sobie wyłączyć — inaczej kolejne testy dostają stolik, do którego nikt nie
+ * może dołączyć.
+ */
+export async function setHostApproval(enabled: boolean): Promise<void> {
+  await withClient(async (client) => {
+    await client.query('UPDATE restaurant SET host_approves_guests = $1 WHERE slug = $2', [
+      enabled,
+      E2E_SLUG,
+    ]);
+  });
+}
