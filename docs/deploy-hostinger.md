@@ -370,6 +370,32 @@ Pod apeksem stoi **statyczny plik** [design/landing-page.html](../design/landing
 podmontowany do Caddy'ego jako `index.html`. Nie ma osobnego kontenera ani procesu
 budowania — Caddy serwuje plik prosto z dysku.
 
+### Gdy wdrożenie już istniało
+
+Krok 7 tworzy `.env.prod` od zera. Jeśli twoje wdrożenie powstało wcześniej, ten plik
+już istnieje i **nie ma w nim `LANDING_DOMAIN`** — trzeba go dopisać ręcznie:
+
+```bash
+cd /root/kelbroo
+grep -q '^LANDING_DOMAIN=' .env.prod || echo 'LANDING_DOMAIN=kelbroo.com' >> .env.prod
+docker compose -f docker-compose.prod.yml --env-file .env.prod up -d caddy
+```
+
+Przebudowywanie obrazów jest zbędne — Caddyfile i plik strony są podmontowane, zmienia się
+wyłącznie środowisko Caddy'ego.
+
+> ⚠️ **Brak tej zmiennej nie zgłasza błędu.** Compose podstawia wtedy adres zapasowy
+> `landing.localhost`, Caddy startuje normalnie, a strona serwuje się pod nazwą, której
+> nikt nie rozwiąże. Objaw: `menu.` i `panel.` działają, a apex zwraca błąd TLS.
+> Sprawdzenie, które to wychwytuje:
+>
+> ```bash
+> docker compose -f docker-compose.prod.yml --env-file .env.prod exec caddy \
+>   sh -c 'echo "$LANDING_DOMAIN"'
+> ```
+>
+> Musi wypisać twoją domenę, nie `landing.localhost`.
+
 ### Aktualizacja treści
 
 ```bash
@@ -558,6 +584,7 @@ usuwa, a uprawnienia odtwarza migracja. Nie musisz nic nadawać ręcznie.
 | `migrate` ma stan `Exited (1)` | Migracje padły — najczęściej literówka w `.env.prod` | `... logs migrate` i przeczytaj błąd |
 | `api` w pętli `Restarting` | API nie łączy się z bazą lub Redisem | `... logs api` — na dole będzie konkretny powód |
 | Budowanie przerywa się bez błędu | Zabrakło RAM-u (KVM 1) | Zrób [krok 5b](#krok-5b-tylko-kvm-1--dodaj-swap) i powtórz `up -d --build` |
+| `kelbroo.com` zwraca błąd TLS, a `menu.` i `panel.` działają | `LANDING_DOMAIN` nie jest ustawione — Caddy nie zna tej nazwy, więc nie ma dla niej certyfikatu | Dopisz zmienną do `.env.prod` i `up -d caddy` — patrz **Gdy wdrożenie już istniało** |
 | `kelbroo.com` pokazuje parking domeny albo starą stronę | Został stary rekord `A` dla `@` lub `www` | Usuń go w **Manage DNS records**, zostaw tylko wpisy z kroku 3 |
 | Nie pamiętam hasła do panelu | — | [Odzyskiwanie dostępu](#odzyskiwanie-dostępu-do-panelu) poniżej |
 | Logowanie zwraca „Operacja się nie powiodła" | Odpowiedź nie pochodzi z API — panel pyta pod zły adres albo API leży | `curl -i -X POST https://panel.kelbroo.com/api/auth/login -H 'content-type: application/json' -d '{}'` — jeśli to zwraca poprawny JSON, przebuduj panel: `up -d --build` |
