@@ -581,7 +581,10 @@ model TableParticipant {
 
   /// Nick wpisany przez gościa albo wylosowany, np. "Wesoły Borsuk".
   displayName String @map("display_name")
-  avatarKey   String @map("avatar_key")
+  /// Znak rozpoznawczy do wypowiedzenia kelnerowi: prosty kształt w wyraźnym
+  /// kolorze („czerwona gwiazdka"). Para symbol + kolor jest unikalna przy stoliku.
+  /// Zestawy w packages/types/src/participant-symbol.ts.
+  symbol      String
   color       String
 
   /// Pierwszy skanujący. Domyślny płatnik; do niego trafiają nierozdzielone

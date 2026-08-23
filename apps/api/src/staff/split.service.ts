@@ -388,6 +388,7 @@ export class SplitService {
           select: {
             id: true,
             displayName: true,
+            symbol: true,
             color: true,
             isHost: true,
             settlementGroupId: true,
@@ -395,7 +396,9 @@ export class SplitService {
         },
         settlementGroups: {
           orderBy: { createdAt: 'asc' },
-          include: { participants: { select: { id: true, displayName: true } } },
+          include: {
+            participants: { select: { id: true, displayName: true, symbol: true, color: true } },
+          },
         },
       },
     });

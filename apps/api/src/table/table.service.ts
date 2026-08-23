@@ -37,7 +37,7 @@ export interface TableEntry {
   participant: {
     id: string;
     displayName: string;
-    avatarKey: string;
+    symbol: string;
     color: string;
     isHost: boolean;
   };
@@ -151,18 +151,20 @@ export class TableService {
       };
     }
 
+    // Generator potrzebuje pełnych tożsamości: nick nie może się powtórzyć,
+    // a para symbol + kolor jest tym, czym gość przedstawia się kelnerowi.
     const existing = await tx.tableParticipant.findMany({
       where: { tableSessionId: openSession.id },
-      select: { displayName: true },
+      select: { displayName: true, symbol: true, color: true },
     });
-    const identity = generateIdentity(existing.map((p) => p.displayName));
+    const identity = generateIdentity(existing);
 
     const participant = await tx.tableParticipant.create({
       data: {
         organizationId,
         tableSessionId: openSession.id,
         displayName: identity.displayName,
-        avatarKey: identity.avatarKey,
+        symbol: identity.symbol,
         color: identity.color,
         // Pierwszy skanujący jest hostem: domyślnym płatnikiem i adresatem
         // nierozdzielonych groszy przy podziale rachunku.
@@ -197,7 +199,7 @@ export class TableService {
       participant: {
         id: participant.id,
         displayName: participant.displayName,
-        avatarKey: participant.avatarKey,
+        symbol: participant.symbol,
         color: participant.color,
         isHost: participant.isHost,
       },
@@ -234,7 +236,7 @@ export class TableService {
       participant: {
         id: participant.id,
         displayName: participant.displayName,
-        avatarKey: participant.avatarKey,
+        symbol: participant.symbol,
         color: participant.color,
         isHost: participant.isHost,
       },
@@ -283,7 +285,7 @@ export class TableService {
     return {
       ...this.baseEntry(restaurant, table, locale, menu),
       session: { id: '', number: 0, orderingEnabled: false, blockedReason: reason },
-      participant: { id: '', displayName: '', avatarKey: '', color: '', isHost: false },
+      participant: { id: '', displayName: '', symbol: '', color: '', isHost: false },
       guestToken: null,
     };
   }

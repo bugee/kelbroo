@@ -1,6 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { describeIdentity } from '@kelbroo/types';
+import { GuestMark } from '@kelbroo/ui/guest-mark';
 import { StaffShell } from '@/components/StaffShell';
 import {
   addOrderItems,
@@ -125,22 +127,51 @@ function WaiterOrdering() {
       </div>
 
       {table.openSession && table.openSession.participants.length > 0 && (
-        <label className="mt-4 block text-sm font-semibold">
-          Dla kogo
-          <select
-            value={participantId}
-            onChange={(event) => setParticipantId(event.target.value)}
-            className="mono mt-1 min-h-12 w-full max-w-sm rounded-[var(--radius-control)] border border-[var(--line)] bg-[var(--surface)] px-3"
-          >
-            {/* Bez wskazania gościa pozycja zostaje na rachunku stolika bez adresata. */}
-            <option value="">— cały stolik —</option>
+        <fieldset className="mt-4">
+          {/*
+            Przyciski, nie lista rozwijana: kelner szuka wzrokiem znaku, który
+            gość właśnie mu nazwał („czerwona gwiazdka"), a nie nicku na liście.
+            Znak jest widoczny bez rozwijania czegokolwiek.
+          */}
+          <legend className="text-sm font-semibold">Dla kogo</legend>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setParticipantId('')}
+              aria-pressed={participantId === ''}
+              className={`min-h-12 rounded-[var(--radius-control)] border px-4 text-sm font-semibold ${
+                participantId === ''
+                  ? 'border-[var(--teal)] bg-[var(--teal-wash)] text-[var(--teal)]'
+                  : 'border-[var(--line)] text-[var(--muted)]'
+              }`}
+            >
+              {/* Bez wskazania gościa pozycja zostaje na rachunku stolika bez adresata. */}
+              Cały stolik
+            </button>
+
             {table.openSession.participants.map((participant) => (
-              <option key={participant.id} value={participant.id}>
-                {participant.displayName}
-              </option>
+              <button
+                key={participant.id}
+                type="button"
+                onClick={() => setParticipantId(participant.id)}
+                aria-pressed={participantId === participant.id}
+                className={`flex min-h-12 items-center gap-2 rounded-[var(--radius-control)] border px-4 text-sm font-semibold ${
+                  participantId === participant.id
+                    ? 'border-[var(--teal)] bg-[var(--teal-wash)] text-[var(--teal)]'
+                    : 'border-[var(--line)]'
+                }`}
+              >
+                <GuestMark symbol={participant.symbol} color={participant.color} />
+                <span>
+                  {participant.displayName}
+                  <span className="mono block text-xs font-normal text-[var(--muted)]">
+                    {describeIdentity(participant.symbol, participant.color)}
+                  </span>
+                </span>
+              </button>
             ))}
-          </select>
-        </label>
+          </div>
+        </fieldset>
       )}
 
       <ul className="mt-5 flex flex-col gap-4">

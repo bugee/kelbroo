@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from 'react';
 import Link from 'next/link';
+import { GuestMark } from '@kelbroo/ui/guest-mark';
 import { StaffShell } from '@/components/StaffShell';
 import { useLiveData } from '@/components/useLiveData';
 import { fetchSessions, minutesSince, money, settleSession, type StaffSession } from '@/lib/api';
@@ -60,11 +61,8 @@ function Room() {
                   key={participant.id}
                   className="flex items-center gap-1.5 rounded-full bg-[var(--surface-2)] px-2 py-1 text-xs"
                 >
-                  <span
-                    className="inline-block size-3 rounded-full"
-                    style={{ background: participant.color }}
-                    aria-hidden
-                  />
+                  {/* Ten sam znak, który gość widzi u siebie i wypowie kelnerowi. */}
+                  <GuestMark symbol={participant.symbol} color={participant.color} size={14} />
                   {participant.displayName}
                   {participant.isHost && <span className="text-[var(--muted)]">·host</span>}
                 </li>

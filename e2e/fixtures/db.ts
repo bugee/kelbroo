@@ -269,8 +269,8 @@ export async function seedSessionWithBill(options: {
     const sessionId = randomUUID();
     const orderId = randomUUID();
     const guests = [
-      { id: randomUUID(), name: 'Ala', isHost: true },
-      { id: randomUUID(), name: 'Borys', isHost: false },
+      { id: randomUUID(), name: 'Ala', symbol: 'star', color: 'red', isHost: true },
+      { id: randomUUID(), name: 'Borys', symbol: 'heart', color: 'blue', isHost: false },
     ];
 
     await client.query(
@@ -284,9 +284,18 @@ export async function seedSessionWithBill(options: {
     for (const guest of guests) {
       await client.query(
         `INSERT INTO table_participant
-           (id, organization_id, table_session_id, display_name, avatar_key, color, is_host, created_by)
-         VALUES ($1, $2, $3, $4, 'a1', '#2A8F8C', $5, 'guest')`,
-        [guest.id, organizationId, sessionId, guest.name, guest.isHost],
+           (id, organization_id, table_session_id, display_name, symbol, color, is_host, created_by)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, 'guest')`,
+        // Znak rozpoznawczy: para symbol + kolor jest unikalna przy stoliku.
+        [
+          guest.id,
+          organizationId,
+          sessionId,
+          guest.name,
+          guest.symbol,
+          guest.color,
+          guest.isHost,
+        ],
       );
     }
 

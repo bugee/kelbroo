@@ -36,6 +36,7 @@ export interface StaffOrder {
   paymentStatus: string;
   tableLabel: string;
   guestName: string | null;
+  guestSymbol: string | null;
   guestColor: string | null;
   guestNote: string | null;
   totalCents: number;
@@ -64,7 +65,13 @@ export interface StaffSession {
   dueCents: number;
   currency: string;
   orderCount: number;
-  participants: { id: string; displayName: string; color: string; isHost: boolean }[];
+  participants: {
+    id: string;
+    displayName: string;
+    symbol: string;
+    color: string;
+    isHost: boolean;
+  }[];
 }
 
 export interface OrderingTable {
@@ -75,7 +82,13 @@ export interface OrderingTable {
     id: string;
     number: number;
     totalCents: number;
-    participants: { id: string; displayName: string; color: string; isHost: boolean }[];
+    participants: {
+      id: string;
+      displayName: string;
+      symbol: string;
+      color: string;
+      isHost: boolean;
+    }[];
   } | null;
 }
 
@@ -104,6 +117,8 @@ export interface StaffOrderItem {
   addedByStaff: boolean;
   addedByName: string | null;
   forGuestName: string | null;
+  forGuestSymbol: string | null;
+  forGuestColor: string | null;
   lastEditedByName: string | null;
   lastEditedAt: string | null;
 }
@@ -153,6 +168,7 @@ export interface SplitPlan {
   participants: {
     id: string;
     displayName: string;
+    symbol: string;
     color: string;
     isHost: boolean;
     settlementGroupId: string | null;
@@ -162,7 +178,7 @@ export interface SplitPlan {
     label: string | null;
     status: string;
     totalCents: number;
-    members: { id: string; displayName: string }[];
+    members: { id: string; displayName: string; symbol: string; color: string }[];
   }[];
 }
 

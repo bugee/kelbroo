@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { ACCOUNTS } from '../fixtures/accounts';
-import { seedMenuAndTable } from '../fixtures/db';
+import { seedMenuAndTable, seedSessionWithBill } from '../fixtures/db';
 
 async function logInAsOwner(page: Page): Promise<void> {
   await page.goto('/login');
@@ -45,6 +45,35 @@ test.describe('zamawianie przez kelnera', () => {
       await page.getByRole('button', { name: 'Pokaż historię zmian' }).click();
       await expect(page.getByText(/utworzone/)).toBeVisible();
       await expect(page.getByText(/zmieniono ilość/)).toBeVisible();
+    } finally {
+      await fixture.cleanup();
+    }
+  });
+
+  test('gościa wybiera się klikając w jego znak, nie z listy rozwijanej', async ({ page }) => {
+    const fixture = await seedMenuAndTable();
+
+    try {
+      const { guests } = await seedSessionWithBill({ tableId: fixture.tableId, totalCents: 4000 });
+
+      await logInAsOwner(page);
+      await page.goto('/order');
+      await page.getByRole('button', { name: new RegExp(fixture.tableLabel) }).click();
+
+      // Lista rozwijana zniknęła — kelner szuka wzrokiem znaku, który gość nazwał.
+      await expect(page.locator('select')).toHaveCount(0);
+      await expect(page.getByRole('button', { name: 'Cały stolik' })).toBeVisible();
+
+      for (const guest of guests) {
+        const przycisk = page.getByRole('button', { name: new RegExp(guest.name) });
+        await expect(przycisk).toBeVisible();
+        // Znak jest podpisany tym, co gość wypowie: „czerwona gwiazdka".
+        await expect(przycisk.locator('svg')).toHaveCount(1);
+      }
+
+      const pierwszy = page.getByRole('button', { name: new RegExp(guests[0]!.name) });
+      await pierwszy.click();
+      await expect(pierwszy).toHaveAttribute('aria-pressed', 'true');
     } finally {
       await fixture.cleanup();
     }

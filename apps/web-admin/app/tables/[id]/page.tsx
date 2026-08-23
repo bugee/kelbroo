@@ -2,6 +2,7 @@
 
 import { use, useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { GuestMark } from '@kelbroo/ui/guest-mark';
 import { StaffShell } from '@/components/StaffShell';
 import {
   fetchSplit,
@@ -142,8 +143,13 @@ function Split({ sessionId }: { sessionId: string }) {
                     <span className="block font-semibold">
                       {group.label ?? group.members.map((member) => member.displayName).join(', ')}
                     </span>
-                    <span className="block text-sm text-[var(--muted)]">
-                      {group.members.map((member) => member.displayName).join(' · ')}
+                    <span className="mt-1 flex flex-wrap items-center gap-2 text-sm text-[var(--muted)]">
+                      {group.members.map((member) => (
+                        <span key={member.id} className="flex items-center gap-1">
+                          <GuestMark symbol={member.symbol} color={member.color} size={14} />
+                          {member.displayName}
+                        </span>
+                      ))}
                     </span>
                   </span>
 
@@ -257,8 +263,15 @@ function GroupBuilder({
                           : 'border-[var(--line)] text-[var(--muted)]'
                       }`}
                     >
-                      {participant.displayName}
-                      {participant.isHost && ' ·host'}
+                      <span className="flex items-center gap-1.5">
+                        <GuestMark
+                          symbol={participant.symbol}
+                          color={participant.color}
+                          size={14}
+                        />
+                        {participant.displayName}
+                        {participant.isHost && ' ·host'}
+                      </span>
                     </button>
                   </li>
                 );

@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useState } from 'react';
+import { GuestMark } from '@kelbroo/ui/guest-mark';
 import { StaffShell } from '@/components/StaffShell';
 import { useLiveData } from '@/components/useLiveData';
 import {
@@ -63,12 +64,10 @@ function Queue() {
             </header>
 
             <p className="mt-1 flex items-center gap-2 text-sm text-[var(--muted)]">
-              {order.guestColor && (
-                <span
-                  className="inline-block size-4 rounded-full"
-                  style={{ background: order.guestColor }}
-                  aria-hidden
-                />
+              {/* Kelner podchodzi do stolika i szuka gościa po znaku, który ten
+                  mu nazwał — kolorowa kropka bez kształtu tego nie da. */}
+              {order.guestSymbol && order.guestColor && (
+                <GuestMark symbol={order.guestSymbol} color={order.guestColor} size={16} />
               )}
               {order.guestName ?? 'Gość'} · przed {minutesSince(order.createdAt)} min
             </p>

@@ -20,7 +20,7 @@ import type { StaffContext } from '../auth/auth.types';
 const ORDER_VIEW = {
   items: true,
   table: { select: { label: true } },
-  createdByParticipant: { select: { displayName: true, color: true } },
+  createdByParticipant: { select: { displayName: true, symbol: true, color: true } },
 } satisfies Prisma.OrderInclude;
 
 @Injectable()
@@ -221,6 +221,7 @@ function toStaffView(order: Prisma.OrderGetPayload<{ include: typeof ORDER_VIEW 
     paymentStatus: order.paymentStatus,
     tableLabel: order.table.label,
     guestName: order.createdByParticipant?.displayName ?? null,
+    guestSymbol: order.createdByParticipant?.symbol ?? null,
     guestColor: order.createdByParticipant?.color ?? null,
     guestNote: order.guestNote,
     totalCents: order.totalCents,

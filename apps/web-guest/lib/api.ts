@@ -81,7 +81,7 @@ export interface TableEntry {
   participant: {
     id: string;
     displayName: string;
-    avatarKey: string;
+    symbol: string;
     color: string;
     isHost: boolean;
   };

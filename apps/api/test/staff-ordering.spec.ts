@@ -220,7 +220,7 @@ describe('zamówienie złożone przez kelnera', () => {
         tableSessionId: obcaSesja.id,
         displayName: 'Obcy',
         color: '#000000',
-        avatarKey: 'a1',
+        symbol: 'star',
         createdBy: 'guest',
       },
     });

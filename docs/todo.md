@@ -42,8 +42,8 @@ Modele są w schemacie od pierwszej migracji i nie mają ani jednego odwołania 
 - [ ] **Zestawienie rachunku na e-mail** — poczta przez SMTP Hostingera, nadawca
       `kontakt@kelbroo.com`. W projekcie nie ma jeszcze żadnej wysyłki, więc najpierw
       abstrakcja dostawcy, dopiero potem treść wiadomości.
-- [ ] **Wybór nicku i awatara przez gościa** — dziś przydzielane automatycznie; zakres
-      etapu 1 mówi o wpisaniu lub wylosowaniu.
+- [ ] **Wybór nicku przez gościa** — dziś losowany; zakres etapu 1 mówi o wpisaniu
+      lub wylosowaniu.
 - [ ] **Powrót do wizyty bez ponownego skanowania** — gość zamyka kartę albo przeglądarkę
       i wraca na `menu.kelbroo.com` z historii. Dziś widzi tam statyczne „Zeskanuj kod QR",
       więc musi fizycznie znaleźć kod na stoliku, mimo że jego wizyta trwa.
@@ -185,6 +185,8 @@ Z [product.md §7](product.md#7-wymagania-niefunkcjonalne-dotyczą-wszystkich-tr
 - [x] Jedno połączenie realtime na kartę zamiast osobnego dla każdego ekranu
 - [x] Status zamówienia na żywo u gościa — osobny kanał wizyty, z proxy w Caddym
 - [x] Polling z przycisku wezwania kelnera zdjęty, zastąpiony zdarzeniem
+- [x] Znak rozpoznawczy gościa: kształt w wyraźnym kolorze, para unikalna przy stoliku,
+      widoczny w panelu i u gościa; wybór adresata na ekranie Zamów przez klikalne ikony
 
 ---
 

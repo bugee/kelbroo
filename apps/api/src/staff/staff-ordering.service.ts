@@ -61,7 +61,7 @@ export class StaffOrderingService {
             take: 1,
             include: {
               participants: {
-                select: { id: true, displayName: true, color: true, isHost: true },
+                select: { id: true, displayName: true, symbol: true, color: true, isHost: true },
               },
             },
           },
@@ -491,12 +491,12 @@ const ORDER_DETAIL = {
     include: {
       addedByStaff: { select: { name: true } },
       lastEditedByStaff: { select: { name: true } },
-      forParticipant: { select: { displayName: true, color: true } },
+      forParticipant: { select: { displayName: true, symbol: true, color: true } },
     },
   },
   table: { select: { label: true } },
   createdByStaff: { select: { name: true } },
-  createdByParticipant: { select: { displayName: true, color: true } },
+  createdByParticipant: { select: { displayName: true, symbol: true, color: true } },
 } satisfies Prisma.OrderInclude;
 
 function toDetailView(order: Prisma.OrderGetPayload<{ include: typeof ORDER_DETAIL }>) {
@@ -526,6 +526,8 @@ function toDetailView(order: Prisma.OrderGetPayload<{ include: typeof ORDER_DETA
       addedByStaff: item.addedBy === 'staff',
       addedByName: item.addedByStaff?.name ?? null,
       forGuestName: item.forParticipant?.displayName ?? null,
+      forGuestSymbol: item.forParticipant?.symbol ?? null,
+      forGuestColor: item.forParticipant?.color ?? null,
       lastEditedByName: item.lastEditedByStaff?.name ?? null,
       lastEditedAt: item.lastEditedAt,
     })),

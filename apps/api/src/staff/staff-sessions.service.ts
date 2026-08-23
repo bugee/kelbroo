@@ -32,7 +32,9 @@ export class StaffSessionsService {
         orderBy: { openedAt: 'asc' },
         include: {
           table: { select: { label: true, zone: true } },
-          participants: { select: { id: true, displayName: true, color: true, isHost: true } },
+          participants: {
+            select: { id: true, displayName: true, symbol: true, color: true, isHost: true },
+          },
           _count: { select: { orders: true } },
         },
       });

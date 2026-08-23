@@ -94,7 +94,7 @@ async function visit(
           organizationId,
           tableSessionId: session.id,
           displayName: guest.name,
-          avatarKey: 'a1',
+          symbol: 'star',
           color: '#111111',
           isHost: guest.isHost ?? false,
           createdBy: 'guest',
