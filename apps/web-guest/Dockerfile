@@ -25,7 +25,12 @@ ARG NEXT_PUBLIC_API_URL
 ARG NEXT_PUBLIC_GUEST_URL
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_GUEST_URL=$NEXT_PUBLIC_GUEST_URL
-RUN pnpm --filter @kelbroo/web-guest build
+# `@kelbroo/types` jest publikowany jako `dist`, a `dist` nie wchodzi do obrazu
+# (patrz .dockerignore) — bez tego kroku Next nie rozwiąże importu. Lokalnie
+# katalog zwykle istnieje po `pnpm build`, więc brak tej linii ujawnia się
+# dopiero przy budowaniu obrazu.
+RUN pnpm --filter @kelbroo/types build \
+ && pnpm --filter @kelbroo/web-guest build
 
 FROM base AS runtime
 ENV NODE_ENV=production
