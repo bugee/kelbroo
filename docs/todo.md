@@ -142,7 +142,9 @@ rejestracje jest niezgodna z prawem** — to blokuje uruchomienie 5a, nie tylko 
 
 Z [product.md §7](product.md#7-wymagania-niefunkcjonalne-dotyczą-wszystkich-trzech-systemów).
 
-- [ ] **Testy e2e ścieżki gościa** — Playwright pokrywa dziś tylko logowanie i zmianę hasła.
+- [ ] **Testy e2e ścieżki gościa: zamawianie** — jest już dymny test wejścia po kodzie QR,
+      znaku rozpoznawczego i wezwania kelnera. Brakuje pełnej drogi: koszyk, złożenie
+      zamówienia, prośba o rachunek.
 - [ ] **Dostępność WCAG 2.1 AA** w aplikacji gościa — używa jej przypadkowa publiczność.
 - [ ] **Buforowanie offline w panelu** — wi-fi w lokalach bywa zawodne, a tablet nie może
       gubić akcji kelnera.

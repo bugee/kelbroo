@@ -12,7 +12,9 @@ loadEnv({ path: path.resolve(__dirname, '../.env'), quiet: true });
  */
 const API_PORT = 4200;
 const PANEL_PORT = 3202;
+const GUEST_PORT = 3201;
 const PANEL_URL = `http://localhost:${PANEL_PORT}`;
+export const GUEST_URL = `http://localhost:${GUEST_PORT}`;
 
 export default defineConfig({
   testDir: './tests',
@@ -58,9 +60,9 @@ export default defineConfig({
       stderr: 'pipe',
       env: {
         API_PORT: String(API_PORT),
-        // Panel stoi pod innym originem niż API — bez tego przeglądarka
+        // Oba fronty stoją pod innym originem niż API — bez tego przeglądarka
         // odrzuci odpowiedź, zanim test zdąży cokolwiek zobaczyć.
-        CORS_ORIGINS: PANEL_URL,
+        CORS_ORIGINS: `${PANEL_URL},${GUEST_URL}`,
       },
     },
     {
@@ -73,6 +75,19 @@ export default defineConfig({
       env: {
         // Lokalnie nie ma reverse proxy, więc ścieżka względna `/api` trafiłaby
         // w Next, a nie w API. Adres musi być znany w momencie kompilacji.
+        NEXT_PUBLIC_API_URL: `http://localhost:${API_PORT}/api`,
+      },
+    },
+    {
+      // Aplikacja gościa długo nie miała żadnego pokrycia i przepuściła awarię
+      // wywracającą cały ekran. Wystarczy, że test ją otworzy.
+      command: `pnpm --filter @kelbroo/web-guest exec next dev --port ${GUEST_PORT}`,
+      port: GUEST_PORT,
+      reuseExistingServer: false,
+      timeout: 180_000,
+      stdout: 'pipe',
+      stderr: 'pipe',
+      env: {
         NEXT_PUBLIC_API_URL: `http://localhost:${API_PORT}/api`,
       },
     },

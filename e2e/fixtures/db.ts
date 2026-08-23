@@ -171,11 +171,14 @@ async function insertStaff(
 export async function seedMenuAndTable(): Promise<{
   tableId: string;
   tableLabel: string;
+  /** Token z kodu QR — wejście do aplikacji gościa. */
+  qrToken: string;
   dishName: string;
   cleanup: () => Promise<void>;
 }> {
   const tableLabel = `Stolik ${randomUUID().slice(0, 4)}`;
   const dishName = `Danie ${randomUUID().slice(0, 4)}`;
+  const qrToken = randomUUID().replace(/-/g, '');
 
   return withClient(async (client) => {
     const { rows } = await client.query<{ id: string; organization_id: string }>(
@@ -195,7 +198,7 @@ export async function seedMenuAndTable(): Promise<{
     await client.query(
       `INSERT INTO restaurant_table (id, organization_id, restaurant_id, label, qr_token, updated_at)
        VALUES ($1, $2, $3, $4, $5, now())`,
-      [tableId, organizationId, restaurant.id, tableLabel, randomUUID().replace(/-/g, '')],
+      [tableId, organizationId, restaurant.id, tableLabel, qrToken],
     );
 
     await client.query(
@@ -223,6 +226,7 @@ export async function seedMenuAndTable(): Promise<{
     return {
       tableId,
       tableLabel,
+      qrToken,
       dishName,
       cleanup: async () => {
         await withClient(async (inner) => {
@@ -278,7 +282,14 @@ export async function seedSessionWithBill(options: {
          (id, organization_id, restaurant_id, table_id, session_number, opened_by, currency,
           business_date, subtotal_cents, total_cents, updated_at)
        VALUES ($1, $2, $3, $4, $5, 'guest', 'PLN', current_date, $6, $6, now())`,
-      [sessionId, organizationId, restaurant.id, options.tableId, 7000 + Math.floor(Math.random() * 900), options.totalCents],
+      [
+        sessionId,
+        organizationId,
+        restaurant.id,
+        options.tableId,
+        7000 + Math.floor(Math.random() * 900),
+        options.totalCents,
+      ],
     );
 
     for (const guest of guests) {
@@ -287,15 +298,7 @@ export async function seedSessionWithBill(options: {
            (id, organization_id, table_session_id, display_name, symbol, color, is_host, created_by)
          VALUES ($1, $2, $3, $4, $5, $6, $7, 'guest')`,
         // Znak rozpoznawczy: para symbol + kolor jest unikalna przy stoliku.
-        [
-          guest.id,
-          organizationId,
-          sessionId,
-          guest.name,
-          guest.symbol,
-          guest.color,
-          guest.isHost,
-        ],
+        [guest.id, organizationId, sessionId, guest.name, guest.symbol, guest.color, guest.isHost],
       );
     }
 
@@ -305,7 +308,15 @@ export async function seedSessionWithBill(options: {
           status, payment_status, currency, business_date, subtotal_cents, total_cents, updated_at)
        VALUES ($1, $2, $3, $4, $5, $6, 'guest', 'confirmed', 'awaiting_settlement', 'PLN',
                current_date, $7, $7, now())`,
-      [orderId, organizationId, restaurant.id, options.tableId, sessionId, 7000 + Math.floor(Math.random() * 900), options.totalCents],
+      [
+        orderId,
+        organizationId,
+        restaurant.id,
+        options.tableId,
+        sessionId,
+        7000 + Math.floor(Math.random() * 900),
+        options.totalCents,
+      ],
     );
 
     await client.query(

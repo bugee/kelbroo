@@ -1,0 +1,68 @@
+import { expect, test } from '@playwright/test';
+import { GUEST_URL } from '../playwright.config';
+import { seedMenuAndTable } from '../fixtures/db';
+
+/**
+ * Ścieżka gościa od skanu kodu QR.
+ *
+ * Ten plik istnieje, bo aplikacja gościa nie miała żadnego pokrycia i przepuściła
+ * awarię wywracającą cały ekran — źle umieszczony hook, który przy pierwszym
+ * renderze liczył się inaczej niż przy drugim. Samo otwarcie strony by ją złapało,
+ * więc pierwszy test robi dokładnie to.
+ */
+test.describe('gość przy stoliku', () => {
+  test('po zeskanowaniu kodu widzi menu, a nie pusty ekran', async ({ page }) => {
+    const fixture = await seedMenuAndTable();
+    const errors: string[] = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+
+    try {
+      await page.goto(`${GUEST_URL}/t/${fixture.qrToken}`);
+
+      // Karta się wyrenderowała — czyli komponent przeżył wczytanie wizyty.
+      await expect(page.getByText(fixture.dishName)).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Menu' })).toBeVisible();
+
+      // Żaden błąd wykonania nie może przejść niezauważony: React #310 objawiał
+      // się właśnie tak — wyjątek w konsoli i biała strona.
+      expect(errors).toEqual([]);
+    } finally {
+      await fixture.cleanup();
+    }
+  });
+
+  test('dostaje znak rozpoznawczy do wypowiedzenia kelnerowi', async ({ page }) => {
+    const fixture = await seedMenuAndTable();
+
+    try {
+      await page.goto(`${GUEST_URL}/t/${fixture.qrToken}`);
+      await expect(page.getByText(fixture.dishName)).toBeVisible();
+
+      // Kształt plus jego nazwa — „czerwona gwiazdka" jest tym, co gość mówi.
+      const naglowek = page.locator('header');
+      await expect(naglowek.locator('svg[role="img"]')).toHaveCount(1);
+      await expect(
+        naglowek.getByText(
+          /(gwiazdka|serce|kwadrat|trójkąt|koło|domek|strzałka|księżyc|romb|błyskawica)/,
+        ),
+      ).toBeVisible();
+    } finally {
+      await fixture.cleanup();
+    }
+  });
+
+  test('może zawołać kelnera i widzi, że zgłoszenie poszło', async ({ page }) => {
+    const fixture = await seedMenuAndTable();
+
+    try {
+      await page.goto(`${GUEST_URL}/t/${fixture.qrToken}`);
+      await expect(page.getByText(fixture.dishName)).toBeVisible();
+
+      await page.getByRole('button', { name: 'Kelner', exact: true }).click();
+      // „Wysłane", nie „idzie" — nikt jeszcze zgłoszenia nie przyjął.
+      await expect(page.getByRole('button', { name: /Kelner — wysłane/ })).toBeVisible();
+    } finally {
+      await fixture.cleanup();
+    }
+  });
+});

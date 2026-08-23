@@ -84,6 +84,21 @@ export function GuestApp({ qrToken }: { qrToken: string }) {
     return () => clearInterval(timer);
   }, [view, refreshOrders]);
 
+  /**
+   * Status zamówienia zmienia się na ekranie gościa sam, gdy kuchnia go przestawi.
+   *
+   * Hook stoi TU, a nie niżej: pod spodem są wczesne `return` dla błędu i dla
+   * jeszcze niewczytanej wizyty. Wywołanie po nich zmieniałoby liczbę hooków
+   * między renderami i wywracało cały ekran (React #310).
+   */
+  useEffect(() => {
+    const channel = connectVisit(qrToken, (kind) => {
+      if (kind === 'orders') void refreshOrders();
+      else setCallTick((tick) => tick + 1);
+    });
+    return () => channel?.close();
+  }, [qrToken, refreshOrders]);
+
   if (error) {
     return (
       <Centered>
@@ -104,15 +119,6 @@ export function GuestApp({ qrToken }: { qrToken: string }) {
   const currency = entry.restaurant.currency;
   const cartTotal = cart.reduce((sum, line) => sum + lineTotal(line), 0);
   const canOrder = entry.session.orderingEnabled;
-
-  // Status zamówienia zmienia się na ekranie gościa sam, gdy kuchnia go przestawi.
-  useEffect(() => {
-    const channel = connectVisit(qrToken, (kind) => {
-      if (kind === 'orders') void refreshOrders();
-      else setCallTick((tick) => tick + 1);
-    });
-    return () => channel?.close();
-  }, [qrToken, refreshOrders]);
 
   const send = async () => {
     setSending(true);
