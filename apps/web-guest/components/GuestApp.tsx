@@ -19,7 +19,6 @@ import {
   type SessionOrders,
   type TableEntry,
 } from '@/lib/api';
-import { describeIdentity } from '@kelbroo/types';
 import { ThemeToggle } from '@kelbroo/ui/theme';
 import { GuestMark } from '@kelbroo/ui/guest-mark';
 import { DishSheet } from './DishSheet';
@@ -145,9 +144,9 @@ export function GuestApp({ qrToken }: { qrToken: string }) {
         </div>
         <div className="mt-2 flex items-center justify-between gap-3">
           {/*
-            Znak rozpoznawczy jest tu po to, żeby gość mógł go wypowiedzieć
-            kelnerowi. Dlatego obok kształtu stoi jego nazwa — „czerwona
-            gwiazdka" — a nie sama kolorowa kropka, której nikt nie nazwie.
+            Sam kształt w kolorze — gość widzi go i nazywa własnymi słowami.
+            Podpis „żółty półksiężyc" byłby dopisywaniem oczywistości pod obrazkiem;
+            nazwa zostaje w `aria-label`, dla czytników ekranu.
           */}
           <span className="flex items-center gap-2 text-xs text-[var(--muted)]">
             <GuestMark
@@ -155,12 +154,7 @@ export function GuestApp({ qrToken }: { qrToken: string }) {
               color={entry.participant.color}
               size={22}
             />
-            <span>
-              {entry.participant.displayName}
-              <span className="block text-[11px]">
-                {describeIdentity(entry.participant.symbol, entry.participant.color)}
-              </span>
-            </span>
+            {entry.participant.displayName}
           </span>
           <div className="flex items-center gap-1">
             <ThemeToggle />

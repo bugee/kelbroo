@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { describeIdentity } from '@kelbroo/types';
 import { GuestMark } from '@kelbroo/ui/guest-mark';
 import { StaffShell } from '@/components/StaffShell';
 import {
@@ -162,12 +161,7 @@ function WaiterOrdering() {
                 }`}
               >
                 <GuestMark symbol={participant.symbol} color={participant.color} />
-                <span>
-                  {participant.displayName}
-                  <span className="mono block text-xs font-normal text-[var(--muted)]">
-                    {describeIdentity(participant.symbol, participant.color)}
-                  </span>
-                </span>
+                {participant.displayName}
               </button>
             ))}
           </div>

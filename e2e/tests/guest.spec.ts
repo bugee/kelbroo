@@ -31,21 +31,28 @@ test.describe('gość przy stoliku', () => {
     }
   });
 
-  test('dostaje znak rozpoznawczy do wypowiedzenia kelnerowi', async ({ page }) => {
+  test('dostaje znak rozpoznawczy jako samą ikonę, bez podpisu', async ({ page }) => {
     const fixture = await seedMenuAndTable();
 
     try {
       await page.goto(`${GUEST_URL}/t/${fixture.qrToken}`);
       await expect(page.getByText(fixture.dishName)).toBeVisible();
 
-      // Kształt plus jego nazwa — „czerwona gwiazdka" jest tym, co gość mówi.
+      // Sam kształt, bez podpisu pod obrazkiem.
       const naglowek = page.locator('header');
-      await expect(naglowek.locator('svg[role="img"]')).toHaveCount(1);
+      const znak = naglowek.locator('svg[role="img"]');
+      await expect(znak).toHaveCount(1);
+
+      // Nazwa nie jest wypisana na ekranie, ale czytnik ekranu musi ją podać.
+      await expect(znak).toHaveAttribute(
+        'aria-label',
+        /(gwiazdka|serce|kwadrat|trójkąt|koło|domek|strzałka|księżyc|romb|błyskawica)/,
+      );
       await expect(
         naglowek.getByText(
           /(gwiazdka|serce|kwadrat|trójkąt|koło|domek|strzałka|księżyc|romb|błyskawica)/,
         ),
-      ).toBeVisible();
+      ).toHaveCount(0);
     } finally {
       await fixture.cleanup();
     }
