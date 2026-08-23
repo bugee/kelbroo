@@ -118,6 +118,8 @@ Sekcja `#kontakt` nie istnieje, a wskazują na nią **trzy** przyciski: „Poroz
 Trzy odnośniki w stopce prowadzą donikąd. **Bez tych dokumentów strona zbierająca
 rejestracje jest niezgodna z prawem** — to blokuje uruchomienie 5a, nie tylko estetykę.
 
+- [~] **Szkice dla prawnika gotowe** — [docs/legal/](legal/README.md): wsad z mapą danych
+      i rolami RODO, szkic regulaminu, szkic polityki prywatności. Do przekazania prawnikowi.
 - [ ] **Regulamin** (`#regulamin`) — warunki świadczenia usługi, abonament, wypowiedzenie.
 - [ ] **Polityka prywatności** (`#prywatnosc`) — jakie dane, po co, jak długo, komu powierzane.
       Musi objąć też dane gości: nick, awatar i zamówienie, mimo braku rejestracji.
