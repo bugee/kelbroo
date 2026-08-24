@@ -378,3 +378,30 @@ export async function acknowledgeCallAt(tableId: string): Promise<void> {
     );
   });
 }
+
+/**
+ * Przestawia abonament lokalu testowego.
+ *
+ * `wygasly` cofa datę końca — panel przechodzi wtedy w stan, w którym nowe
+ * zamówienia są wstrzymane, a rozliczenia nadal działają.
+ */
+export async function setSubscription(stan: 'aktywny' | 'wygasly' | 'proba'): Promise<void> {
+  await withClient(async (client) => {
+    const { rows } = await client.query('SELECT organization_id FROM restaurant WHERE slug = $1', [
+      E2E_SLUG,
+    ]);
+    const organizationId = rows[0]?.organization_id as string;
+    const koniec =
+      stan === 'wygasly'
+        ? "now() - interval '1 day'"
+        : stan === 'proba'
+          ? "now() + interval '2 days'"
+          : 'NULL';
+    const status = stan === 'proba' ? 'trialing' : 'active';
+    await client.query(
+      `UPDATE subscription SET status = $2::"SubscriptionStatus", current_period_end = ${koniec}
+        WHERE organization_id = $1`,
+      [organizationId, status],
+    );
+  });
+}

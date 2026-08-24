@@ -92,7 +92,10 @@ function Podglad({ sessionId }: { sessionId: string }) {
 
 /** Kto co zamówił. Pozycje bez wskazanego gościa idą na koniec, jako wspólne. */
 function PoGosciach({ items, currency }: { items: SessionItem[]; currency: string }) {
-  const grupy = new Map<string, { naglowek: SessionItem['forParticipant']; items: SessionItem[] }>();
+  const grupy = new Map<
+    string,
+    { naglowek: SessionItem['forParticipant']; items: SessionItem[] }
+  >();
 
   for (const item of items) {
     const klucz = item.forParticipant?.id ?? '';

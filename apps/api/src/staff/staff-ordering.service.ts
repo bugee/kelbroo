@@ -11,6 +11,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { DailyCounterService } from '../common/daily-counter.service';
 import { businessDateFor, toDateColumn, type BusinessDate } from '../common/business-date';
 import { recalculateSessionTotals } from '../common/session-totals';
+import { subscriptionActive } from '../common/subscription';
 import { MenuService } from '../menu/menu.service';
 import {
   OrderPricingService,
@@ -40,6 +41,28 @@ export class StaffOrderingService {
     private readonly gateway: OrdersGateway,
     private readonly guests: GuestGateway,
   ) {}
+
+  /**
+   * Bramka abonamentowa dla panelu.
+   *
+   * Wygaśnięcie abonamentu zatrzymuje **przyjmowanie nowych zamówień**, a nie
+   * cały panel. Rozliczanie otwartych rachunków, wydawanie z kuchni i zamykanie
+   * wizyt zostaje dostępne — lokal, któremu abonament skończył się w środku
+   * serwisu, musi móc dokończyć to, co już przyjął, i wziąć za to pieniądze.
+   * Zablokowanie rozliczeń uwięziłoby gotówkę w systemie i zrobiłoby z awarii
+   * płatności awarię lokalu.
+   */
+  private async wymagajAbonamentu(
+    tx: Prisma.TransactionClient,
+    organizationId: string,
+  ): Promise<void> {
+    const subscription = await tx.subscription.findUnique({ where: { organizationId } });
+    if (subscriptionActive(subscription)) return;
+
+    throw new ForbiddenException(
+      'Abonament wygasł — nowe zamówienia są wstrzymane. Otwarte rachunki możesz rozliczyć normalnie.',
+    );
+  }
 
   private restaurantOf(staff: StaffContext): string {
     if (!staff.restaurantId) {
@@ -114,6 +137,7 @@ export class StaffOrderingService {
     dto: { tableId: string; forParticipantId?: string; note?: string; items: RequestedItem[] },
   ) {
     return this.prisma.withTenant(staff.organizationId, async (tx) => {
+      await this.wymagajAbonamentu(tx, staff.organizationId);
       const restaurantId = this.restaurantOf(staff);
       const table = await tx.table.findFirst({ where: { id: dto.tableId, restaurantId } });
       if (!table) {
@@ -225,6 +249,7 @@ export class StaffOrderingService {
 
   async addItems(staff: StaffContext, orderId: string, dto: { items: RequestedItem[] }) {
     return this.prisma.withTenant(staff.organizationId, async (tx) => {
+      await this.wymagajAbonamentu(tx, staff.organizationId);
       const order = await this.loadEditable(tx, staff, orderId);
       const restaurant = await tx.restaurant.findUniqueOrThrow({
         where: { id: order.restaurantId },
@@ -278,6 +303,13 @@ export class StaffOrderingService {
       }
       if (item.quantity === quantity) {
         return toDetailView(order);
+      }
+
+      // Bramka dopiero tutaj, bo liczy się **kierunek** zmiany, a ten znamy
+      // po wczytaniu pozycji. Zmniejszenie to poprawianie pomyłki na rachunku,
+      // który już powstał — nie nowa praca do opłacenia.
+      if (quantity > item.quantity) {
+        await this.wymagajAbonamentu(tx, staff.organizationId);
       }
 
       await tx.orderItem.update({

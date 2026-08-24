@@ -156,17 +156,27 @@ przez gości zostaje wyłączone, ale **dane restauracji nie są kasowane**.
 ## 8. Rozbieżności między dokumentami a działającym systemem
 
 Sprawdzone z kodem 2026-08-24, zweryfikowane ponownie po dodaniu rejestracji.
-**Trzy obietnice nadal nie mają pokrycia**, jedna została domknięta. Nie unieważnia
+**Dwie obietnice nadal nie mają pokrycia**, dwie zostały domknięte (jedna z nich
+wymaga jeszcze poprawki w treści regulaminu). Nie unieważnia
 to dokumentów, ale każdą trzeba zamknąć kodem albo poprawką w treści.
 
 ### Otwarte
 
 1. **Regulamin §7 ust. 1 — „panel obsługi pozostaje w trybie do odczytu".**
-   Wygaśnięcie abonamentu wyłącza dziś zamawianie **przez gości**, ale kelner nadal
-   składa zamówienia z panelu bez żadnej przeszkody. To najostrzejsza z rozbieżności,
-   bo dotyczy egzekwowania płatności: lokal, który przestał płacić, pracuje dalej.
-   *Domknięcie:* sprawdzenie abonamentu w `staff-ordering.service.ts`, obok tego,
-   które już jest w `table.service.ts`.
+   **Kod domknięty 2026-08-24, treść wymaga poprawki.** Wygaśnięcie abonamentu
+   wstrzymuje teraz nowe zamówienia także w panelu (wcześniej blokowało wyłącznie
+   gościa, więc lokal bez abonamentu pracował dalej). Zostawiliśmy jednak dostępne
+   **rozliczanie otwartych rachunków, wydawanie z kuchni i zamykanie wizyt** —
+   dosłowny „tryb do odczytu" uwięziłby gotówkę w lokalu, któremu abonament
+   skończył się w środku serwisu, i zrobiłby z naszej awarii jego awarię.
+
+   > **Do rozstrzygnięcia z prawnikiem:** zdanie w regulaminie jest przez to
+   > za mocne. Proponowane brzmienie: *„…skutkuje automatycznym zawieszeniem
+   > modułu zamawiania dla Gości oraz przyjmowania nowych zamówień w panelu.
+   > Rozliczenie otwartych rachunków, realizacja zamówień już przyjętych i wgląd
+   > w historię pozostają dostępne."* Zmiana treści oznacza **nową wersję
+   > dokumentu** i zawiadomienie klientów z 14-dniowym wyprzedzeniem (§10) —
+   > dziś tanie, bo klient jest jeden.
 
 2. **Regulamin §7 ust. 3 i Polityka §5 — usunięcie danych po 6 miesiącach.**
    Żaden mechanizm retencji nie istnieje; nic się samo nie kasuje i nikt nie liczy

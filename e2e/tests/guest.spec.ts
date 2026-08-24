@@ -1,11 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { GUEST_URL } from '../playwright.config';
-import {
-  acknowledgeCallAt,
-  blockTable,
-  seedMenuAndTable,
-  setHostApproval,
-} from '../fixtures/db';
+import { acknowledgeCallAt, blockTable, seedMenuAndTable, setHostApproval } from '../fixtures/db';
 
 /**
  * Ścieżka gościa od skanu kodu QR.
@@ -223,7 +218,9 @@ test('dwóch czekających gości nie zapętla ekranów przy stoliku', async ({ b
 
     // Obaj pojawiają się u hosta sami.
     await expect(host!.getByText(/Chętni do stolika/)).toBeVisible({ timeout: 20_000 });
-    await expect(host!.locator('section', { hasText: 'Chętni do stolika' }).locator('li')).toHaveCount(2);
+    await expect(
+      host!.locator('section', { hasText: 'Chętni do stolika' }).locator('li'),
+    ).toHaveCount(2);
 
     // Cztery sekundy ciszy: bez pętli wczytań jest garstka, nie dziesiątki.
     const poDolaczeniu = wczytania;

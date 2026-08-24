@@ -395,3 +395,77 @@ describe('podgląd zamówień stolika', () => {
     }
   });
 });
+
+/**
+ * Bramka abonamentowa w panelu.
+ *
+ * Regulamin §7 obiecuje wstrzymanie zamawiania po wygaśnięciu abonamentu.
+ * Dotąd wyłączało to wyłącznie gościa: kelner mógł przyjmować zamówienia
+ * z panelu w nieskończoność, więc lokal, który przestał płacić, pracował dalej.
+ *
+ * Granica jest tu świadoma: wstrzymujemy **nowe zamówienia**, nie cały panel.
+ * Rozliczenie otwartych rachunków musi zostać możliwe, inaczej wygaśnięcie
+ * abonamentu w środku serwisu uwięziłoby gotówkę w systemie.
+ */
+describe('wygasły abonament', () => {
+  const wygas = () =>
+    direct.subscription.update({
+      where: { organizationId },
+      data: { status: 'active', currentPeriodEnd: new Date(Date.now() - 86_400_000) },
+    });
+  const przywroc = () =>
+    direct.subscription.update({
+      where: { organizationId },
+      data: { status: 'active', currentPeriodEnd: null },
+    });
+
+  it('wstrzymuje nowe zamówienie z panelu', async () => {
+    await wygas();
+    try {
+      await expect(zamow(tableId)).rejects.toThrow(/Abonament wygasł/);
+    } finally {
+      await przywroc();
+    }
+  });
+
+  it('wstrzymuje dokładanie pozycji do istniejącego zamówienia', async () => {
+    const order = await zamow(tableId);
+    await wygas();
+    try {
+      await expect(
+        ordering.addItems(waiter, order.id, { items: [{ menuItemId: kawaId, quantity: 1 }] }),
+      ).rejects.toThrow(/Abonament wygasł/);
+    } finally {
+      await przywroc();
+    }
+  });
+
+  it('wstrzymuje zwiększenie ilości, ale pozwala zmniejszyć', async () => {
+    const order = await zamow(tableId, [{ menuItemId: zupaId, quantity: 2 }]);
+    const pozycja = order.items[0]!;
+    await wygas();
+    try {
+      await expect(ordering.changeQuantity(waiter, order.id, pozycja.id, 3)).rejects.toThrow(
+        /Abonament wygasł/,
+      );
+
+      // Poprawianie pomyłki na rachunku, który już powstał, nie jest nową pracą.
+      await expect(ordering.changeQuantity(waiter, order.id, pozycja.id, 1)).resolves.toBeTruthy();
+    } finally {
+      await przywroc();
+    }
+  });
+
+  it('nie rusza okresu próbnego, dopóki trwa', async () => {
+    await direct.subscription.update({
+      where: { organizationId },
+      data: { status: 'trialing', currentPeriodEnd: new Date(Date.now() + 5 * 86_400_000) },
+    });
+    try {
+      // Okres próbny to pełnoprawne używanie usługi, tylko nieopłacone.
+      await expect(zamow(tableId)).resolves.toBeTruthy();
+    } finally {
+      await przywroc();
+    }
+  });
+});

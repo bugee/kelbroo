@@ -267,8 +267,7 @@ export interface StaffPendingGuest {
 }
 
 /** Wszyscy czekający na wpuszczenie w lokalu — kolejka „Powiadomienia". */
-export const fetchPendingGuests = () =>
-  authorized<StaffPendingGuest[]>('/staff/pending-guests');
+export const fetchPendingGuests = () => authorized<StaffPendingGuest[]>('/staff/pending-guests');
 
 /** Zgoda zastępcza na wejście gościa: host bywa zajęty albo odszedł od stolika. */
 export const decidePendingGuest = (
@@ -644,6 +643,17 @@ export function connectRealtime(onChange: () => void): { close: () => void } | n
     },
   };
 }
+
+export interface SubscriptionState {
+  active: boolean;
+  status: string;
+  currentPeriodEnd: string | null;
+  /** Ujemne, gdy termin minął. */
+  daysLeft: number | null;
+  trial: boolean;
+}
+
+export const fetchSubscription = () => authorized<SubscriptionState>('/staff/subscription');
 
 export const fetchBadges = () => authorized<Record<string, number>>('/staff/badges');
 

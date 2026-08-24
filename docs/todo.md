@@ -137,11 +137,14 @@ Sekcja `#kontakt` nie istnieje, a wskazują na nią **trzy** przyciski: „Poroz
       pod `/prywatnosc`. Obejmuje obowiązek informacyjny RODO, więc odnośnik „RODO"
       w stopce prowadzi do jej §8 zamiast do osobnego dokumentu.
 - [x] **Zgody przy rejestracji** — dwa wymagane pola, zapisywane z **wersją dokumentu**.
-- [ ] **Domknąć cztery obietnice bez pokrycia w kodzie** — spis w
-      [docs/legal/README.md §8](legal/README.md). Najpoważniejsza: regulamin mówi, że po
-      wygaśnięciu abonamentu panel przechodzi w tryb do odczytu, a dziś blokujemy tylko
-      zamawianie przez gości. Druga: obiecane usunięcie danych po 6 miesiącach nie ma
-      żadnego mechanizmu.
+- [x] **Wygaśnięcie abonamentu wstrzymuje zamawianie także w panelu** (2026-08-24) —
+      wcześniej blokowało wyłącznie gościa, więc lokal bez abonamentu pracował dalej.
+      Rozliczanie otwartych rachunków zostaje dostępne, a panel mówi o tym paskiem.
+      **Zostaje poprawka w regulaminie:** „tryb do odczytu" jest za mocny wobec tego,
+      co robimy — proponowane brzmienie w [legal/README.md §8](legal/README.md).
+- [ ] **Domknąć pozostałe obietnice bez pokrycia w kodzie** — spis w
+      [docs/legal/README.md §8](legal/README.md): usunięcie danych po 6 miesiącach
+      (żadnego mechanizmu retencji nie ma) i wypowiedzenie umowy z poziomu panelu.
 - [ ] **Zbierać NIP przy rejestracji** — usługa jest B2B, faktury VAT będą potrzebne,
       a polityka już deklaruje przetwarzanie NIP-u. Kolumna `Organization.nip` czeka.
 

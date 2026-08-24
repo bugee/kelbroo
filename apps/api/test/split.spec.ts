@@ -385,3 +385,29 @@ describe('przeliczanie przy zmianie rachunku', () => {
     expect(plan.locked).toBe(false);
   });
 });
+
+/**
+ * Rozliczanie przy nieaktywnym abonamencie.
+ *
+ * Bramka abonamentowa zatrzymuje przyjmowanie nowych zamówień, ale **nie może**
+ * zatrzymać rozliczeń. Lokal, któremu abonament skończył się w środku serwisu,
+ * musi wziąć pieniądze za to, co już wydał — inaczej awaria płatności u nas
+ * staje się awarią kasy u niego.
+ *
+ * Organizacja w tym pliku nie ma wiersza abonamentu, czyli jest w stanie
+ * nieaktywnym z definicji — i właśnie dlatego jest dobrym miejscem na ten test.
+ */
+describe('nieaktywny abonament a rozliczenie', () => {
+  it('pozwala zamknąć otwarty rachunek', async () => {
+    expect(await direct.subscription.findUnique({ where: { organizationId } })).toBeNull();
+
+    const { session } = await visit(
+      [{ name: 'Ala', isHost: true }, { name: 'Bo' }],
+      [{ amountCents: 5000 }],
+    );
+    const plan = await split.setMode(waiter, session.id, { splitMode: 'equal' });
+
+    const po = await split.settleGroup(waiter, session.id, plan.groups[0]!.id, 'cash');
+    expect(po.paidCents).toBeGreaterThan(0);
+  });
+});

@@ -5,7 +5,16 @@ import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { ThemeToggle } from '@kelbroo/ui/theme';
 import { useLiveData } from '@/components/useLiveData';
-import { clearSession, fetchBadges, me, readAccess, type Staff, type StaffRole } from '@/lib/api';
+import {
+  clearSession,
+  fetchBadges,
+  fetchSubscription,
+  me,
+  readAccess,
+  type Staff,
+  type StaffRole,
+  type SubscriptionState,
+} from '@/lib/api';
 
 type NavItem = { href: string; label: string; roles: StaffRole[] };
 
@@ -90,6 +99,11 @@ function Shell({
   const loadBadges = useCallback(() => fetchBadges(), []);
   const { data: badges } = useLiveData(loadBadges);
 
+  // Stan abonamentu też mieszka w powłoce: ostrzeżenie ma być widoczne z każdego
+  // ekranu, a nie dopiero wtedy, gdy kelner stuknie w „Złóż zamówienie".
+  const loadSubscription = useCallback(() => fetchSubscription(), []);
+  const { data: abonament } = useLiveData(loadSubscription, 300_000);
+
   return (
     <div className="min-h-dvh">
       <header className="sticky top-0 z-20 border-b border-[var(--line)] bg-[var(--surface)] px-4 py-2 print:hidden">
@@ -137,9 +151,43 @@ function Shell({
         </div>
       </header>
 
+      {abonament && <SubscriptionBanner stan={abonament} />}
+
       <main className="mx-auto max-w-6xl p-4">{children(staff)}</main>
     </div>
   );
+}
+
+/**
+ * Pasek o abonamencie.
+ *
+ * Dwa stany, bo znaczą co innego. Wygasły: nowe zamówienia są wstrzymane i to
+ * jest awaria do naprawienia dziś. Kończący się okres próbny: jeszcze wszystko
+ * działa, ale warto wiedzieć — ostrzeżenie pokazujemy dopiero na trzy dni przed,
+ * bo pasek widoczny przez dwa tygodnie przestaje być zauważany.
+ */
+function SubscriptionBanner({ stan }: { stan: SubscriptionState }) {
+  if (!stan.active) {
+    return (
+      <p
+        role="alert"
+        className="mono border-b border-[var(--orange)] bg-[var(--orange-wash)] px-4 py-2.5 text-center text-sm print:hidden"
+      >
+        <strong>Abonament wygasł.</strong> Nowe zamówienia są wstrzymane — otwarte rachunki
+        rozliczysz normalnie. Napisz na kontakt@kelbroo.com.
+      </p>
+    );
+  }
+
+  if (stan.trial && stan.daysLeft !== null && stan.daysLeft <= 3) {
+    return (
+      <p className="mono border-b border-[var(--line)] bg-[var(--teal-wash)] px-4 py-2.5 text-center text-sm text-[var(--teal)] print:hidden">
+        Okres próbny kończy się {stan.daysLeft === 0 ? 'dziś' : `za ${stan.daysLeft} dni`}.
+      </p>
+    );
+  }
+
+  return null;
 }
 
 /**

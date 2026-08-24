@@ -34,6 +34,8 @@ import { WaiterCallsService } from './waiter-calls.service';
 import { BadgesService } from './badges.service';
 import { TableLifecycleService } from './table-lifecycle.service';
 import { TableAccessService } from '../guest/table-access.service';
+import { PrismaService } from '../prisma/prisma.service';
+import { readSubscription } from '../common/subscription';
 
 class ReasonDto {
   @IsString()
@@ -182,6 +184,7 @@ export class StaffController {
     private readonly badges: BadgesService,
     private readonly lifecycle: TableLifecycleService,
     private readonly access: TableAccessService,
+    private readonly prisma: PrismaService,
   ) {}
 
   /** Ekran „Powiadomienia" — kelner i wyżej. Kuchnia go nie widzi. */
@@ -385,6 +388,18 @@ export class StaffController {
     @Param('participantId', ParseUUIDPipe) participantId: string,
   ) {
     return this.lifecycle.removeParticipant(staff, id, participantId);
+  }
+
+  /**
+   * Stan abonamentu. Panel pokazuje go paskiem u góry, bo kelner ma wiedzieć
+   * o wygaśnięciu **zanim** stuknie w „Złóż zamówienie", a nie z komunikatu błędu.
+   */
+  @Get('subscription')
+  @Roles('owner', 'manager', 'waiter', 'kitchen')
+  subscription(@Staff() staff: StaffContext) {
+    return this.prisma.withTenant(staff.organizationId, (tx) =>
+      readSubscription(tx, staff.organizationId),
+    );
   }
 
   /** Wszyscy oczekujący w lokalu — ekran „Powiadomienia" bierze listę stąd. */

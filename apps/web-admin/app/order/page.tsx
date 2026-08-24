@@ -72,7 +72,7 @@ function WaiterOrdering() {
    */
   useEffect(() => {
     if (!wskazany || !tables) return;
-    setTable((obecny) => obecny ?? (tables.find((t) => t.id === wskazany) ?? null));
+    setTable((obecny) => obecny ?? tables.find((t) => t.id === wskazany) ?? null);
   }, [wskazany, tables]);
 
   const run = async (action: () => Promise<StaffOrderDetail>) => {

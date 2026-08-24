@@ -29,7 +29,10 @@ async function logIn(page: Page, account: Pick<Account, 'email' | 'password'>): 
  * kosmetyką: token trafia do `localStorage` dopiero po odpowiedzi z API, a
  * nawigacja wykonana wcześniej zastaje `StaffShell` bez sesji i wraca na /login.
  */
-async function logInToPanel(page: Page, account: Pick<Account, 'email' | 'password'>): Promise<void> {
+async function logInToPanel(
+  page: Page,
+  account: Pick<Account, 'email' | 'password'>,
+): Promise<void> {
   await logIn(page, account);
   await expect(page).toHaveURL(/\/queue$/);
 }

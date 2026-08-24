@@ -9,6 +9,7 @@ import { GuestSessionService } from '../guest/guest-session.service';
 import { GuestGateway } from '../realtime/guest.gateway';
 import { StaffSignalsGateway } from '../realtime/staff-signals.gateway';
 import { generateIdentity } from '../guest/participant-identity';
+import { subscriptionActive as czyAbonamentDziala } from '../common/subscription';
 
 export interface EnterOptions {
   requestedLocale?: string;
@@ -137,11 +138,9 @@ export class TableService {
       throw new NotFoundException('Nieaktywny lub nieznany kod QR.');
     }
 
+    // Ta sama reguła, którą stosuje panel — jedna definicja „abonament działa".
     const subscription = await tx.subscription.findUnique({ where: { organizationId } });
-    const subscriptionActive =
-      subscription !== null &&
-      (subscription.status === 'active' || subscription.status === 'trialing') &&
-      (subscription.currentPeriodEnd === null || subscription.currentPeriodEnd > new Date());
+    const subscriptionActive = czyAbonamentDziala(subscription);
 
     const locale = this.menu.resolveLocale(
       options.requestedLocale,
