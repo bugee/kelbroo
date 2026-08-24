@@ -16,6 +16,9 @@ RUN pnpm install --frozen-lockfile --filter @kelbroo/web-marketing...
 FROM deps AS build
 COPY packages/config packages/config
 COPY apps/web-marketing apps/web-marketing
+# Regulamin i polityka prywatności są renderowane przy budowaniu — to treść
+# strony, nie dokumentacja. Reszta `docs` zostaje poza obrazem (.dockerignore).
+COPY docs/legal docs/legal
 # Bez kroku budowania `@kelbroo/types`: strona produktowa celowo nie sięga po
 # pakiety współdzielone, więc nie ma czego kompilować przed nią.
 RUN pnpm --filter @kelbroo/web-marketing build

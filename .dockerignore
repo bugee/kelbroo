@@ -11,3 +11,6 @@
 **/test-results
 design
 docs
+# Wyjątek: dokumenty prawne są treścią strony produktowej, nie dokumentacją.
+# `apps/web-marketing` renderuje je przy budowaniu, więc muszą być w kontekście.
+!docs/legal
