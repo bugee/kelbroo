@@ -7,9 +7,15 @@
  */
 const API = process.env.NEXT_PUBLIC_API_URL || '/api';
 
-/** Wersje dokumentów, na które zgadza się zakładający konto. */
-export const TERMS_VERSION = '2026-08-01';
-export const PRIVACY_VERSION = '2026-08-01';
+/**
+ * Wersje dokumentów, na które zgadza się zakładający konto.
+ *
+ * Muszą odpowiadać nagłówkom `_Wersja …_` w `docs/legal/` — zgoda zapisuje się
+ * z wersją, a spór rozstrzyga to, co wtedy było napisane. Zmiana treści dokumentu
+ * bez zmiany tej stałej daje zgody wskazujące na nieistniejące brzmienie.
+ */
+export const TERMS_VERSION = '2026-08-24';
+export const PRIVACY_VERSION = '2026-08-24';
 
 export interface RegistrationResult {
   restaurantName: string;

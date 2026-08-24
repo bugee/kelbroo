@@ -1,17 +1,19 @@
 # Wsad dla prawnika — kelbroo
 
-**To nie są dokumenty gotowe do publikacji.** Trzy pliki w tym katalogu opisują, jak
-naprawdę działa system i co przetwarza. Mają skrócić prawnikowi drogę do zrozumienia
-usługi, a nie zastąpić jego pracę.
-
 | Plik | Co zawiera |
 |---|---|
-| [regulamin.draft.md](regulamin.draft.md) | Szkielet regulaminu świadczenia usługi SaaS |
-| [polityka-prywatnosci.draft.md](polityka-prywatnosci.draft.md) | Szkielet polityki prywatności |
-| ten plik | Mapa danych, role RODO i pytania otwarte |
+| [regulamin.md](regulamin.md) | **Obowiązujący regulamin** — publikowany pod `/regulamin` |
+| [polityka-prywatnosci.md](polityka-prywatnosci.md) | **Obowiązująca polityka prywatności** — publikowana pod `/prywatnosc` |
+| ten plik | Mapa danych, role RODO i rozbieżności do zamknięcia |
 
-Miejsca do uzupełnienia oznaczone są `[…]`. Uwagi skierowane do prawnika stoją
-w cytatach zaczynających się od **Do rozstrzygnięcia**.
+**Te pliki są źródłem prawdy dla stron publikowanych na `kelbroo.com`** — aplikacja
+marketingowa renderuje je wprost, żeby opublikowana treść nie mogła rozjechać się
+z repozytorium. Zmiana treści = zmiana wersji w nagłówku dokumentu **i** w stałych
+`TERMS_VERSION` / `PRIVACY_VERSION` (`apps/web-marketing/lib/api.ts`), bo rejestracja
+zapisuje przy zgodzie wersję, na którą klient przystał.
+
+Wcześniejsze szkice dla prawnika zostały zastąpione tymi dokumentami i usunięte —
+dwa komplety w jednym katalogu to proszenie się o opublikowanie nie tego.
 
 ---
 
@@ -148,3 +150,25 @@ przez gości zostaje wyłączone, ale **dane restauracji nie są kasowane**.
    restauracja, i regulamin powinien to przesądzać.
 5. Czy potrzebny jest osobny regulamin dla gościa, skoro gość nie zawiera z nami umowy
    ani nie zakłada konta.
+
+---
+
+## 8. Rozbieżności między dokumentami a działającym systemem
+
+Dokumenty zostały sprawdzone z kodem 2026-08-24. Cztery obietnice **nie mają dziś
+pokrycia** — nie unieważnia to dokumentów, ale trzeba je domknąć kodem albo poprawką
+w treści. Zadania są w [todo.md §5c](../todo.md).
+
+1. **Regulamin §7 ust. 1** — „Panel obsługi pozostaje w trybie do odczytu". Wygaśnięcie
+   abonamentu wyłącza dziś zamawianie **przez gości**, ale kelner nadal może złożyć
+   zamówienie z panelu. Albo dokładamy blokadę, albo zdanie jest za mocne.
+2. **Regulamin §7 ust. 3 i Polityka §5** — trwałe usunięcie danych po 6 miesiącach.
+   Żaden mechanizm retencji nie istnieje; dziś nic się samo nie kasuje.
+3. **Regulamin §7 ust. 2** — wypowiedzenie „z poziomu panelu Konta". W panelu nie ma
+   takiej funkcji; zostaje droga mailowa, którą dokument też dopuszcza.
+4. **Polityka §5** — deklarujemy przetwarzanie NIP-u i adresu działalności, a formularz
+   rejestracji ich nie zbiera. Przy sprzedaży B2B i fakturach VAT i tak będą potrzebne.
+
+> Do potwierdzenia przez Ciebie, bo tego nie sprawdzę z kodu: czy infrastruktura
+> naprawdę stoi we **Frankfurcie** (Polityka §6) — dokument opiera na tym twierdzenie
+> o braku transferu poza EOG.

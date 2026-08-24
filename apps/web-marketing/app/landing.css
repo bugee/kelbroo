@@ -1225,3 +1225,94 @@ svg {
     transform: none;
   }
 }
+
+/* ============ DOKUMENTY PRAWNE ============ */
+/* Tekst do czytania od początku do końca, nie do skanowania wzrokiem — inna
+   hierarchia niż na stronie produktowej i znacznie więcej powietrza między
+   paragrafami. */
+.dokument {
+  margin-top: 24px;
+  font-size: var(--fs-body);
+  line-height: 1.7;
+  color: var(--ink-2);
+}
+.dokument h1 {
+  font-family: 'Outfit', sans-serif;
+  font-size: var(--fs-h2);
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--ink);
+  margin-bottom: 18px;
+}
+.dokument h2 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 40px 0 12px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+.dokument h1 + p em,
+.dokument > p:first-of-type em {
+  font-family: 'IBM Plex Mono', monospace;
+  font-style: normal;
+  font-size: var(--fs-xs);
+  color: var(--muted);
+}
+.dokument p {
+  margin-bottom: 14px;
+}
+.dokument strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+.dokument ol,
+.dokument ul {
+  margin: 0 0 16px 22px;
+}
+.dokument li {
+  margin-bottom: 8px;
+}
+.dokument ol {
+  list-style: decimal;
+}
+.dokument ul {
+  list-style: disc;
+}
+.dokument code {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.9em;
+  background: var(--surface-2);
+  padding: 2px 5px;
+  border-radius: 5px;
+}
+/* Tabela cennika i tabela danych — na telefonie muszą się przewijać w poziomie,
+   a nie rozpychać strony. */
+.dokument table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 18px;
+  font-size: var(--fs-sm);
+}
+.dokument th,
+.dokument td {
+  border: 1px solid var(--line);
+  padding: 8px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+.dokument th {
+  background: var(--surface-2);
+  font-weight: 600;
+  color: var(--ink);
+}
+.dokument a {
+  color: var(--teal);
+}
+@media (max-width: 640px) {
+  .dokument table {
+    display: block;
+    overflow-x: auto;
+  }
+}

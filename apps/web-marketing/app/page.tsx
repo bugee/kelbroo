@@ -912,13 +912,18 @@ export default function LandingPage() {
                   <a href="#kontakt">Kontakt</a>
                 </li>
                 <li>
-                  <a href="#regulamin">Regulamin</a>
+                  <a href="/regulamin">Regulamin</a>
                 </li>
                 <li>
-                  <a href="#prywatnosc">Prywatność</a>
+                  <a href="/prywatnosc">Prywatność</a>
                 </li>
+                {/*
+                  Obowiązek informacyjny RODO wypełnia polityka prywatności — §1
+                  opisuje role, §8 prawa i drogę zgłaszania żądań. Osobny dokument
+                  powtarzałby to samo i rozjechałby się przy pierwszej zmianie.
+                */}
                 <li>
-                  <a href="#rodo">RODO</a>
+                  <a href="/prywatnosc#par-8">RODO</a>
                 </li>
               </ul>
             </div>

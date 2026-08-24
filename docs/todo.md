@@ -121,20 +121,19 @@ Sekcja `#kontakt` nie istnieje, a wskazują na nią **trzy** przyciski: „Poroz
 
 ### 5c. Treści prawne w stopce
 
-Trzy odnośniki w stopce prowadzą donikąd. **Bez tych dokumentów strona zbierająca
-rejestracje jest niezgodna z prawem** — to blokuje uruchomienie 5a, nie tylko estetykę.
-
-- [~] **Szkice dla prawnika gotowe** — [docs/legal/](legal/README.md): wsad z mapą danych
-      i rolami RODO, szkic regulaminu, szkic polityki prywatności. Do przekazania prawnikowi.
-- [ ] **Regulamin** (`#regulamin`) — warunki świadczenia usługi, abonament, wypowiedzenie.
-- [ ] **Polityka prywatności** (`#prywatnosc`) — jakie dane, po co, jak długo, komu powierzane.
-      Musi objąć też dane gości: nick, awatar i zamówienie, mimo braku rejestracji.
-- [ ] **Informacja RODO** (`#rodo`) — administrator, podstawa prawna, prawa osoby,
-      dane kontaktowe do zgłoszeń.
-- [ ] **Zgody przy rejestracji** — checkboxy akceptacji regulaminu i polityki, z datą zgody.
-
-> Te trzy dokumenty wymagają prawnika. Szablon z internetu nie obroni się przy kontroli,
-> a przy modelu SaaS dochodzi powierzenie przetwarzania danych gości restauracji.
+- [x] **Regulamin** — [docs/legal/regulamin.md](legal/regulamin.md), publikowany pod
+      `/regulamin` (2026-08-24).
+- [x] **Polityka prywatności** — [docs/legal/polityka-prywatnosci.md](legal/polityka-prywatnosci.md),
+      pod `/prywatnosc`. Obejmuje obowiązek informacyjny RODO, więc odnośnik „RODO"
+      w stopce prowadzi do jej §8 zamiast do osobnego dokumentu.
+- [x] **Zgody przy rejestracji** — dwa wymagane pola, zapisywane z **wersją dokumentu**.
+- [ ] **Domknąć cztery obietnice bez pokrycia w kodzie** — spis w
+      [docs/legal/README.md §8](legal/README.md). Najpoważniejsza: regulamin mówi, że po
+      wygaśnięciu abonamentu panel przechodzi w tryb do odczytu, a dziś blokujemy tylko
+      zamawianie przez gości. Druga: obiecane usunięcie danych po 6 miesiącach nie ma
+      żadnego mechanizmu.
+- [ ] **Zbierać NIP przy rejestracji** — usługa jest B2B, faktury VAT będą potrzebne,
+      a polityka już deklaruje przetwarzanie NIP-u. Kolumna `Organization.nip` czeka.
 
 ### 5d. Pozostałe treści z odnośników
 
