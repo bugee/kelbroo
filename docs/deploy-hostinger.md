@@ -357,6 +357,11 @@ Wszystko poniżej robisz już klikając w panelu:
 
 ---
 
+> **Zmiana w Caddyfile wymaga przebudowania.** Konfiguracja jest wpieczona w obraz
+> (`deploy/Dockerfile.caddy`), więc `up -d --build` wystarcza. Nie montujemy jej już
+> z dysku: montowanie wyglądało wygodniej, ale zmiana treści pliku nie odtwarzała
+> kontenera i nowe trasy po cichu nie wchodziły w życie.
+
 ## Strona produktowa na kelbroo.com
 
 Pod apeksem stoi aplikacja **`apps/web-marketing`** — Next.js renderujący strony

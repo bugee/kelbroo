@@ -1,0 +1,16 @@
+# syntax=docker/dockerfile:1
+#
+# Caddy z wpieczoną konfiguracją.
+#
+# Wcześniej Caddyfile był montowany z dysku hosta. Wyglądało to na wygodne, ale
+# miało cichą wadę: zmiana treści pliku nie zmienia definicji usługi, więc
+# `docker compose up -d --build` zostawiał działający kontener z konfiguracją
+# wczytaną przy starcie. Nowe trasy nie wchodziły w życie i **nic tego nie
+# sygnalizowało** — tak zniknęła trasa /api na domenie produktowej, przez co
+# formularz rejestracji trafiał w stronę zamiast w API.
+#
+# Wpieczenie pliku w obraz sprawia, że jego zmiana zmienia warstwę obrazu,
+# a to wymusza przebudowanie i odtworzenie kontenera.
+FROM caddy:2-alpine
+
+COPY deploy/Caddyfile /etc/caddy/Caddyfile

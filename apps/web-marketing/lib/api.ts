@@ -30,26 +30,115 @@ export interface RegistrationInput {
   password: string;
 }
 
-export async function register(input: RegistrationInput): Promise<RegistrationResult> {
-  const response = await fetch(`${API}/auth/register`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({
-      ...input,
-      acceptTerms: true,
-      acceptPrivacy: true,
-      termsVersion: TERMS_VERSION,
-      privacyVersion: PRIVACY_VERSION,
-    }),
-  });
+export type Pole = keyof RegistrationInput;
 
-  const payload: unknown = await response.json().catch(() => null);
-  if (!response.ok) {
-    const message =
-      payload && typeof payload === 'object' && 'message' in payload
-        ? String((payload as { message: unknown }).message)
-        : 'Nie udało się założyć konta.';
-    throw new Error(message);
+/**
+ * Błąd rejestracji rozbity na pola.
+ *
+ * `pola` wypełnia się, gdy serwer odrzucił konkretne wartości; `ogolny` niesie
+ * to, czego nie da się przypiąć do pola. Formularz potrzebuje obu — komunikat
+ * pod polem prowadzi do poprawki, komunikat nad przyciskiem tylko informuje.
+ */
+export class RegistrationError extends Error {
+  constructor(
+    message: string,
+    readonly pola: Partial<Record<Pole, string>> = {},
+  ) {
+    super(message);
+    this.name = 'RegistrationError';
   }
-  return payload as RegistrationResult;
+}
+
+/** Komunikaty `class-validator` przychodzą po angielsku i z nazwą pola na początku. */
+const POLA: Record<string, Pole> = {
+  restaurantName: 'restaurantName',
+  ownerName: 'ownerName',
+  email: 'email',
+  password: 'password',
+};
+
+const PO_POLSKU: { wzorzec: RegExp; tekst: string }[] = [
+  { wzorzec: /must be an email/, tekst: 'To nie wygląda na poprawny adres e-mail.' },
+  { wzorzec: /longer than or equal to (\d+)/, tekst: 'Za krótkie — minimum $1 znaki.' },
+  { wzorzec: /shorter than or equal to (\d+)/, tekst: 'Za długie — maksimum $1 znaków.' },
+  { wzorzec: /should not be empty|must be a string/, tekst: 'To pole jest wymagane.' },
+  { wzorzec: /must be equal to true/, tekst: 'Bez tej zgody nie możemy założyć konta.' },
+];
+
+function naPolski(komunikat: string): string {
+  for (const { wzorzec, tekst } of PO_POLSKU) {
+    const trafienie = wzorzec.exec(komunikat);
+    if (trafienie) return tekst.replace('$1', trafienie[1] ?? '');
+  }
+  return komunikat;
+}
+
+/** Rozbija odpowiedź walidatora na komunikaty przypisane do pól. */
+function rozbij(komunikaty: string[]): Partial<Record<Pole, string>> {
+  const pola: Partial<Record<Pole, string>> = {};
+  for (const komunikat of komunikaty) {
+    const nazwa = komunikat.split(' ')[0] ?? '';
+    const pole = POLA[nazwa];
+    // Pierwszy komunikat dla pola jest najbardziej konkretny — kolejne to zwykle
+    // pochodne tego samego braku („must be a string" po „should not be empty").
+    if (pole && !pola[pole]) pola[pole] = naPolski(komunikat);
+  }
+  return pola;
+}
+
+export async function register(input: RegistrationInput): Promise<RegistrationResult> {
+  let response: Response;
+  try {
+    response = await fetch(`${API}/auth/register`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        ...input,
+        acceptTerms: true,
+        acceptPrivacy: true,
+        termsVersion: TERMS_VERSION,
+        privacyVersion: PRIVACY_VERSION,
+      }),
+    });
+  } catch {
+    throw new RegistrationError('Brak połączenia z serwerem. Sprawdź sieć i spróbuj ponownie.');
+  }
+
+  const tekst = await response.text();
+  let payload: unknown = null;
+  try {
+    payload = JSON.parse(tekst);
+  } catch {
+    /* odpowiedź nie jest JSON-em — obsłużone niżej */
+  }
+
+  if (response.ok) return payload as RegistrationResult;
+
+  const komunikat =
+    payload && typeof payload === 'object' && 'message' in payload
+      ? (payload as { message: unknown }).message
+      : null;
+
+  if (Array.isArray(komunikat)) {
+    const pola = rozbij(komunikat.map(String));
+    throw new RegistrationError(
+      Object.keys(pola).length > 0
+        ? 'Popraw zaznaczone pola.'
+        : komunikat.map((k) => naPolski(String(k))).join(' '),
+      pola,
+    );
+  }
+
+  if (typeof komunikat === 'string') throw new RegistrationError(komunikat);
+
+  /**
+   * Serwer odpowiedział czymś, co nie jest naszym błędem — najczęściej stroną
+   * HTML z proxy. Podajemy kod odpowiedzi, bo bez niego zgłoszenie „nie udało
+   * się założyć konta" nie niesie żadnej informacji do diagnozy. Tak właśnie
+   * wyglądała awaria z 2026-08-24: żądanie trafiało w stronę zamiast w API.
+   */
+  throw new RegistrationError(
+    `Serwer odpowiedział błędem ${response.status} i nie podał powodu. ` +
+      'Spróbuj ponownie za chwilę albo napisz na kontakt@kelbroo.com.',
+  );
 }

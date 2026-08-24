@@ -15,7 +15,9 @@ name: kelbroo-prod
 
 services:
   caddy:
-    image: caddy:2-alpine
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.caddy
     restart: unless-stopped
     ports:
       - '80:80'
@@ -29,7 +31,7 @@ services:
       LANDING_DOMAIN: ${LANDING_DOMAIN:-landing.localhost}
       ACME_EMAIL: ${ACME_EMAIL}
     volumes:
-      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      # Caddyfile jest wpieczony w obraz, nie montowany — patrz deploy/Dockerfile.caddy.
       - caddy-data:/data
       - caddy-config:/config
     depends_on:
