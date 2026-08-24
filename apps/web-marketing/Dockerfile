@@ -34,6 +34,9 @@ ENV HOSTNAME=0.0.0.0
 
 COPY --from=build /app/apps/web-marketing/.next/standalone ./
 COPY --from=build /app/apps/web-marketing/.next/static ./apps/web-marketing/.next/static
+# `public` niesie logo, do którego odwołują się wiadomości e-mail. Bez tej linii
+# obrazek w powitaniu dawałby 404 — i to widoczne dopiero w cudzej skrzynce.
+COPY --from=build /app/apps/web-marketing/public ./apps/web-marketing/public
 
 RUN addgroup -S kelbroo && adduser -S kelbroo -G kelbroo && chown -R kelbroo:kelbroo /app
 USER kelbroo

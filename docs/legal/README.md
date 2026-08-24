@@ -155,20 +155,38 @@ przez gości zostaje wyłączone, ale **dane restauracji nie są kasowane**.
 
 ## 8. Rozbieżności między dokumentami a działającym systemem
 
-Dokumenty zostały sprawdzone z kodem 2026-08-24. Cztery obietnice **nie mają dziś
-pokrycia** — nie unieważnia to dokumentów, ale trzeba je domknąć kodem albo poprawką
-w treści. Zadania są w [todo.md §5c](../todo.md).
+Sprawdzone z kodem 2026-08-24, zweryfikowane ponownie po dodaniu rejestracji.
+**Trzy obietnice nadal nie mają pokrycia**, jedna została domknięta. Nie unieważnia
+to dokumentów, ale każdą trzeba zamknąć kodem albo poprawką w treści.
 
-1. **Regulamin §7 ust. 1** — „Panel obsługi pozostaje w trybie do odczytu". Wygaśnięcie
-   abonamentu wyłącza dziś zamawianie **przez gości**, ale kelner nadal może złożyć
-   zamówienie z panelu. Albo dokładamy blokadę, albo zdanie jest za mocne.
-2. **Regulamin §7 ust. 3 i Polityka §5** — trwałe usunięcie danych po 6 miesiącach.
-   Żaden mechanizm retencji nie istnieje; dziś nic się samo nie kasuje.
-3. **Regulamin §7 ust. 2** — wypowiedzenie „z poziomu panelu Konta". W panelu nie ma
-   takiej funkcji; zostaje droga mailowa, którą dokument też dopuszcza.
-4. **Polityka §5** — deklarujemy przetwarzanie NIP-u i adresu działalności, a formularz
-   rejestracji ich nie zbiera. Przy sprzedaży B2B i fakturach VAT i tak będą potrzebne.
+### Otwarte
+
+1. **Regulamin §7 ust. 1 — „panel obsługi pozostaje w trybie do odczytu".**
+   Wygaśnięcie abonamentu wyłącza dziś zamawianie **przez gości**, ale kelner nadal
+   składa zamówienia z panelu bez żadnej przeszkody. To najostrzejsza z rozbieżności,
+   bo dotyczy egzekwowania płatności: lokal, który przestał płacić, pracuje dalej.
+   *Domknięcie:* sprawdzenie abonamentu w `staff-ordering.service.ts`, obok tego,
+   które już jest w `table.service.ts`.
+
+2. **Regulamin §7 ust. 3 i Polityka §5 — usunięcie danych po 6 miesiącach.**
+   Żaden mechanizm retencji nie istnieje; nic się samo nie kasuje i nikt nie liczy
+   tych sześciu miesięcy. Deklarujemy w polityce prywatności usuwanie, którego
+   nie wykonujemy — to zobowiązanie wobec osób, których dane dotyczą, nie tylko
+   wobec klienta. *Domknięcie:* zadanie cykliczne plus decyzja, co dokładnie kasujemy
+   (całą organizację czy same dane osobowe, zostawiając statystyki).
+
+3. **Regulamin §7 ust. 2 — wypowiedzenie „z poziomu panelu Konta".**
+   W panelu nie ma takiej funkcji. Najłagodniejsza z trzech, bo dokument dopuszcza
+   też drogę mailową i klient nie zostaje bez wyjścia. *Domknięcie:* przycisk
+   w ustawieniach albo skreślenie tych czterech słów z regulaminu.
+
+### Domknięte
+
+4. ~~**Polityka §5 — NIP i adres działalności.**~~ NIP zbieramy od 2026-08-24,
+   ze sprawdzeniem sumy kontrolnej. **Adresu działalności nadal nie zbieramy** —
+   przy pierwszej fakturze VAT i tak będzie potrzebny, więc zostaje do dołożenia
+   razem z fakturowaniem.
 
 > Do potwierdzenia przez Ciebie, bo tego nie sprawdzę z kodu: czy infrastruktura
 > naprawdę stoi we **Frankfurcie** (Polityka §6) — dokument opiera na tym twierdzenie
-> o braku transferu poza EOG.
+> o braku transferu poza EOG, a to jedno z mocniejszych zdań w całej polityce.

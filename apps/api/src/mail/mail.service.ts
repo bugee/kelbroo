@@ -4,7 +4,9 @@ import { createTransport, type Transporter } from 'nodemailer';
 export interface Wiadomosc {
   to: string;
   subject: string;
+  /** Wersja tekstowa. Zawsze wymagana — część klientów nie pokaże HTML-a. */
   text: string;
+  html?: string;
 }
 
 /**
@@ -70,6 +72,7 @@ export class MailService {
         to: wiadomosc.to,
         subject: wiadomosc.subject,
         text: wiadomosc.text,
+        html: wiadomosc.html,
       });
       return true;
     } catch (blad) {

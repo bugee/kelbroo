@@ -11,6 +11,7 @@ import * as bcrypt from 'bcryptjs';
 import { isValidNip, normalizeNip, formatNip } from '@kelbroo/types';
 import { PrismaService } from '../prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
+import { ramka, tekstem, type Ramka } from '../mail/templates';
 
 /** Okres próbny: 14 dni planu Pro, bez podawania karty (obietnica ze strony). */
 export const TRIAL_DAYS = 14;
@@ -239,44 +240,73 @@ export class RegistrationService {
     return { sent: true as const };
   }
 
-  /** Wiadomość do klienta z odnośnikiem potwierdzającym adres. */
+  /**
+   * Powitanie z odnośnikiem potwierdzającym adres.
+   *
+   * Jedna wiadomość robi dwie rzeczy naraz: odblokowuje konto i mówi, po co ono
+   * jest. To pierwszy kontakt klienta z produktem po opuszczeniu strony, więc
+   * krótki opis wartości należy tutaj, nie do osobnego newslettera.
+   */
   private async wyslijPotwierdzenie(email: string, lokal: string, token: string): Promise<void> {
-    const odnosnik = `${this.mail.adresStrony}/potwierdz?token=${token}`;
+    const tresc: Ramka = {
+      adresStrony: this.mail.adresStrony,
+      naglowek: `Witamy w kelbroo, ${lokal}`,
+      akapity: [
+        'Konto jest już założone. Wystarczy potwierdzić adres — jednym kliknięciem.',
+        '<strong>Goście zamawiają z telefonu po zeskanowaniu kodu QR przy stoliku.</strong> ' +
+          'Zamówienie trafia prosto na ekran kuchni i do kelnera, a rachunek dzieli się sam. ' +
+          'Bez aplikacji do pobrania, bez rejestracji gościa i bez zmiany Twojej kasy fiskalnej.',
+        `Przez najbliższe ${TRIAL_DAYS} dni masz plan Pro bez opłat i bez podawania karty.`,
+      ],
+      przycisk: {
+        etykieta: 'Potwierdź adres i zacznij',
+        href: `${this.mail.adresStrony}/potwierdz?token=${token}`,
+      },
+      stopka: [
+        `Odnośnik jest ważny ${WAZNOSC_TOKENU_H} godzin.`,
+        'Jeśli to nie Ty zakładałeś konto, po prostu zignoruj tę wiadomość — bez kliknięcia nic się nie stanie.',
+      ],
+    };
+
     await this.mail.send({
       to: email,
-      subject: 'Potwierdź adres e-mail — kelbroo',
-      text: [
-        `Konto dla „${lokal}" zostało założone.`,
-        '',
-        'Potwierdź adres e-mail, żeby zalogować się do panelu:',
-        odnosnik,
-        '',
-        `Odnośnik jest ważny ${WAZNOSC_TOKENU_H} godzin.`,
-        'Jeśli to nie Ty zakładałeś konto, po prostu zignoruj tę wiadomość.',
-        '',
-        'kelbroo — self-service dining',
-      ].join('\n'),
+      subject: 'Potwierdź adres i zacznij — kelbroo',
+      text: tekstem(tresc),
+      html: ramka(tresc),
     });
   }
 
-  /** Powiadomienie dla nas: ktoś właśnie założył konto. */
+  /**
+   * Powiadomienie dla nas: ktoś właśnie założył konto.
+   *
+   * Bez odnośnika potwierdzającego — ten token otwiera cudze konto i nie ma
+   * powodu, żeby leżał w naszej skrzynce.
+   */
   private async powiadomKelbroo(
     lokal: string,
     nip: string,
     email: string,
     wlasciciel: string,
   ): Promise<void> {
+    const tresc: Ramka = {
+      adresStrony: this.mail.adresStrony,
+      naglowek: `Nowe konto: ${lokal}`,
+      akapity: [
+        `<strong>Lokal:</strong> ${lokal}`,
+        `<strong>NIP:</strong> ${formatNip(nip)}`,
+        `<strong>Właściciel:</strong> ${wlasciciel}`,
+        `<strong>E-mail:</strong> ${email}`,
+      ],
+      stopka: [
+        'Adres nie jest jeszcze potwierdzony — konto wpuści do panelu dopiero po kliknięciu w odnośnik z wiadomości powitalnej.',
+      ],
+    };
+
     await this.mail.send({
       to: this.mail.skrzynkaKelbroo,
       subject: `Nowe konto: ${lokal}`,
-      text: [
-        `Lokal: ${lokal}`,
-        `NIP: ${formatNip(nip)}`,
-        `Właściciel: ${wlasciciel}`,
-        `E-mail: ${email}`,
-        '',
-        'Adres nie jest jeszcze potwierdzony — konto wpuści do panelu dopiero po kliknięciu w odnośnik.',
-      ].join('\n'),
+      text: tekstem(tresc),
+      html: ramka(tresc),
     });
   }
 
