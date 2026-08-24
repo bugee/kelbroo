@@ -1,7 +1,9 @@
 # kelbroo — Specyfikacja produktowa
 
 > Status: draft v0.1 · 2026-08-22
-> Ten dokument jest nadrzędną specyfikacją produktu. Szczegóły techniczne każdego z trzech systemów znajdują się w osobnych plikach: [architecture.md](architecture.md), [01-landing-marketing.md](01-landing-marketing.md), [02-admin-panel.md](02-admin-panel.md), [03-customer-ordering.md](03-customer-ordering.md).
+> Ten dokument jest nadrzędną specyfikacją produktu. Szczegóły techniczne każdego z systemów znajdują się w osobnych plikach: [architecture.md](architecture.md), [01-landing-marketing.md](01-landing-marketing.md), [02-admin-panel.md](02-admin-panel.md), [03-customer-ordering.md](03-customer-ordering.md).
+>
+> **System 4 — zaplecze kelbroo** (`apps/web-backoffice`) nie ma jeszcze własnego dokumentu. Jego zakres i decyzje otwarte opisuje [todo.md §6](todo.md). Obsługuje nas, nie restauracje, i leży poza zakresem MVP etapu 1.
 
 ## 1. Wizja produktu
 
@@ -174,7 +176,7 @@ Kelner musi móc złożyć zamówienie w imieniu gościa (gość woli zamówić 
 - Automatyczne tłumaczenie menu wspomagane AI z edycją manualną.
 - Wielowalutowość i wielorynkowość (ekspansja poza Polskę).
 
-## 7. Wymagania niefunkcjonalne (dotyczą wszystkich trzech systemów)
+## 7. Wymagania niefunkcjonalne (dotyczą wszystkich systemów)
 
 - **Wydajność:** menu gościa musi się załadować w < 2s na 4G; aktualizacje statusu zamówienia w czasie rzeczywistym (< 3s opóźnienia) między panelem obsługi a apką gościa.
 - **Dostępność (uptime):** cel 99.9% dla ścieżki zamawiania i płatności (krytyczna dla przychodu restauracji).

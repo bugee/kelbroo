@@ -40,13 +40,22 @@ Przed implementacją czegokolwiek przeczytaj odpowiedni dokument:
 
 Ten plik jest **źródłem prawdy dla palety, typografii i tonu** przy budowie `apps/web-marketing` — przenieś z niego tokeny CSS i komponenty do Next.js zamiast projektować od nowa.
 
-## Trzy systemy
+## Cztery systemy
 
 1. **`apps/web-marketing`** — landing + checkout abonamentu (Next.js SSG/ISR)
 2. **`apps/web-admin`** — panel zarządzania + KDS/panel kelnera (Next.js PWA, desktop + iPad + tablet Android)
 3. **`apps/web-guest`** — PWA gościa bez rejestracji i bez instalacji (+ `apps/mobile-guest` w React Native, Faza 2)
+4. **`apps/web-backoffice`** — zaplecze kelbroo: klienci, abonamenty, blokady, wsparcie
 
 Backend: **`apps/api`** (NestJS + Prisma + PostgreSQL + Redis).
+
+**System 4 obsługuje nas, nie restauracje**, i to go odróżnia od pozostałych trzech.
+Jego użytkownik nie należy do żadnej organizacji, więc **nie jest `StaffMember`** —
+potrzebuje własnej tożsamości i własnego logowania. Czyta w poprzek najemców, czyli
+robi to, przed czym broni RLS: każdy jego ekran musi mieć świadomie wybraną drogę
+do danych (patrz [docs/todo.md §6a](docs/todo.md)). Nazwa katalogu celowo nie brzmi
+`web-admin` — ta jest zajęta przez panel restauracji i pomylenie tych dwóch
+w rozmowie o uprawnieniach kosztowałoby za dużo.
 
 ## Domeny produkcyjne
 
@@ -58,6 +67,7 @@ Domena produktowa: **`kelbroo.com`**.
 | `www.kelbroo.com` | Przekierowanie 301 na apex | Caddy |
 | `panel.kelbroo.com` | Panel obsługi (System 2) | `apps/web-admin` |
 | `menu.kelbroo.com` | PWA gościa (System 3) | `apps/web-guest` |
+| `admin.kelbroo.com` | Zaplecze kelbroo (System 4) | `apps/web-backoffice`, jeszcze nie istnieje |
 
 `/api` i `/socket.io` są serwowane **z tego samego originu co aplikacja**, nie z osobnej
 subdomeny — dzięki temu nie ma CORS-u i adres backendu nie jest wkompilowany w bundle.

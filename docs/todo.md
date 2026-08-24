@@ -7,7 +7,7 @@ tryb `pay_at_table`, bez płatności online i bez fiskalizacji.
 Zadania są ułożone w kolejności realizacji — wcześniejsze odblokowują późniejsze.
 Listę aktualizuję na bieżąco przy każdej zmianie w projekcie.
 
-*Ostatnia aktualizacja: 2026-08-23*
+*Ostatnia aktualizacja: 2026-08-24*
 
 ---
 
@@ -19,13 +19,16 @@ skan QR, menu, koszyk, zamówienie, kolejka potwierdzeń, KDS, rozliczenie stoli
 Kody QR drukują się, backupy bazy są ustawione.
 
 Ścieżka gościa jest potwierdzona **ręcznie, jednorazowo** — nie pilnuje jej żaden test.
-Pokrycie e2e tej drogi jest w sekcji 6 i to jest teraz najkrótsza droga do tego, żeby
+Pokrycie e2e tej drogi jest w sekcji 7 i to jest teraz najkrótsza droga do tego, żeby
 regresja nie wróciła niezauważona.
 
-Czego brakuje do pełnego zakresu etapu 1: **Systemu 1 w całości** (rejestracja i abonament),
-**podziału rachunku**, **zamawiania przez kelnera**, oraz czterech funkcji gościa,
-których modele istnieją w bazie, ale nie ma do nich ani linii kodu — `SettlementGroup`,
-`Review`, `WaiterCall`, `OrderItemShare`.
+Poza etapem 1 leży **System 4 — zaplecze kelbroo** (§6) — dziś każda czynność obsługi
+klienta to `psql` albo ręczna edycja `.env.prod`. Wystarcza przy jednym kliencie.
+
+Czego brakuje do pełnego zakresu etapu 1: **otwarcia Systemu 1** — strona i rejestracja
+są zbudowane, ale rejestracja jest zamknięta do czasu dokumentów prawnych (§5a, §5c) —
+oraz dwóch modeli, które wciąż nie mają ani linii kodu: `Review` (ocena dania)
+i `OrderItemShare` (podział `per_item`, zakres etapu 2).
 
 **Najbliższa blokada: sekcja 4.** Ekran gościa działa już na żywo — status zamówienia,
 stan wezwania i wpuszczenie do stolika zmieniają się same. Zostają cztery rzeczy: ocena
@@ -156,7 +159,127 @@ rejestracje jest niezgodna z prawem** — to blokuje uruchomienie 5a, nie tylko 
       > jedyna różnica między nimi: wiersze gości na karcie „Rachunek stolika" są o 7 px
       > wyższe. Nowa wersja jest poprawna; starej nie naprawiamy, bo i tak ją zastąpi.
 
-## 6. Jakość i wymagania niefunkcjonalne
+## 6. System 4 — zaplecze kelbroo (`apps/web-backoffice`)
+
+Zaplecze dla **nas**, nie dla restauracji. Dziś każda z tych czynności wymaga wejścia
+do bazy przez `psql` albo ręcznej edycji `.env.prod` — to działa przy jednym kliencie
+i przestaje działać przy trzecim.
+
+**Osobny system, osobna aplikacja, osobna domena** — decyzja z 2026-08-24, zapisana
+w [CLAUDE.md](../CLAUDE.md). Nie rozszerzamy panelu restauracji o tryb administratora:
+to dwie różne publiczności, dwa różne modele tożsamości i dwa różne zakresy dostępu
+do danych. Katalog nazywa się `web-backoffice`, nie `web-admin`, bo ta druga nazwa
+jest zajęta przez panel restauracji.
+
+### 6a. Decyzja przed kodem: kim jest administrator kelbroo
+
+To nie jest kolejna rola w `StaffMember`. Pracownik kelbroo **nie należy do żadnej
+organizacji**, a cała izolacja danych stoi na tym, że każde zapytanie ma ustawionego
+najemcę (`app.current_organization_id`). Panel administracyjny z definicji musi czytać
+w poprzek najemców — czyli robić dokładnie to, przed czym broni RLS.
+
+Do rozstrzygnięcia **przed** napisaniem pierwszego ekranu:
+
+- [ ] **Model tożsamości** — osobna tabela `PlatformAdmin` z własnym logowaniem, czy
+      rola specjalna w istniejącej? Osobna jest czystsza: konto kelbroo nigdy nie może
+      przypadkiem wpaść w listę pracowników lokalu ani w `AuditLog` restauracji.
+- [ ] **Sposób dostępu do danych** — trzy drogi, każda z inną ceną:
+      połączenie omijające RLS (jak `DIRECT_DATABASE_URL` w logowaniu) jest najprostsze,
+      ale jeden błąd w zapytaniu odsłania wszystko; wąskie funkcje `SECURITY DEFINER`
+      są bezpieczne i pracochłonne; `withTenant` po jednym kliencie naraz wystarcza
+      do większości ekranów i **jest domyślną odpowiedzią**, dopóki ktoś nie wykaże,
+      że konkretny widok bez tego nie powstanie.
+- [x] **Osobna subdomena i osobne uwierzytelnienie** — `admin.kelbroo.com`, z 2FA
+      (2026-08-24). Panel restauracji i zaplecze nie dzielą sesji ani ciasteczek.
+
+> **Prawnie:** wobec danych lokalu jesteśmy **podmiotem przetwarzającym**
+> ([docs/legal](legal/README.md) §2). Administrator kelbroo oglądający zamówienia gości
+> przetwarza cudze dane osobowe — musi to być ograniczone, uzasadnione i **zapisane
+> w dzienniku**. Umowa powierzenia powinna to opisywać, zanim funkcja powstanie.
+
+### 6b. Klienci
+
+- [ ] **Lista klientów** — organizacja, lokale, plan, status abonamentu, data założenia.
+- [ ] **Karta klienta** — wszystko o jednym kliencie w jednym miejscu.
+- [ ] **Wyszukiwanie** po nazwie, NIP-ie i adresie e-mail właściciela.
+- [ ] **Zdrowie wdrożenia** — czy klient w ogóle wystartował: liczba stolików z kodami,
+      pozycji w karcie, zamówień w ostatnich 7 dniach, data ostatniej aktywności.
+      Bez tego nie widać różnicy między klientem zadowolonym a takim, który założył
+      konto i nigdy go nie użył — a to drugie jest sygnałem do telefonu, nie do faktury.
+
+### 6c. Parametryzacja klienta
+
+- [ ] **Limity planu** (`tableLimit`, `languageLimit`) — dziś tylko w bazie.
+- [ ] **Ustawienia lokalu z poziomu wsparcia** — te same przełączniki, które ma manager
+      (tryb zamawiania, potwierdzanie, zgoda hosta, rozliczanie po jednym).
+- [ ] **Przełączniki funkcji per klient** — pilotaż nowej funkcji u jednego lokalu bez
+      wypuszczania jej wszystkim. Dziś każda taka decyzja to wdrożenie całej aplikacji.
+- [ ] **Nadpisanie limitu ponad plan** — sieć na 45 stolikach przy planie na 40 ma
+      dostać zgodę handlową, a nie awarię w piątek wieczorem.
+
+### 6d. Abonamenty i płatności
+
+> **Zależy od etapu 2.** Dopóki nie ma operatora płatności, ta część sprowadza się
+> do ewidencji: co komu wystawiono i co wpłynęło. Ma to sens także bez Stripe'a.
+
+- [ ] **Historia abonamentu** — zmiany planu, przedłużenia, wygaśnięcia.
+- [ ] **Stan rozliczenia** — opłacone do kiedy, ile zalega, od ilu dni.
+- [ ] **Zaległości** — lista klientów po terminie, posortowana po tym, jak długo.
+- [ ] **Faktury VAT za abonament** — sprzedaż B2B w Polsce, więc nie opcja. Do
+      rozstrzygnięcia: wystawiamy u siebie czy przez zewnętrzny system księgowy.
+- [ ] **Ręczna korekta** — rabat, przedłużenie, anulowanie należności. Każda z powodem
+      i podpisem osoby, która ją wprowadziła.
+
+### 6e. Blokowanie i odblokowywanie
+
+- [ ] **Blokada administracyjna** jako stan **osobny od wygaśnięcia abonamentu**.
+      Wygaśnięcie wyłącza zamawianie automatycznie i już działa; blokada to decyzja
+      człowieka, z innym powodem i inną drogą wyjścia.
+- [ ] **Stopnie blokady** — do rozstrzygnięcia, czy blokujemy tylko zamawianie przez
+      gości (lokal działa dalej, kelner obsługuje ręcznie), czy cały dostęp do panelu.
+      Pierwsze jest łagodniejsze i prawie zawsze wystarczy.
+- [ ] **Powód i termin** — blokada bez powodu wpisanego w chwili nakładania jest
+      po tygodniu nie do odtworzenia.
+- [ ] **Nigdy nie kasuje danych** — zasada z [CLAUDE.md](../CLAUDE.md) obowiązuje tak
+      samo przy blokadzie ręcznej, jak przy wygaśnięciu.
+
+### 6f. Zakładanie kont przez nas
+
+- [ ] **Formularz zakładania konta w imieniu klienta** — logika już istnieje
+      (`RegistrationService`), brakuje wejścia dla administratora. Przydatne przy
+      sprzedaży przez telefon i przy większych lokalach, które nie założą konta same.
+- [ ] **Zaproszenie zamiast hasła** — zakładamy konto, klient sam ustawia hasło
+      z jednorazowego odnośnika. **Wymaga poczty** (ta sama blokada co §4 i §5a).
+- [ ] **Zgody przy koncie zakładanym przez nas** — kto i kiedy zaakceptował regulamin,
+      skoro nie było formularza. Do rozstrzygnięcia z prawnikiem; najprawdopodobniej
+      akceptacja przy pierwszym logowaniu klienta.
+
+### 6g. Okresy próbne
+
+- [ ] **Lista trwających okresów próbnych** z datą końca i tym, czy klient w ogóle
+      zaczął korzystać.
+- [ ] **Przedłużenie okresu próbnego** — z powodem.
+- [ ] **Konwersja na płatny plan** bez zakładania konta od nowa.
+- [ ] **Co się dzieje po wygaśnięciu** — dziś zamawianie się wyłącza. Do rozstrzygnięcia,
+      czy przechodzimy na darmowy plan Menu, czy zostawiamy konto martwe.
+- [ ] **Przypomnienia przed końcem** — 3 dni przed. **Wymaga poczty.**
+
+### 6h. Wsparcie i bezpieczeństwo
+
+- [ ] **Wejście w konto klienta** — najbardziej przydatna funkcja wsparcia i najbardziej
+      niebezpieczna w całym systemie. Wymaga: wyraźnego oznaczenia na ekranie, że to
+      sesja wsparcia, wygasania po godzinie, i **wpisu w dzienniku przy każdym wejściu**.
+      Bez tych trzech rzeczy nie budować.
+- [ ] **Dziennik działań administratora** — osobny od `AuditLog` restauracji. Kto co
+      zmienił, komu i dlaczego. Append-only, jak historia zamówień.
+- [ ] **Ograniczenie dostępu do danych gości** — panel administracyjny nie potrzebuje
+      treści zamówień do żadnego z ekranów powyżej. Domyślnie ich nie pokazuje.
+- [ ] **Usunięcie konta klienta i eksport danych** — obiecane w szkicu regulaminu (§9),
+      dziś nie istnieje w żadnej postaci.
+
+---
+
+## 7. Jakość i wymagania niefunkcjonalne
 
 Z [product.md §7](product.md#7-wymagania-niefunkcjonalne-dotyczą-wszystkich-trzech-systemów).
 
@@ -253,3 +376,12 @@ Blokują zadania powyżej — wymagają twojej decyzji, nie kodu.
       widok do własnych pozycji.
 - [ ] **Kto pisze dokumenty prawne** — regulamin i polityka prywatności wymagają prawnika,
       nie szablonu z internetu.
+- [x] **Czy zaplecze to czwarty system** — tak, osobna aplikacja `apps/web-backoffice`
+      pod `admin.kelbroo.com` (2026-08-24). Powód: inna publiczność, inny model
+      tożsamości i inny zakres dostępu do danych niż w panelu restauracji.
+- [ ] **Jak panel administracyjny sięga po dane w poprzek najemców** — cała izolacja stoi
+      na RLS, a to zaplecze musi ją omijać. Trzy drogi opisane w §6a; wybór przesądza,
+      ile pracy i ile ryzyka niesie każdy kolejny ekran.
+- [ ] **Czy wsparcie może wchodzić w konto klienta** — najbardziej przydatna funkcja
+      zaplecza i najbardziej niebezpieczna. Jesteśmy podmiotem przetwarzającym, więc
+      to pytanie jest tak samo prawne, jak techniczne (§6h).
