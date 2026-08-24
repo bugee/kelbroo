@@ -83,8 +83,8 @@ Modele są w schemacie od pierwszej migracji i nie mają ani jednego odwołania 
 
 ## 5. System 1 — strona produktowa i sprzedaż
 
-Pod `kelbroo.com` stoi `apps/web-marketing`. Strona wygląda na gotową, ale
-**12 z 20 odnośników nie ma celu** —
+Pod `kelbroo.com` stoi `apps/web-marketing`. Rejestracja i dokumenty prawne działają;
+**11 z 33 odnośników wciąż nie ma celu** —
 klikając cokolwiek poza nawigacją i logowaniem, użytkownik zostaje na miejscu.
 Poniższe zadania to dokładnie ta lista braków.
 
@@ -98,10 +98,13 @@ do `#rejestracja`, którego nie ma.
       ale **nie jest podlinkowana** z żadnego CTA; przyciski wciąż prowadzą do `#trial`.
 - [x] **Endpoint zakładający konto** — `POST /auth/register`, wszystko w jednej transakcji.
 - [x] **Okres próbny 14 dni** — plan `pro`, `status = trialing`.
-- [ ] **Otworzyć rejestrację** — `REGISTRATION_ENABLED=true` w `.env.prod` i podpięcie CTA.
-      **Blokuje to sekcja 5c:** formularz zbiera zgodę na regulamin i politykę, których
-      jeszcze nie ma. Zgody zapisują się z wersją dokumentu, więc wersje trzeba ustawić
-      na prawdziwe (`TERMS_VERSION` i `PRIVACY_VERSION` w `apps/web-marketing/lib/api.ts`).
+- [x] **Rejestracja otwarta** (2026-08-24) — domyślnie włączona w compose, wszystkie
+      sześć wezwań do założenia konta prowadzi do `/rejestracja`. `REGISTRATION_ENABLED`
+      zostaje jako wyłącznik awaryjny.
+- [ ] **Weryfikacja adresu e-mail** — dziś konto działa od razu po założeniu, bez
+      potwierdzenia adresu. **Wymaga poczty** (ta sama blokada co §4).
+- [ ] **Zbierać NIP przy rejestracji** — usługa jest B2B, a polityka prywatności już
+      deklaruje przetwarzanie NIP-u.
 - [ ] **Weryfikacja adresu e-mail** — zależy od dostawcy poczty (sekcja 4, ta sama blokada
       co zestawienie rachunku).
 - [ ] **Wygaśnięcie abonamentu wyłącza zamawianie**, ale nigdy nie kasuje danych restauracji.

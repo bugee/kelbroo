@@ -50,11 +50,15 @@ export class RegistrationService {
   constructor(private readonly prisma: PrismaService) {}
 
   /**
-   * Rejestracja jest zbudowana, ale wyłączona.
+   * Wyłącznik awaryjny zakładania kont.
    *
-   * Otwiera ją dopiero `REGISTRATION_ENABLED=true`, a to czeka na regulamin
-   * i politykę prywatności: bez nich formularz zbiera zgodę na dokument, którego
-   * nie ma. Brak zmiennej znaczy „wyłączone" — włączenie musi być decyzją.
+   * Powstał jako blokada na czas, gdy formularz zbierałby zgodę na nieistniejące
+   * dokumenty. Od 2026-08-24 regulamin i polityka są opublikowane, więc rejestracja
+   * jest otwarta — zmienna zostaje, żeby dało się ją zamknąć bez wdrażania kodu.
+   *
+   * Domyślną wartość ustala `docker-compose.prod.yml`. Tutaj brak zmiennej nadal
+   * znaczy „zamknięte": test i lokalne uruchomienie nie mają prawa zakładać kont
+   * przez przypadek.
    */
   static get enabled(): boolean {
     return process.env.REGISTRATION_ENABLED === 'true';

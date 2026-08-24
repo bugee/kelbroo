@@ -31,7 +31,7 @@ const PLANY: Plan[] = [
     cena: { m: '0', y: '0' },
     podpisStaly: 'na zawsze za darmo',
     cechy: ['Kody QR bez limitu', '1 język, do 50 pozycji', 'Aktualizacja karty w minutę'],
-    cta: { etykieta: 'Załóż konto', href: '#trial' },
+    cta: { etykieta: 'Załóż konto', href: '/rejestracja' },
   },
   {
     nazwa: 'Starter',
@@ -45,7 +45,7 @@ const PLANY: Plan[] = [
       'Podział „każdy za siebie”',
       '3 konta personelu',
     ],
-    cta: { etykieta: 'Wybierz Starter', href: '#trial' },
+    cta: { etykieta: 'Wybierz Starter', href: '/rejestracja' },
   },
   {
     nazwa: 'Pro',
@@ -60,7 +60,7 @@ const PLANY: Plan[] = [
       'Konta personelu bez limitu',
       'Wsparcie w 4 godziny',
     ],
-    cta: { etykieta: 'Testuj 14 dni', href: '#trial' },
+    cta: { etykieta: 'Testuj 14 dni', href: '/rejestracja' },
     najlepszy: true,
   },
   {

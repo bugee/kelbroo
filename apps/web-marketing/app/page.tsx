@@ -97,7 +97,7 @@ export default function LandingPage() {
             <a className="btn btn-ghost btn-sm" href="https://panel.kelbroo.com">
               Zaloguj się
             </a>
-            <a className="btn btn-primary btn-sm" href="#trial">
+            <a className="btn btn-primary btn-sm" href="/rejestracja">
               Wypróbuj 14 dni
             </a>
           </div>
@@ -119,7 +119,7 @@ export default function LandingPage() {
                 aplikacji do pobrania, bez rejestracji gościa i bez zmiany Twojej kasy fiskalnej.
               </p>
               <div className="hero-cta">
-                <a className="btn btn-primary" href="#trial">
+                <a className="btn btn-primary" href="/rejestracja">
                   Zacznij 14 dni za darmo
                 </a>
                 <a className="btn btn-ghost" href="#demo">
@@ -781,7 +781,7 @@ export default function LandingPage() {
                 bez podawania karty.
               </p>
               <div className="cta-actions">
-                <a className="btn btn-primary" href="#rejestracja">
+                <a className="btn btn-primary" href="/rejestracja">
                   Zacznij za darmo
                 </a>
                 <a className="btn btn-ghost" href="#kontakt">
