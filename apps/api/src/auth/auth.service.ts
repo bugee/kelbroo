@@ -49,6 +49,22 @@ export class AuthService {
       throw new UnauthorizedException('Nieprawidłowy e-mail lub hasło.');
     }
 
+    /**
+     * Niepotwierdzony adres nie wpuszcza do panelu — inaczej weryfikacja byłaby
+     * ozdobnikiem i dałoby się zakładać konta na cudze adresy.
+     *
+     * Komunikat jest tu **inny** niż przy złym haśle i to jest świadome: hasło
+     * milczy, żeby formularz nie stał się listą kont, ale człowiek, który podał
+     * poprawne hasło, i tak jest właścicielem tego konta. Ukrywanie przed nim
+     * powodu zostawiłoby go z „nieprawidłowy e-mail lub hasło" i skrzynką pełną
+     * niezauważonej wiadomości.
+     */
+    if (!staff.emailVerifiedAt) {
+      throw new UnauthorizedException(
+        'Potwierdź adres e-mail — odnośnik wysłaliśmy przy zakładaniu konta.',
+      );
+    }
+
     await this.directory.staffMember.update({
       where: { id: staff.id },
       data: { lastLoginAt: new Date() },

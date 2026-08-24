@@ -93,6 +93,17 @@ services:
       # prywatności. Zmienna zostaje jako wyłącznik awaryjny: `false` zamyka
       # zakładanie kont bez wdrażania czegokolwiek.
       REGISTRATION_ENABLED: ${REGISTRATION_ENABLED:-true}
+      # Poczta. Bez SMTP_HOST nic nie wychodzi na zewnątrz — wiadomości lądują
+      # w logu, a rejestracja działa dalej. To celowe: brak poczty ma być
+      # widoczny w logu, a nie wywracać zakładanie kont.
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      MAIL_FROM: ${MAIL_FROM:-kelbroo <kontakt@kelbroo.com>}
+      MAIL_NOTIFY: ${MAIL_NOTIFY:-kontakt@kelbroo.com}
+      # Adres w odnośnikach wysyłanych do klientów.
+      PUBLIC_SITE_URL: https://${LANDING_DOMAIN}
       # Za proxy przeglądarka i tak nie przekracza originu, ale nagłówek Origin
       # przychodzi — musi być na liście, inaczej API odrzuci własne aplikacje.
       CORS_ORIGINS: https://${GUEST_DOMAIN},https://${ADMIN_DOMAIN}

@@ -143,9 +143,12 @@ async function insertStaff(
   account: Account & { mustChangePassword?: boolean },
 ): Promise<void> {
   await client.query(
+    // `email_verified_at` z urzędu: logowanie odrzuca konta z niepotwierdzonym
+    // adresem, a w testach nikt nie odbiera poczty.
     `INSERT INTO staff_member
-       (id, organization_id, restaurant_id, email, password_hash, role, name, must_change_password, updated_at)
-     VALUES ($1, $2, $3, $4, $5, $6::"StaffRole", $7, $8, now())`,
+       (id, organization_id, restaurant_id, email, password_hash, role, name,
+        must_change_password, email_verified_at, updated_at)
+     VALUES ($1, $2, $3, $4, $5, $6::"StaffRole", $7, $8, now(), now())`,
     [
       randomUUID(),
       scope.organizationId,

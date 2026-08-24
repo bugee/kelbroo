@@ -90,6 +90,9 @@ export class StaffAdminService {
             name: dto.name.trim(),
             role: dto.role,
             passwordHash,
+            // Adres podał ktoś, kto sam przeszedł weryfikację — nie zmuszamy
+            // kelnera do potwierdzania konta, którego nie zakładał.
+            emailVerifiedAt: new Date(),
             // Hasło nadane przez kogoś innego jest z definicji tymczasowe.
             mustChangePassword: true,
           },

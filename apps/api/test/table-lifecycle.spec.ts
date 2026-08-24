@@ -178,9 +178,7 @@ describe('sprzątnięcie stolika', () => {
     const sesja = await direct.tableSession.findFirstOrThrow({ where: { tableId: table.id } });
     await direct.tableSession.update({ where: { id: sesja.id }, data: { paidCents: 500 } });
 
-    await expect(lifecycle.reset(staff, table.id, 'pomyłka')).rejects.toThrow(
-      'są już płatności',
-    );
+    await expect(lifecycle.reset(staff, table.id, 'pomyłka')).rejects.toThrow('są już płatności');
   });
 
   it('wymaga powodu', async () => {

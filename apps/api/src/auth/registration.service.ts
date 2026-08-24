@@ -1,8 +1,16 @@
-import { randomUUID } from 'node:crypto';
-import { ConflictException, Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
+import { createHash, randomBytes, randomUUID } from 'node:crypto';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  Logger,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
+import { isValidNip, normalizeNip, formatNip } from '@kelbroo/types';
 import { PrismaService } from '../prisma/prisma.service';
+import { MailService } from '../mail/mail.service';
 
 /** Okres próbny: 14 dni planu Pro, bez podawania karty (obietnica ze strony). */
 export const TRIAL_DAYS = 14;
@@ -10,11 +18,21 @@ export const TRIAL_DAYS = 14;
 /** Limity planu Pro — te same, którymi opisany jest w cenniku. */
 const PRO_LIMITS = { tableLimit: 40, languageLimit: 6 };
 
+/** Ile czasu ma klient na kliknięcie w odnośnik z wiadomości. */
+const WAZNOSC_TOKENU_H = 48;
+
+/** Token z wiadomości. W bazie trzymamy wyłącznie jego skrót. */
+function tokenPotwierdzenia() {
+  const token = randomBytes(32).toString('base64url');
+  return { token, hash: createHash('sha256').update(token).digest('hex') };
+}
+
 export interface RegistrationInput {
   restaurantName: string;
   email: string;
   password: string;
   ownerName: string;
+  nip: string;
   termsVersion: string;
   privacyVersion: string;
 }
@@ -47,7 +65,10 @@ export class RegistrationService {
     datasourceUrl: process.env.DIRECT_DATABASE_URL,
   });
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mail: MailService,
+  ) {}
 
   /**
    * Wyłącznik awaryjny zakładania kont.
@@ -71,6 +92,13 @@ export class RegistrationService {
       );
     }
 
+    // Suma kontrolna, nie sama długość — literówka w NIP-ie wychodzi dopiero
+    // przy fakturze, czyli miesiąc później i po stronie księgowości.
+    const nip = normalizeNip(input.nip);
+    if (!isValidNip(nip)) {
+      throw new BadRequestException('Numer NIP jest nieprawidłowy — sprawdź cyfry.');
+    }
+
     const email = input.email.toLowerCase().trim();
     const zajety = await this.directory.staffMember.findFirst({ where: { email } });
     if (zajety) {
@@ -81,12 +109,14 @@ export class RegistrationService {
     const passwordHash = await bcrypt.hash(input.password, 10);
     const slug = await this.freeSlug(input.restaurantName);
     const teraz = new Date();
+    const { token, hash } = tokenPotwierdzenia();
 
     const wynik = await this.prisma.withTenant(organizationId, async (tx) => {
       const organization = await tx.organization.create({
         data: {
           id: organizationId,
           name: input.restaurantName.trim(),
+          nip,
           billingEmail: email,
           termsAcceptedAt: teraz,
           termsVersion: input.termsVersion,
@@ -116,6 +146,10 @@ export class RegistrationService {
           passwordHash,
           // Hasło ustawił sam zakładający — nie ma go po co zmuszać do zmiany.
           mustChangePassword: false,
+          // Adres jest niepotwierdzony aż do kliknięcia w odnośnik; do tego czasu
+          // konto istnieje, ale nie wpuszcza do panelu.
+          emailTokenHash: hash,
+          emailTokenExpiresAt: new Date(teraz.getTime() + WAZNOSC_TOKENU_H * 3600 * 1000),
         },
       });
 
@@ -134,13 +168,116 @@ export class RegistrationService {
 
     this.logger.log(`Nowe konto: ${wynik.restaurant.slug}`);
 
+    // Poczta idzie po zatwierdzeniu transakcji i nie może jej wywrócić: konto
+    // jest założone, a nieudana wysyłka to sprawa do ponowienia, nie do cofania.
+    const trialEndsAt = new Date(teraz.getTime() + TRIAL_DAYS * 24 * 60 * 60 * 1000);
+    await Promise.all([
+      this.wyslijPotwierdzenie(email, wynik.restaurant.name, token),
+      this.powiadomKelbroo(wynik.restaurant.name, nip, email, wynik.owner.name),
+    ]);
+
     return {
       organizationId: wynik.organization.id,
       restaurantId: wynik.restaurant.id,
       restaurantName: wynik.restaurant.name,
       slug: wynik.restaurant.slug,
-      trialEndsAt: new Date(teraz.getTime() + TRIAL_DAYS * 24 * 60 * 60 * 1000),
+      trialEndsAt,
+      /// Formularz mówi „sprawdź skrzynkę" — bez tego nie wiedziałby, że ma czekać.
+      emailVerificationRequired: true,
     };
+  }
+
+  /**
+   * Potwierdzenie adresu z odnośnika.
+   *
+   * Token porównujemy po skrócie — w bazie nie ma wersji jawnej. Po użyciu
+   * kasujemy go, żeby ten sam odnośnik nie działał drugi raz.
+   */
+  async verifyEmail(token: string) {
+    const hash = createHash('sha256').update(token).digest('hex');
+    const konto = await this.directory.staffMember.findFirst({ where: { emailTokenHash: hash } });
+
+    if (!konto || !konto.emailTokenExpiresAt || konto.emailTokenExpiresAt < new Date()) {
+      throw new BadRequestException(
+        'Odnośnik wygasł albo został już użyty. Poproś o nowy na stronie logowania.',
+      );
+    }
+
+    await this.directory.staffMember.update({
+      where: { id: konto.id },
+      data: { emailVerifiedAt: new Date(), emailTokenHash: null, emailTokenExpiresAt: null },
+    });
+
+    return { email: konto.email, verified: true as const };
+  }
+
+  /**
+   * Ponowna wysyłka. Odpowiedź jest zawsze taka sama — inaczej ten endpoint
+   * mówiłby obcym, które adresy mają u nas konto.
+   */
+  async resendVerification(email: string) {
+    const konto = await this.directory.staffMember.findFirst({
+      where: { email: email.toLowerCase().trim() },
+    });
+
+    if (konto && !konto.emailVerifiedAt) {
+      const { token, hash } = tokenPotwierdzenia();
+      await this.directory.staffMember.update({
+        where: { id: konto.id },
+        data: {
+          emailTokenHash: hash,
+          emailTokenExpiresAt: new Date(Date.now() + WAZNOSC_TOKENU_H * 3600 * 1000),
+        },
+      });
+      const lokal = await this.directory.restaurant.findFirst({
+        where: { organizationId: konto.organizationId },
+        select: { name: true },
+      });
+      await this.wyslijPotwierdzenie(konto.email, lokal?.name ?? 'Twój lokal', token);
+    }
+
+    return { sent: true as const };
+  }
+
+  /** Wiadomość do klienta z odnośnikiem potwierdzającym adres. */
+  private async wyslijPotwierdzenie(email: string, lokal: string, token: string): Promise<void> {
+    const odnosnik = `${this.mail.adresStrony}/potwierdz?token=${token}`;
+    await this.mail.send({
+      to: email,
+      subject: 'Potwierdź adres e-mail — kelbroo',
+      text: [
+        `Konto dla „${lokal}" zostało założone.`,
+        '',
+        'Potwierdź adres e-mail, żeby zalogować się do panelu:',
+        odnosnik,
+        '',
+        `Odnośnik jest ważny ${WAZNOSC_TOKENU_H} godzin.`,
+        'Jeśli to nie Ty zakładałeś konto, po prostu zignoruj tę wiadomość.',
+        '',
+        'kelbroo — self-service dining',
+      ].join('\n'),
+    });
+  }
+
+  /** Powiadomienie dla nas: ktoś właśnie założył konto. */
+  private async powiadomKelbroo(
+    lokal: string,
+    nip: string,
+    email: string,
+    wlasciciel: string,
+  ): Promise<void> {
+    await this.mail.send({
+      to: this.mail.skrzynkaKelbroo,
+      subject: `Nowe konto: ${lokal}`,
+      text: [
+        `Lokal: ${lokal}`,
+        `NIP: ${formatNip(nip)}`,
+        `Właściciel: ${wlasciciel}`,
+        `E-mail: ${email}`,
+        '',
+        'Adres nie jest jeszcze potwierdzony — konto wpuści do panelu dopiero po kliknięciu w odnośnik.',
+      ].join('\n'),
+    });
   }
 
   /**

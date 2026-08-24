@@ -21,6 +21,8 @@ export interface RegistrationResult {
   restaurantName: string;
   slug: string;
   trialEndsAt: string;
+  /** Konto istnieje, ale do panelu wpuści dopiero po kliknięciu w odnośnik. */
+  emailVerificationRequired: boolean;
 }
 
 export interface RegistrationInput {
@@ -28,6 +30,7 @@ export interface RegistrationInput {
   ownerName: string;
   email: string;
   password: string;
+  nip: string;
 }
 
 export type Pole = keyof RegistrationInput;
@@ -49,12 +52,43 @@ export class RegistrationError extends Error {
   }
 }
 
+/**
+ * Potwierdzenie adresu z odnośnika w wiadomości.
+ *
+ * Wołane ze strony `/potwierdz`, do której prowadzi ten odnośnik.
+ */
+export async function verifyEmail(token: string): Promise<void> {
+  const response = await fetch(`${API}/auth/verify-email`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ token }),
+  });
+  if (!response.ok) {
+    const payload: unknown = await response.json().catch(() => null);
+    const komunikat =
+      payload && typeof payload === 'object' && 'message' in payload
+        ? String((payload as { message: unknown }).message)
+        : `Serwer odpowiedział błędem ${response.status}.`;
+    throw new Error(komunikat);
+  }
+}
+
+/** Ponowna wysyłka potwierdzenia. Odpowiada tak samo dla nieistniejącego konta. */
+export async function resendVerification(email: string): Promise<void> {
+  await fetch(`${API}/auth/resend-verification`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ email }),
+  });
+}
+
 /** Komunikaty `class-validator` przychodzą po angielsku i z nazwą pola na początku. */
 const POLA: Record<string, Pole> = {
   restaurantName: 'restaurantName',
   ownerName: 'ownerName',
   email: 'email',
   password: 'password',
+  nip: 'nip',
 };
 
 const PO_POLSKU: { wzorzec: RegExp; tekst: string }[] = [

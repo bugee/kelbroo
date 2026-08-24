@@ -55,6 +55,11 @@ class RegisterDto {
   @MaxLength(200)
   password!: string;
 
+  /** Usługa jest wyłącznie B2B, a faktury VAT wymagają numeru. */
+  @IsString()
+  @Length(10, 20)
+  nip!: string;
+
   @Equals(true)
   acceptTerms!: boolean;
 
@@ -68,6 +73,17 @@ class RegisterDto {
   @IsString()
   @Length(1, 40)
   privacyVersion!: string;
+}
+
+class VerifyDto {
+  @IsString()
+  @Length(10, 200)
+  token!: string;
+}
+
+class ResendDto {
+  @IsEmail()
+  email!: string;
 }
 
 class RefreshDto {
@@ -117,9 +133,27 @@ export class AuthController {
       ownerName: dto.ownerName,
       email: dto.email,
       password: dto.password,
+      nip: dto.nip,
       termsVersion: dto.termsVersion,
       privacyVersion: dto.privacyVersion,
     });
+  }
+
+  /** Kliknięcie w odnośnik z wiadomości. Otwiera drogę do panelu. */
+  @Post('verify-email')
+  @HttpCode(HttpStatus.OK)
+  async verifyEmail(@Body() dto: VerifyDto) {
+    return this.registration.verifyEmail(dto.token);
+  }
+
+  /**
+   * Ponowna wysyłka potwierdzenia. Odpowiada tak samo niezależnie od tego, czy
+   * konto istnieje — inaczej formularz stałby się sposobem sprawdzania adresów.
+   */
+  @Post('resend-verification')
+  @HttpCode(HttpStatus.OK)
+  async resendVerification(@Body() dto: ResendDto) {
+    return this.registration.resendVerification(dto.email);
   }
 
   @Post('login')

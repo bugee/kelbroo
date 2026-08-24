@@ -268,9 +268,9 @@ describe('wycofanie wezwania', () => {
     const call = await guestSignals.call(organizationId, guestSession.id, 'help');
     await waiterCalls.acknowledge(staff, call.id);
 
-    await expect(
-      guestSignals.cancelCall(organizationId, guestSession.id, 'help'),
-    ).rejects.toThrow(/już idzie/);
+    await expect(guestSignals.cancelCall(organizationId, guestSession.id, 'help')).rejects.toThrow(
+      /już idzie/,
+    );
 
     const wiersz = await direct.waiterCall.findUniqueOrThrow({ where: { id: call.id } });
     expect(wiersz.status).toBe('acknowledged');
@@ -279,9 +279,9 @@ describe('wycofanie wezwania', () => {
   it('milczy, gdy nie ma czego cofać', async () => {
     const { guestSession } = await visit(5000);
     // Stan po tej operacji jest ten sam, o który gościowi chodzi — brak wezwania.
-    await expect(
-      guestSignals.cancelCall(organizationId, guestSession.id, 'help'),
-    ).resolves.toEqual({ canceled: false });
+    await expect(guestSignals.cancelCall(organizationId, guestSession.id, 'help')).resolves.toEqual(
+      { canceled: false },
+    );
   });
 
   it('po wycofaniu da się zawołać kelnera od nowa', async () => {
@@ -299,7 +299,13 @@ describe('prośba o rachunek', () => {
   it('ustawia podział i przestawia wizytę w oczekiwanie na rozliczenie', async () => {
     const { session, guestSession } = await visit(10001);
 
-    const wynik = await guestSignals.requestBill(organizationId, guestSession.id, 'equal', 'card', false);
+    const wynik = await guestSignals.requestBill(
+      organizationId,
+      guestSession.id,
+      'equal',
+      'card',
+      false,
+    );
 
     expect(wynik.splitMode).toBe('equal');
     // Ten sam niezmiennik co przy podziale ustawionym przez kelnera.

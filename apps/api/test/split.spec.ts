@@ -325,9 +325,9 @@ describe('rozliczanie grup', () => {
       data: { partialSettlementEnabled: false },
     });
     try {
-      await expect(split.settleGroup(waiter, session.id, plan.groups[0]!.id, 'cash')).rejects.toThrow(
-        /w całości/,
-      );
+      await expect(
+        split.settleGroup(waiter, session.id, plan.groups[0]!.id, 'cash'),
+      ).rejects.toThrow(/w całości/);
     } finally {
       await direct.restaurant.update({
         where: { id: restaurantId },

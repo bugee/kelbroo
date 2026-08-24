@@ -6,7 +6,7 @@
  * że nowe zaczyna, i że nie da się zmienić hasła bez znajomości aktualnego.
  */
 import { randomUUID } from 'node:crypto';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
@@ -38,6 +38,9 @@ beforeAll(async () => {
       passwordHash: await bcrypt.hash(STARE, 10),
       // Konto założone ręcznie w bazie startuje z wymuszoną zmianą hasła.
       mustChangePassword: true,
+      // Ten plik testuje hasła, nie weryfikację adresu — bez tego logowanie
+      // odbijałoby się o niepotwierdzony e-mail, zanim dojdzie do hasła.
+      emailVerifiedAt: new Date(),
     },
   });
   staffId = staff.id;
@@ -89,5 +92,34 @@ describe('zmiana hasła', () => {
       'Konto jest nieaktywne.',
     );
     await direct.staffMember.update({ where: { id: staffId }, data: { isActive: true } });
+  });
+});
+
+/**
+ * Weryfikacja adresu jako bariera logowania.
+ *
+ * Bez tego potwierdzanie e-maila byłoby ozdobnikiem: konto założone na cudzy
+ * adres działałoby tak samo, jak potwierdzone.
+ */
+describe('niepotwierdzony adres', () => {
+  const HASLO = 'znaneHaslo123';
+
+  // Wcześniejsze testy w tym pliku zmieniają hasło, więc ustawiamy własne
+  // zamiast polegać na tym, w jakiej kolejności coś się wykonało.
+  beforeEach(async () => {
+    await direct.staffMember.update({
+      where: { id: staffId },
+      data: { passwordHash: await bcrypt.hash(HASLO, 10), emailVerifiedAt: new Date() },
+    });
+  });
+
+  it('nie wpuszcza do panelu, nawet z poprawnym hasłem', async () => {
+    await direct.staffMember.update({ where: { id: staffId }, data: { emailVerifiedAt: null } });
+
+    await expect(auth.login(email, HASLO)).rejects.toThrow(/Potwierdź adres e-mail/);
+  });
+
+  it('po potwierdzeniu wpuszcza normalnie', async () => {
+    await expect(auth.login(email, HASLO)).resolves.toMatchObject({ staff: { role: 'owner' } });
   });
 });

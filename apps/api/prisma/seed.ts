@@ -199,6 +199,9 @@ async function main() {
       role: member.role,
       passwordHash,
       mustChangePassword: false,
+      // Konta demonstracyjne są potwierdzone: nikt nie odbierze wiadomości
+      // wysłanej na `@bistrowidok.pl`, a seed ma dawać działający panel.
+      emailVerifiedAt: new Date(),
     })),
   });
 

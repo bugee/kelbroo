@@ -102,15 +102,17 @@ export class TableAccessService {
     participantId: string,
     decision: 'approve' | 'reject',
   ) {
-    return this.prisma.withTenant(organizationId, async (tx) => {
-      const { participant: host } = await this.loadGuest(tx, guestSessionId);
-      if (!host.isHost) {
-        throw new ForbiddenException('Tylko host wizyty wpuszcza gości do stolika.');
-      }
-      return this.decide(tx, organizationId, host.tableSessionId, participantId, decision, {
-        actorParticipantId: host.id,
-      });
-    }).then((wynik) => this.announce(wynik));
+    return this.prisma
+      .withTenant(organizationId, async (tx) => {
+        const { participant: host } = await this.loadGuest(tx, guestSessionId);
+        if (!host.isHost) {
+          throw new ForbiddenException('Tylko host wizyty wpuszcza gości do stolika.');
+        }
+        return this.decide(tx, organizationId, host.tableSessionId, participantId, decision, {
+          actorParticipantId: host.id,
+        });
+      })
+      .then((wynik) => this.announce(wynik));
   }
 
   /** Ta sama decyzja z panelu. Kuchnia nie ma tu wstępu — nie stoi przy stolikach. */
@@ -120,17 +122,19 @@ export class TableAccessService {
     participantId: string,
     decision: 'approve' | 'reject',
   ) {
-    return this.prisma.withTenant(staff.organizationId, async (tx) => {
-      const session = await tx.tableSession.findFirst({
-        where: { id: sessionId, restaurantId: staff.restaurantId ?? undefined },
-      });
-      if (!session) {
-        throw new NotFoundException('Wizyta nie istnieje.');
-      }
-      return this.decide(tx, staff.organizationId, session.id, participantId, decision, {
-        actorStaffId: staff.staffId,
-      });
-    }).then((wynik) => this.announce(wynik));
+    return this.prisma
+      .withTenant(staff.organizationId, async (tx) => {
+        const session = await tx.tableSession.findFirst({
+          where: { id: sessionId, restaurantId: staff.restaurantId ?? undefined },
+        });
+        if (!session) {
+          throw new NotFoundException('Wizyta nie istnieje.');
+        }
+        return this.decide(tx, staff.organizationId, session.id, participantId, decision, {
+          actorStaffId: staff.staffId,
+        });
+      })
+      .then((wynik) => this.announce(wynik));
   }
 
   /**

@@ -42,9 +42,9 @@ do wizyty bez ponownego skanowania.
 Modele są w schemacie od pierwszej migracji i nie mają ani jednego odwołania w kodzie.
 
 - [ ] **Ocena dania po posiłku** (`Review`).
-- [ ] **Zestawienie rachunku na e-mail** — poczta przez SMTP Hostingera, nadawca
-      `kontakt@kelbroo.com`. W projekcie nie ma jeszcze żadnej wysyłki, więc najpierw
-      abstrakcja dostawcy, dopiero potem treść wiadomości.
+- [ ] **Zestawienie rachunku na e-mail** — **warstwa poczty już jest** (`MailService`,
+      §5a), zostaje treść wiadomości i miejsce, w którym gość podaje adres. Adres
+      wykorzystujemy jednorazowo i nie zapisujemy — tak mówi polityka prywatności §9.
 - [ ] **Wybór nicku przez gościa** — dziś losowany; zakres etapu 1 mówi o wpisaniu
       lub wylosowaniu.
 - [ ] **Powrót do wizyty bez ponownego skanowania** — gość zamyka kartę albo przeglądarkę
@@ -101,10 +101,17 @@ do `#rejestracja`, którego nie ma.
 - [x] **Rejestracja otwarta** (2026-08-24) — domyślnie włączona w compose, wszystkie
       sześć wezwań do założenia konta prowadzi do `/rejestracja`. `REGISTRATION_ENABLED`
       zostaje jako wyłącznik awaryjny.
-- [ ] **Weryfikacja adresu e-mail** — dziś konto działa od razu po założeniu, bez
-      potwierdzenia adresu. **Wymaga poczty** (ta sama blokada co §4).
-- [ ] **Zbierać NIP przy rejestracji** — usługa jest B2B, a polityka prywatności już
-      deklaruje przetwarzanie NIP-u.
+- [x] **Weryfikacja adresu e-mail** (2026-08-24) — konto powstaje niepotwierdzone
+      i **nie wpuszcza do panelu**, dopóki klient nie kliknie w odnośnik z wiadomości.
+      Token trzymany jako skrót, ważny 48 h, jednorazowy; ponowna wysyłka ze strony
+      `/potwierdz` odpowiada tak samo dla nieistniejącego konta.
+- [x] **NIP przy rejestracji** — sprawdzany sumą kontrolną po obu stronach
+      (`@kelbroo/types`), zapisywany bez myślników.
+- [x] **Powiadomienie o nowym koncie** na `kontakt@kelbroo.com`, z nazwą lokalu,
+      NIP-em i adresem właściciela.
+- [x] **Warstwa poczty** (`MailService`) — dostawca jest abstrakcją: bez `SMTP_HOST`
+      wiadomości trafiają do logu i nic nie wychodzi na zewnątrz. Odblokowuje też
+      zestawienie rachunku z §4.
 - [ ] **Weryfikacja adresu e-mail** — zależy od dostawcy poczty (sekcja 4, ta sama blokada
       co zestawienie rachunku).
 - [ ] **Wygaśnięcie abonamentu wyłącza zamawianie**, ale nigdy nie kasuje danych restauracji.

@@ -314,6 +314,16 @@ model StaffMember {
   role           StaffRole
   name           String
   isActive       Boolean   @default(true) @map("is_active")
+
+  /// Potwierdzenie adresu e-mail. `null` znaczy: konto założone, ale adres
+  /// niepotwierdzony — takie konto nie może się zalogować. Konta zakładane przez
+  /// restaurację z panelu są potwierdzone z urzędu: adres podał ktoś, kto już
+  /// przeszedł weryfikację.
+  emailVerifiedAt          DateTime? @map("email_verified_at")
+  /// Skrót tokenu z odnośnika w wiadomości. Trzymamy skrót, nie token — wyciek
+  /// bazy nie może dawać gotowego klucza do cudzych kont.
+  emailTokenHash           String?   @map("email_token_hash")
+  emailTokenExpiresAt      DateTime? @map("email_token_expires_at")
   mustChangePassword Boolean @default(true) @map("must_change_password")
   lastLoginAt    DateTime? @map("last_login_at")
   createdAt      DateTime  @default(now()) @map("created_at")

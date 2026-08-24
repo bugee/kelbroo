@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { isValidNip } from '@kelbroo/types';
 import { RegistrationError, register, type Pole, type RegistrationInput } from '@/lib/api';
 
 /** Minimalna długość hasła — ta sama, której pilnuje serwer. */
@@ -23,6 +24,8 @@ function sprawdz(dane: RegistrationInput): Partial<Record<Pole, string>> {
     bledy.email = 'To nie wygląda na poprawny adres e-mail.';
   if (dane.password.length < MIN_HASLO)
     bledy.password = `Hasło musi mieć co najmniej ${MIN_HASLO} znaków.`;
+  // Suma kontrolna, nie sama długość — literówka wyszłaby dopiero przy fakturze.
+  if (!isValidNip(dane.nip)) bledy.nip = 'Sprawdź numer NIP — te cyfry się nie zgadzają.';
 
   return bledy;
 }
@@ -38,7 +41,7 @@ export function RegistrationForm() {
   const [wysylanie, setWysylanie] = useState(false);
   const [bledy, setBledy] = useState<Partial<Record<Pole, string>>>({});
   const [blad, setBlad] = useState<string | null>(null);
-  const [gotowe, setGotowe] = useState<{ nazwa: string; koniecProby: string } | null>(null);
+  const [gotowe, setGotowe] = useState<{ nazwa: string; email: string } | null>(null);
 
   if (gotowe) {
     return (
@@ -47,14 +50,21 @@ export function RegistrationForm() {
         style={{ borderColor: 'var(--teal)', background: 'var(--teal-wash)' }}
       >
         <h2 style={{ fontSize: 'var(--fs-h3)', fontWeight: 700, marginBottom: '8px' }}>
-          Konto dla „{gotowe.nazwa}” jest gotowe
+          Sprawdź skrzynkę
         </h2>
-        <p style={{ color: 'var(--ink-2)', marginBottom: '18px' }}>
-          Okres próbny trwa do {gotowe.koniecProby}. Zaloguj się i dodaj pierwsze pozycje karty.
+        {/*
+          Konto dla „…" istnieje, ale panel wpuści dopiero po potwierdzeniu adresu.
+          Mówimy to wprost, żeby nikt nie próbował się logować i nie odbił się
+          o komunikat, którego nie umiałby powiązać z tym ekranem.
+        */}
+        <p style={{ color: 'var(--ink-2)', marginBottom: '12px' }}>
+          Konto dla „{gotowe.nazwa}” jest założone. Wysłaliśmy wiadomość na{' '}
+          <strong>{gotowe.email}</strong> — kliknij w odnośnik, żeby potwierdzić adres i wejść do
+          panelu.
         </p>
-        <a className="btn btn-primary" href="https://panel.kelbroo.com">
-          Przejdź do panelu
-        </a>
+        <p className="mono" style={{ fontSize: 'var(--fs-xs)', color: 'var(--muted)' }}>
+          Wiadomość nie dotarła? Sprawdź spam albo napisz na kontakt@kelbroo.com.
+        </p>
       </div>
     );
   }
@@ -75,6 +85,7 @@ export function RegistrationForm() {
       ownerName: String(formularz.get('ownerName') ?? ''),
       email: String(formularz.get('email') ?? ''),
       password: String(formularz.get('password') ?? ''),
+      nip: String(formularz.get('nip') ?? ''),
     };
 
     const wlasne = sprawdz(dane);
@@ -89,10 +100,7 @@ export function RegistrationForm() {
     setBlad(null);
     try {
       const wynik = await register(dane);
-      setGotowe({
-        nazwa: wynik.restaurantName,
-        koniecProby: new Date(wynik.trialEndsAt).toLocaleDateString('pl-PL'),
-      });
+      setGotowe({ nazwa: wynik.restaurantName, email: dane.email.trim() });
     } catch (przyczyna) {
       if (przyczyna instanceof RegistrationError) {
         setBledy(przyczyna.pola);
@@ -119,6 +127,13 @@ export function RegistrationForm() {
         blad={bledy.restaurantName}
       />
       <Pole nazwa="ownerName" label="Imię i nazwisko" autoComplete="name" blad={bledy.ownerName} />
+      <Pole
+        nazwa="nip"
+        label="NIP"
+        inputMode="numeric"
+        podpowiedz="Dziesięć cyfr. Usługa jest wyłącznie dla firm."
+        blad={bledy.nip}
+      />
       <Pole nazwa="email" label="E-mail" type="email" autoComplete="email" blad={bledy.email} />
       <Pole
         nazwa="password"

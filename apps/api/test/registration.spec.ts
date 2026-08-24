@@ -10,10 +10,25 @@ import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { RegistrationService, TRIAL_DAYS } from '../src/auth/registration.service';
+import type { MailService } from '../src/mail/mail.service';
 
 const direct = new PrismaClient({ datasourceUrl: process.env.DIRECT_DATABASE_URL });
 const prisma = new PrismaService();
-const registration = new RegistrationService(prisma);
+/**
+ * Atrapa poczty notująca wysyłki. Liczba i adresaci są przedmiotem testu:
+ * rejestracja ma zawiadomić i klienta, i nas.
+ */
+const wyslane: { to: string; subject: string; text: string }[] = [];
+const mail = {
+  send: async (w: { to: string; subject: string; text: string }) => {
+    wyslane.push(w);
+    return true;
+  },
+  skrzynkaKelbroo: 'kontakt@kelbroo.com',
+  adresStrony: 'https://kelbroo.com',
+} as unknown as MailService;
+
+const registration = new RegistrationService(prisma, mail);
 
 const zalozone: string[] = [];
 
@@ -25,6 +40,7 @@ function dane(nadpisz: Partial<Parameters<RegistrationService['register']>[0]> =
     ownerName: 'Anna Właścicielka',
     email: `owner-${znak}@test.local`,
     password: 'tajne-haslo-123',
+    nip: '5222269366',
     termsVersion: '2026-08-01',
     privacyVersion: '2026-08-01',
     ...nadpisz,
@@ -175,5 +191,102 @@ describe('zakładanie konta', () => {
     ).rejects.toThrow(/pęknięcie/);
 
     expect(await direct.organization.findUnique({ where: { id: organizationId } })).toBeNull();
+  });
+});
+
+/**
+ * NIP, potwierdzenie adresu i powiadomienia.
+ *
+ * Weryfikacja adresu ma coś znaczyć: konto z niepotwierdzonym e-mailem nie
+ * wpuszcza do panelu. Inaczej byłaby ozdobnikiem, a zakładanie kont na cudze
+ * adresy zostałoby możliwe.
+ */
+describe('NIP', () => {
+  it('odrzuca numer z błędną sumą kontrolną', async () => {
+    await expect(registration.register(dane({ nip: '5222263966' }))).rejects.toThrow(/NIP/);
+  });
+
+  it('zapisuje same cyfry, choć formularz przyjmuje myślniki', async () => {
+    const wynik = await zarejestruj({ nip: '522-226-93-66' });
+    const organizacja = await direct.organization.findUniqueOrThrow({
+      where: { id: wynik.organizationId },
+    });
+    expect(organizacja.nip).toBe('5222269366');
+  });
+});
+
+describe('potwierdzenie adresu e-mail', () => {
+  it('konto powstaje niepotwierdzone i z tokenem w postaci skrótu', async () => {
+    const wynik = await zarejestruj();
+    const wlasciciel = await direct.staffMember.findFirstOrThrow({
+      where: { organizationId: wynik.organizationId },
+    });
+
+    expect(wynik.emailVerificationRequired).toBe(true);
+    expect(wlasciciel.emailVerifiedAt).toBeNull();
+    expect(wlasciciel.emailTokenHash).toBeTruthy();
+    // Skrót, nie token: wyciek bazy nie może dawać gotowego klucza do kont.
+    expect(wlasciciel.emailTokenHash).toMatch(/^[0-9a-f]{64}$/);
+  });
+
+  it('wysyła dwie wiadomości: do klienta i do nas', async () => {
+    wyslane.length = 0;
+    const wynik = await zarejestruj();
+
+    const doKlienta = wyslane.find((w) => w.to !== 'kontakt@kelbroo.com');
+    const doNas = wyslane.find((w) => w.to === 'kontakt@kelbroo.com');
+
+    expect(doKlienta?.text).toContain('/potwierdz?token=');
+    expect(doNas?.subject).toContain(wynik.restaurantName);
+    // Powiadomienie ma nieść to, co potrzebne do kontaktu i faktury.
+    expect(doNas?.text).toContain('522-226-93-66');
+  });
+
+  it('odnośnik potwierdza adres i przestaje działać', async () => {
+    wyslane.length = 0;
+    const wynik = await zarejestruj();
+    const token = /\/potwierdz\?token=(\S+)/.exec(
+      wyslane.find((w) => w.to !== 'kontakt@kelbroo.com')?.text ?? '',
+    )?.[1];
+    expect(token).toBeTruthy();
+
+    await expect(registration.verifyEmail(token!)).resolves.toMatchObject({ verified: true });
+
+    const wlasciciel = await direct.staffMember.findFirstOrThrow({
+      where: { organizationId: wynik.organizationId },
+    });
+    expect(wlasciciel.emailVerifiedAt).not.toBeNull();
+
+    // Ten sam odnośnik drugi raz nie może już nic otworzyć.
+    await expect(registration.verifyEmail(token!)).rejects.toThrow(/wygasł albo został już użyty/);
+  });
+
+  it('odrzuca token wygasły', async () => {
+    const wynik = await zarejestruj();
+    await direct.staffMember.updateMany({
+      where: { organizationId: wynik.organizationId },
+      data: { emailTokenExpiresAt: new Date(Date.now() - 1000) },
+    });
+    wyslane.length = 0;
+    await registration.resendVerification('nieistniejacy@test.local');
+
+    await expect(registration.verifyEmail('cokolwiek-nieistniejacego')).rejects.toThrow(/wygasł/);
+  });
+
+  it('ponowna wysyłka milczy o tym, czy konto istnieje', async () => {
+    wyslane.length = 0;
+    // Ten endpoint nie może stać się sposobem sprawdzania, kto ma u nas konto.
+    await expect(registration.resendVerification('nikogo-tu-nie-ma@test.local')).resolves.toEqual({
+      sent: true,
+    });
+    expect(wyslane).toHaveLength(0);
+
+    const wynik = await zarejestruj();
+    const wlasciciel = await direct.staffMember.findFirstOrThrow({
+      where: { organizationId: wynik.organizationId },
+    });
+    wyslane.length = 0;
+    await registration.resendVerification(wlasciciel.email);
+    expect(wyslane).toHaveLength(1);
   });
 });

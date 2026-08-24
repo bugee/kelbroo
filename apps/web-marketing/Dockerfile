@@ -10,18 +10,22 @@ WORKDIR /app
 FROM base AS deps
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json .npmrc ./
 COPY packages/config/package.json packages/config/
+COPY packages/types/package.json packages/types/
 COPY apps/web-marketing/package.json apps/web-marketing/
 RUN pnpm install --frozen-lockfile --filter @kelbroo/web-marketing...
 
 FROM deps AS build
 COPY packages/config packages/config
+COPY packages/types packages/types
 COPY apps/web-marketing apps/web-marketing
 # Regulamin i polityka prywatności są renderowane przy budowaniu — to treść
 # strony, nie dokumentacja. Reszta `docs` zostaje poza obrazem (.dockerignore).
 COPY docs/legal docs/legal
-# Bez kroku budowania `@kelbroo/types`: strona produktowa celowo nie sięga po
-# pakiety współdzielone, więc nie ma czego kompilować przed nią.
-RUN pnpm --filter @kelbroo/web-marketing build
+# `@kelbroo/types` jest publikowany jako `dist`, a `dist` nie wchodzi do obrazu
+# (.dockerignore) — bez tego kroku Next nie rozwiąże importu. Formularz
+# rejestracji sprawdza NIP tą samą funkcją co serwer.
+RUN pnpm --filter @kelbroo/types build \
+ && pnpm --filter @kelbroo/web-marketing build
 
 FROM base AS runtime
 ENV NODE_ENV=production
