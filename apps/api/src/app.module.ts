@@ -17,6 +17,9 @@ import { AuthController } from './auth/auth.controller';
 import { AuthService } from './auth/auth.service';
 import { RegistrationService } from './auth/registration.service';
 import { MailService } from './mail/mail.service';
+import { PlatformController } from './platform/platform.controller';
+import { PlatformAuthService } from './platform/platform-auth.service';
+import { PlatformClientsService } from './platform/platform-clients.service';
 import { StaffAuthGuard } from './auth/staff.guard';
 import { StaffController } from './staff/staff.controller';
 import { StaffOrdersService } from './staff/staff-orders.service';
@@ -52,6 +55,7 @@ import { StaffAdminService } from './management/staff.admin.service';
   ],
   controllers: [
     GuestController,
+    PlatformController,
     GuestOpenTableController,
     HealthController,
     TableController,
@@ -71,6 +75,8 @@ import { StaffAdminService } from './management/staff.admin.service';
     AuthService,
     RegistrationService,
     MailService,
+    PlatformAuthService,
+    PlatformClientsService,
     StaffAuthGuard,
     StaffOrdersService,
     StaffOrderingService,

@@ -195,7 +195,9 @@ Do rozstrzygnięcia **przed** napisaniem pierwszego ekranu:
 - [ ] **Model tożsamości** — osobna tabela `PlatformAdmin` z własnym logowaniem, czy
       rola specjalna w istniejącej? Osobna jest czystsza: konto kelbroo nigdy nie może
       przypadkiem wpaść w listę pracowników lokalu ani w `AuditLog` restauracji.
-- [ ] **Sposób dostępu do danych** — trzy drogi, każda z inną ceną:
+- [~] **Sposób dostępu do danych** — lista klientów jako jedyna sięga po połączenie
+      katalogowe, bo z definicji czyta w poprzek najemców. Pozostałe ekrany mają iść
+      przez `withTenant`. Trzy drogi, każda z inną ceną:
       połączenie omijające RLS (jak `DIRECT_DATABASE_URL` w logowaniu) jest najprostsze,
       ale jeden błąd w zapytaniu odsłania wszystko; wąskie funkcje `SECURITY DEFINER`
       są bezpieczne i pracochłonne; `withTenant` po jednym kliencie naraz wystarcza
@@ -211,7 +213,9 @@ Do rozstrzygnięcia **przed** napisaniem pierwszego ekranu:
 
 ### 6b. Klienci
 
-- [ ] **Lista klientów** — organizacja, lokale, plan, status abonamentu, data założenia.
+- [x] **Lista klientów** (2026-08-25) — organizacja, NIP, lokale, plan, status
+      abonamentu, okres próbny, termin ważności, liczba stolików i kont, ostatnie
+      logowanie. Z wyszukiwaniem i podsumowaniem u góry.
 - [ ] **Karta klienta** — wszystko o jednym kliencie w jednym miejscu.
 - [ ] **Wyszukiwanie** po nazwie, NIP-ie i adresie e-mail właściciela.
 - [ ] **Zdrowie wdrożenia** — czy klient w ogóle wystartował: liczba stolików z kodami,

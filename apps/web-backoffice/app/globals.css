@@ -1,0 +1,23 @@
+@import 'tailwindcss';
+@import '@kelbroo/config/tailwind/theme.css';
+
+/* Zaplecze to narzędzie biurowe, nie tablet w kuchni: gęściejsze tabele,
+   mniejsze cele dotykowe, zaznaczanie tekstu włączone — dane klientów kopiuje
+   się do maila i do księgowości. */
+@layer base {
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--font-sans);
+  }
+
+  h1,
+  h2 {
+    font-family: var(--font-display);
+    font-weight: 700;
+  }
+}
+
+@utility mono {
+  font-family: var(--font-mono);
+}

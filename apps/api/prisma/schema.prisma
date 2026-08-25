@@ -195,6 +195,28 @@ enum WaiterCallStatus {
   canceled
 }
 
+/// Konto pracownika kelbroo — zaplecze platformy (System 4).
+///
+/// **Nie jest `StaffMember`** i nie należy do żadnej organizacji: obsługuje nas,
+/// nie restaurację. Osobna tabela, osobne logowanie i osobny sekret tokenu, żeby
+/// konto platformy nie mogło przypadkiem wpaść w listę pracowników lokalu ani
+/// zalogować się do panelu restauracji.
+///
+/// Rola aplikacyjna (`kelbroo_app`, ta pod RLS) **nie ma do niej dostępu** —
+/// uprawnienia odbiera migracja. Czyta ją wyłącznie połączenie katalogowe.
+model PlatformAdmin {
+  id           String    @id @default(uuid()) @db.Uuid
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  name         String
+  isActive     Boolean   @default(true) @map("is_active")
+  lastLoginAt  DateTime? @map("last_login_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  @@map("platform_admin")
+}
+
 // ------------------------------------------------------------------- tenant
 
 /// Klient SaaS i płatnik abonamentu. Korzeń izolacji danych.
