@@ -10,11 +10,18 @@ async function bootstrap(): Promise<void> {
 
   app.setGlobalPrefix('api');
 
-  // Aplikacja gościa i panel obsługi stoją pod innym originem niż API.
+  // Wszystkie cztery aplikacje stoją lokalnie pod innym originem niż API.
   // Lista dozwolonych originów pochodzi z konfiguracji — nigdy '*', bo
-  // żądania niosą token sesji gościa.
+  // żądania niosą token sesji gościa i token zaplecza.
+  //
+  // Wartość domyślna obejmuje komplet portów deweloperskich. Brak któregoś
+  // objawia się w przeglądarce jako „Failed to fetch" — błąd sieciowy bez
+  // odpowiedzi serwera, więc przyczyny nie widać ani w logu API, ani na ekranie.
   app.enableCors({
-    origin: (process.env.CORS_ORIGINS ?? 'http://localhost:3001')
+    origin: (
+      process.env.CORS_ORIGINS ??
+      'http://localhost:3001,http://localhost:3002,http://localhost:3003,http://localhost:3004'
+    )
       .split(',')
       .map((origin) => origin.trim())
       .filter(Boolean),

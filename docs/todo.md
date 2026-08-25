@@ -213,6 +213,11 @@ Do rozstrzygnięcia **przed** napisaniem pierwszego ekranu:
 
 ### 6b. Klienci
 
+> **Lokalnie:** zaplecze stoi na `http://localhost:3004`, a jego port musi być
+> w `CORS_ORIGINS` — inaczej logowanie kończy się w przeglądarce komunikatem
+> „Failed to fetch", którego nie widać ani w logu API, ani na ekranie.
+> `.env.example` wymienia komplet czterech portów.
+
 - [x] **Lista klientów** (2026-08-25) — organizacja, NIP, lokale, plan, status
       abonamentu, okres próbny, termin ważności, liczba stolików i kont, ostatnie
       logowanie. Z wyszukiwaniem i podsumowaniem u góry.

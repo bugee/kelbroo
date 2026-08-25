@@ -64,6 +64,25 @@ export interface Klient {
   ostatnieLogowanie: string | null;
 }
 
+/**
+ * Żądanie z rozróżnieniem awarii sieci od odpowiedzi serwera.
+ *
+ * `fetch` rzuca „Failed to fetch" i przy wyłączonym API, i przy odciętym CORS-ie —
+ * a to komunikat, z którego nie da się wyjść. Zamieniamy go na zdanie mówiące,
+ * gdzie szukać: najczęstszą przyczyną lokalnie jest brak portu zaplecza
+ * w `CORS_ORIGINS`, a przeglądarka nie pokazuje tego nigdzie indziej.
+ */
+async function zapytaj(sciezka: string, init?: RequestInit): Promise<Response> {
+  try {
+    return await fetch(`${API}${sciezka}`, init);
+  } catch {
+    throw new Error(
+      `Nie udało się połączyć z API (${API}). Sprawdź, czy działa i czy adres tej strony ` +
+        'jest wymieniony w CORS_ORIGINS.',
+    );
+  }
+}
+
 async function odczytaj<T>(response: Response): Promise<T> {
   const payload: unknown = await response.json().catch(() => null);
   if (!response.ok) {
@@ -77,7 +96,7 @@ async function odczytaj<T>(response: Response): Promise<T> {
 }
 
 export async function login(email: string, password: string): Promise<Admin> {
-  const response = await fetch(`${API}/platform/login`, {
+  const response = await zapytaj('/platform/login', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ email, password }),
@@ -91,7 +110,7 @@ async function zTokenem<T>(sciezka: string): Promise<T> {
   const token = readToken();
   if (!token) throw new Error('Brak sesji.');
   return odczytaj<T>(
-    await fetch(`${API}${sciezka}`, {
+    await zapytaj(sciezka, {
       headers: { Authorization: `Bearer ${token}` },
       cache: 'no-store',
     }),
