@@ -606,3 +606,142 @@ source ~/.bashrc
 ```
 
 Od tej pory zamiast całej komendy piszesz np. `kb ps -a`, `kb logs -f api`, `kb restart`.
+
+---
+
+## Wdrożenie zaplecza kelbroo (System 4)
+
+Zaplecze widzi **wszystkich klientów** — dane firm, abonamenty, terminy. Nie jest
+panelem restauracji i nie wystawia się go „przy okazji". Ta procedura jest
+świadomie dłuższa niż pozostałe.
+
+Zanim zaczniesz, sprawdź, czy naprawdę chcesz mieć je dostępne z internetu.
+Alternatywa bez żadnego wystawiania: tunel SSH z Twojego komputera
+(`ssh -L 3004:localhost:3004 root@serwer`) i praca na `http://localhost:3004`.
+Wtedy pomiń całą tę sekcję — nic nie musi być publiczne.
+
+### Krok 1. Ustal, z jakich adresów IP będziesz wchodzić
+
+To jest **właściwa bariera**, nie nazwa subdomeny. Sprawdź swój adres:
+
+```bash
+curl -s ifconfig.me
+```
+
+Zapisz go. Jeśli pracujesz z kilku miejsc (biuro, dom, telefon jako modem),
+zbierz wszystkie. Adres domowy zwykle się zmienia — u większości dostawców raz
+na kilka dni. Jeśli nie masz stałego, rozważ zakres całego dostawcy albo tunel
+SSH z akapitu wyżej.
+
+> **Nie zostawiaj `BACKOFFICE_ALLOWED_IPS` pustego.** Puste znaczy „wszyscy",
+> a to jest panel z danymi wszystkich klientów.
+
+### Krok 2. Dodaj rekord DNS
+
+W panelu Hostingera → **Domeny** → `kelbroo.com` → **DNS / Serwery nazw**:
+
+| Pole | Wartość |
+|---|---|
+| Typ | `A` |
+| Nazwa | `kantorek` |
+| Wskazuje na | adres IP twojego VPS (ten sam co `panel`) |
+| TTL | zostaw domyślne |
+
+Zapisz i poczekaj, aż zacznie się rozwiązywać:
+
+```bash
+dig +short kantorek.kelbroo.com
+```
+
+Ma zwrócić adres serwera. **Nie idź dalej, dopóki nie zwraca** — Caddy będzie
+inaczej bezskutecznie dobijał się o certyfikat i zaśmiecał log.
+
+### Krok 3. Uzupełnij `.env.prod`
+
+```bash
+cd /root/kelbroo
+```
+
+Dopisz trzy zmienne (`ADMIN_JWT_SECRET` mogłeś już dodać wcześniej):
+
+```bash
+# Sekret tokenu zaplecza — inny niż JWT_ACCESS_SECRET panelu.
+openssl rand -base64 48
+```
+
+```
+ADMIN_JWT_SECRET=<wynik powyższego polecenia>
+BACKOFFICE_DOMAIN=kantorek.kelbroo.com
+BACKOFFICE_ALLOWED_IPS=<twój adres>/32
+```
+
+Kilka adresów rozdziel spacją: `BACKOFFICE_ALLOWED_IPS=1.2.3.4/32 5.6.7.8/32`.
+
+### Krok 4. Wdróż
+
+```bash
+git pull
+docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
+```
+
+Dojdzie nowy obraz `web-backoffice`, a Caddy przebuduje się z nową konfiguracją.
+
+### Krok 5. Załóż konto administratora
+
+Konta zaplecza nie da się założyć przez przeglądarkę — i to jest celowe.
+Endpoint tworzący administratora platformy byłby pierwszą rzeczą, której szuka
+atakujący.
+
+```bash
+docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm api \
+  pnpm --filter @kelbroo/api exec tsx scripts/create-platform-admin.ts \
+  "twoj@adres.pl" "Imię Nazwisko" "haslo-co-najmniej-12-znakow"
+```
+
+Hasło musi mieć **12 znaków** — więcej niż w panelu, bo to konto widzi wszystkich
+klientów. Użyj menedżera haseł, nie wymyślaj.
+
+### Krok 6. Sprawdź, że działa i że blokuje
+
+```bash
+# Ze swojego komputera — powinno wpuścić:
+curl -s -o /dev/null -w "%{http_code}\n" https://kantorek.kelbroo.com/login
+```
+
+Oczekiwane `200`. Potem zaloguj się w przeglądarce i sprawdź, czy widzisz listę
+klientów.
+
+Teraz sprawdzenie odwrotne, ważniejsze — **czy ktoś spoza listy jest odcięty**.
+Najprościej z telefonu na transmisji komórkowej (inny adres IP niż wi-fi):
+
+```
+https://kantorek.kelbroo.com/login
+```
+
+Ma pokazać **404**, nie formularz logowania. Odpowiadamy 404, a nie 403, bo 403
+potwierdzałoby, że pod tym adresem coś stoi.
+
+> Jeśli z telefonu widzisz formularz, `BACKOFFICE_ALLOWED_IPS` nie zadziałało —
+> najczęściej dlatego, że zostało puste albo zawiera adres w złym formacie
+> (trzeba `1.2.3.4/32`, nie samo `1.2.3.4`). Popraw i wykonaj krok 4 ponownie.
+
+### Krok 7. Odetnij dostęp, gdy zmieni Ci się adres
+
+Adres IP u dostawcy internetu potrafi się zmienić bez uprzedzenia. Jeśli
+zaplecze przestanie Cię wpuszczać (404 zamiast formularza), to zwykle to:
+sprawdź `curl -s ifconfig.me`, dopisz nowy adres do `.env.prod` i:
+
+```bash
+docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build caddy
+```
+
+### Czego ta procedura nie załatwia
+
+- **2FA** — hasło to jedyny czynnik. Lista adresów IP chroni przed dostępem
+  z sieci, ale nie przed wyciekiem hasła z Twojego komputera. Jest w planie (§6h).
+- **Dziennik działań administratora** — dziś nie wiadomo, kto co obejrzał
+  w zapleczu. Też w planie.
+- **Nieoczywista nazwa subdomeny nie jest zabezpieczeniem.** Certyfikat trafia
+  do publicznych rejestrów Certificate Transparency i `kantorek.kelbroo.com`
+  da się tam znaleźć w kilka minut od wystawienia. Nazwa broni tylko przed
+  skanerem ze słownikiem.

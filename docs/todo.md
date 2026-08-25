@@ -203,8 +203,12 @@ Do rozstrzygnięcia **przed** napisaniem pierwszego ekranu:
       są bezpieczne i pracochłonne; `withTenant` po jednym kliencie naraz wystarcza
       do większości ekranów i **jest domyślną odpowiedzią**, dopóki ktoś nie wykaże,
       że konkretny widok bez tego nie powstanie.
-- [x] **Osobna subdomena i osobne uwierzytelnienie** — `admin.kelbroo.com`, z 2FA
-      (2026-08-24). Panel restauracji i zaplecze nie dzielą sesji ani ciasteczek.
+- [x] **Osobna subdomena i osobne uwierzytelnienie** — `kantorek.kelbroo.com`
+      (2026-08-25). Panel restauracji i zaplecze nie dzielą sesji ani ciasteczek.
+      Dostęp zawęża lista adresów IP w Caddym; kto spoza niej, dostaje 404.
+- [ ] **2FA dla kont zaplecza** — lista adresów zabezpiecza dostęp z sieci, ale nie
+      chroni przed wyciekiem hasła. Do zrobienia przed dopuszczeniem pracy z laptopa
+      poza stałymi lokalizacjami.
 
 > **Prawnie:** wobec danych lokalu jesteśmy **podmiotem przetwarzającym**
 > ([docs/legal](legal/README.md) §2). Administrator kelbroo oglądający zamówienia gości
@@ -398,7 +402,7 @@ Blokują zadania powyżej — wymagają twojej decyzji, nie kodu.
 - [ ] **Kto pisze dokumenty prawne** — regulamin i polityka prywatności wymagają prawnika,
       nie szablonu z internetu.
 - [x] **Czy zaplecze to czwarty system** — tak, osobna aplikacja `apps/web-backoffice`
-      pod `admin.kelbroo.com` (2026-08-24). Powód: inna publiczność, inny model
+      pod `kantorek.kelbroo.com` (2026-08-24). Powód: inna publiczność, inny model
       tożsamości i inny zakres dostępu do danych niż w panelu restauracji.
 - [ ] **Jak panel administracyjny sięga po dane w poprzek najemców** — cała izolacja stoi
       na RLS, a to zaplecze musi ją omijać. Trzy drogi opisane w §6a; wybór przesądza,
