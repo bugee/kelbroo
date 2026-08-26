@@ -112,12 +112,13 @@ do `#rejestracja`, którego nie ma.
 - [x] **Warstwa poczty** (`MailService`) — dostawca jest abstrakcją: bez `SMTP_HOST`
       wiadomości trafiają do logu i nic nie wychodzi na zewnątrz. Odblokowuje też
       zestawienie rachunku z §4.
-- [ ] **Weryfikacja adresu e-mail** — zależy od dostawcy poczty (sekcja 4, ta sama blokada
-      co zestawienie rachunku).
-- [ ] **Wygaśnięcie abonamentu wyłącza zamawianie**, ale nigdy nie kasuje danych restauracji.
+- [x] **Weryfikacja adresu e-mail** (2026-08-24) — konto nie wpuszcza do panelu przed
+      potwierdzeniem; token ważny 48 h, jednorazowy, w bazie tylko jako skrót.
+- [x] **Wygaśnięcie abonamentu wyłącza zamawianie** (2026-08-24) — u gościa i w panelu,
+      z zachowaniem rozliczania otwartych rachunków. Dane nie są kasowane.
 - [ ] **Zakup abonamentu Starter i Pro** — pole `stripeSubscriptionId` czeka w schemacie.
-- [ ] **Podpiąć CTA do rejestracji** — „Zacznij 14 dni za darmo", „Załóż konto",
-      „Wybierz Starter", „Testuj 14 dni" prowadzą dziś tylko do sekcji z opisem.
+- [x] **CTA podpięte do rejestracji** (2026-08-24) — wszystkie sześć prowadzi
+      do `/rejestracja`.
 
 ### 5b. Kontakt i prezentacja
 
@@ -145,8 +146,8 @@ Sekcja `#kontakt` nie istnieje, a wskazują na nią **trzy** przyciski: „Poroz
 - [ ] **Domknąć pozostałe obietnice bez pokrycia w kodzie** — spis w
       [docs/legal/README.md §8](legal/README.md): usunięcie danych po 6 miesiącach
       (żadnego mechanizmu retencji nie ma) i wypowiedzenie umowy z poziomu panelu.
-- [ ] **Zbierać NIP przy rejestracji** — usługa jest B2B, faktury VAT będą potrzebne,
-      a polityka już deklaruje przetwarzanie NIP-u. Kolumna `Organization.nip` czeka.
+- [x] **NIP przy rejestracji** (2026-08-24) — ze sprawdzeniem sumy kontrolnej po obu
+      stronach. **Adresu działalności nadal nie zbieramy** — dojdzie z fakturowaniem.
 
 ### 5d. Pozostałe treści z odnośników
 
@@ -192,9 +193,9 @@ w poprzek najemców — czyli robić dokładnie to, przed czym broni RLS.
 
 Do rozstrzygnięcia **przed** napisaniem pierwszego ekranu:
 
-- [ ] **Model tożsamości** — osobna tabela `PlatformAdmin` z własnym logowaniem, czy
-      rola specjalna w istniejącej? Osobna jest czystsza: konto kelbroo nigdy nie może
-      przypadkiem wpaść w listę pracowników lokalu ani w `AuditLog` restauracji.
+- [x] **Model tożsamości** (2026-08-25) — osobna tabela `PlatformAdmin`, osobne
+      logowanie, **osobny sekret tokenu**. Rola aplikacyjna pod RLS nie ma do tej tabeli
+      dostępu; uprawnienia odbiera migracja.
 - [~] **Sposób dostępu do danych** — lista klientów jako jedyna sięga po połączenie
       katalogowe, bo z definicji czyta w poprzek najemców. Pozostałe ekrany mają iść
       przez `withTenant`. Trzy drogi, każda z inną ceną:
@@ -226,9 +227,10 @@ Do rozstrzygnięcia **przed** napisaniem pierwszego ekranu:
       abonamentu, okres próbny, termin ważności, liczba stolików i kont, ostatnie
       logowanie. Z wyszukiwaniem i podsumowaniem u góry.
 - [ ] **Karta klienta** — wszystko o jednym kliencie w jednym miejscu.
-- [ ] **Wyszukiwanie** po nazwie, NIP-ie i adresie e-mail właściciela.
-- [ ] **Zdrowie wdrożenia** — czy klient w ogóle wystartował: liczba stolików z kodami,
-      pozycji w karcie, zamówień w ostatnich 7 dniach, data ostatniej aktywności.
+- [x] **Wyszukiwanie** po nazwie, NIP-ie, adresie e-mail i nazwie lokalu (2026-08-25).
+- [~] **Zdrowie wdrożenia** — lista pokazuje już liczbę stolików, kont personelu
+      i **ostatnie logowanie** (klient, który nigdy nie wszedł, jest oznaczony).
+      Brakuje liczby pozycji w karcie i zamówień z ostatnich 7 dni.
       Bez tego nie widać różnicy między klientem zadowolonym a takim, który założył
       konto i nigdy go nie użył — a to drugie jest sygnałem do telefonu, nie do faktury.
 
