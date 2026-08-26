@@ -482,6 +482,26 @@ zaplecza i liście klientów — świadomie wybrana droga omijająca RLS.
 wpłacie na `kontakt@kelbroo.com` idzie wiadomość z kompletem danych nabywcy.
 Integracja z systemem księgowym jest do zrobienia, gdy liczba klientów to uzasadni.
 
+**Uzgadnianie z operatorem.** Powiadomienie potrafi nie dotrzeć — zły adres w panelu
+PayU, chwilowa awaria API, wygasły certyfikat. Wtedy klient zapłacił, abonament się nie
+przedłużył i **nikt się o tym nie dowie**, dopóki nie zadzwoni. Dlatego co dziesięć minut
+zadanie pyta operatora o faktyczny stan zamówień wiszących dłużej niż 15 minut:
+opłacone księguje tą samą drogą co powiadomienie, odrzucone zamyka, a po 48 godzinach
+uznaje za porzucone. Alarm na `kontakt@kelbroo.com` leci **wyłącznie** wtedy, gdy
+uzgadnianie faktycznie odzyskało wpłatę — bo to znaczy, że powiadomienia są zepsute
+i uderzą w następnego płacącego. Samo „wisi w pending" nie jest sygnałem: tak samo
+wygląda klient, który rozmyślił się na bramce, a takich jest znacznie więcej.
+
+**Podwójne księgowanie blokuje baza, nie kolejność wywołań.** Powiadomienie i uzgadnianie
+mogą trafić na to samo zamówienie równocześnie i oba zobaczyć „pending". Przejście na
+`completed` idzie przez warunkowy `UPDATE`, który blokuje wiersz — druga transakcja czeka
+i po odblokowaniu nie dopasowuje już niczego. Pokryte testem uruchamiającym obie drogi
+naraz; bez tej bramki test kończy się dwoma zaksięgowaniami.
+
+**Zadania cykliczne zakładają jedną instancję API.** Przy skalowaniu w poziomie każda
+uruchamiałaby przegląd osobno — podwójnego księgowania to nie spowoduje, ale wymaga
+blokady w Redisie.
+
 **Czego jeszcze nie ma:** automatycznego odnawiania (token karty), przypomnień przed
 końcem okresu i ponawiania nieudanych płatności. Zakup jednorazowy jest warunkiem
 koniecznym dla każdej z tych rzeczy, więc nic z tej pracy nie przepadnie.

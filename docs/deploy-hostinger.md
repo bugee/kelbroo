@@ -842,3 +842,25 @@ danych nabywcy.
   wdrożenia terminy trzeba pilnować z zaplecza (lista klientów pokazuje „aktywny do").
 - **Zwroty robisz w panelu PayU.** kelbroo ich nie zna i nie cofnie po nich
   abonamentu — trzeba go skrócić ręcznie z zaplecza.
+
+### Gdy klient twierdzi, że zapłacił, a abonament się nie przedłużył
+
+Najpierw zaczekaj **kwadrans**. Co dziesięć minut zadanie uzgadniające pyta PayU
+o zamówienia wiszące dłużej niż 15 minut i samo księguje te opłacone — w większości
+przypadków problem zniknie bez Twojego udziału, a na `kontakt@kelbroo.com` przyjdzie
+wiadomość „Wpłata odzyskana przez uzgadnianie".
+
+**Ta wiadomość jest sygnałem, że coś jest zepsute**, mimo że klient nie ucierpiał:
+znaczy, że powiadomienie od PayU nie dotarło i nie dotrze przy następnej wpłacie.
+Sprawdź wtedy dwie rzeczy — adres powiadomień w panelu PayU (ma wskazywać na
+`https://panel.kelbroo.com/api/billing/notify`) oraz log pod kątem odrzuconych podpisów:
+
+```bash
+docker compose -f docker-compose.prod.yml --env-file .env.prod logs api | grep -i "podpis\|uzgadnianie"
+```
+
+Jeśli po kwadransie nic się nie zmieniło, sprawdź, co PayU mówi o tym zamówieniu:
+
+```bash
+docker compose -f docker-compose.prod.yml --env-file .env.prod logs api | grep -i "PayU nie podał"
+```

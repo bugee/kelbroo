@@ -71,6 +71,17 @@ export abstract class SubscriptionPaymentProvider {
   abstract createOrder(request: PaymentOrderRequest): Promise<PaymentOrderCreated>;
 
   /**
+   * Pyta operatora o faktyczny stan zamówienia.
+   *
+   * Potrzebne, bo powiadomienie potrafi nie dotrzeć — a wtedy nasza baza mówi
+   * „w trakcie" i dla klienta, który zapłacił, i dla klienta, który zrezygnował
+   * na bramce. Rozróżnia je wyłącznie operator, więc trzeba go zapytać.
+   *
+   * `null`, gdy operator nie zna tego zamówienia.
+   */
+  abstract fetchOrder(providerOrderId: string): Promise<PaymentNotification | null>;
+
+  /**
    * Sprawdza podpis i odczytuje treść powiadomienia.
    *
    * Dostaje **surowe bajty**, nie sparsowany obiekt: podpis liczy się z dokładnie

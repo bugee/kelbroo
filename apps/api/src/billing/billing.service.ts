@@ -19,7 +19,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
 import { ramka, tekstem, type Ramka } from '../mail/templates';
 import type { StaffContext } from '../auth/auth.types';
-import { SubscriptionPaymentProvider } from './payment-provider';
+import { SubscriptionPaymentProvider, type PaymentNotification } from './payment-provider';
 import type { CheckoutDto } from './dto';
 
 const GROSZE = 100;
@@ -100,6 +100,54 @@ export class BillingService {
       postalCode: organizacja.billingPostalCode ?? '',
       city: organizacja.billingCity ?? '',
     };
+  }
+
+  /**
+   * Zamówienia czekające na rozstrzygnięcie, w poprzek najemców.
+   *
+   * Drugi (i ostatni) odczyt omijający RLS w tym module: uzgadnianie z natury
+   * pyta o wszystkich klientów naraz, bo nie działa w niczyjej sesji. Wybiera
+   * wąsko — tylko wiszące zamówienia z zadanego przedziału czasu.
+   */
+  async oczekujaceZamowienia(starszeNiz: Date, mlodszeNiz: Date) {
+    return this.directory.subscriptionOrder.findMany({
+      where: { status: { in: ['new', 'pending'] }, createdAt: { lt: starszeNiz, gt: mlodszeNiz } },
+      orderBy: { createdAt: 'asc' },
+      take: 200,
+      select: {
+        id: true,
+        externalId: true,
+        organizationId: true,
+        payuOrderId: true,
+        grossCents: true,
+        createdAt: true,
+      },
+    });
+  }
+
+  /** Zamyka zamówienie, którego klient nie dokończył. */
+  async porzuc(organizationId: string, externalId: string): Promise<void> {
+    await this.prisma.withTenant(organizationId, (tx) =>
+      tx.subscriptionOrder.updateMany({
+        where: { externalId, status: { not: 'completed' } },
+        data: { status: 'canceled' },
+      }),
+    );
+  }
+
+  /** Wiadomość do nas — używa jej uzgadnianie, gdy odzyska zgubioną wpłatę. */
+  async zawiadomNas(temat: string, akapity: string[]): Promise<void> {
+    const tresc: Ramka = {
+      adresStrony: this.mail.adresStrony,
+      naglowek: temat,
+      akapity,
+    };
+    await this.mail.send({
+      to: this.mail.skrzynkaKelbroo,
+      subject: temat,
+      text: tekstem(tresc),
+      html: ramka(tresc),
+    });
   }
 
   /** Historia zakupów lokalu — także nieudanych. */
@@ -258,44 +306,80 @@ export class BillingService {
 
     // Jedyny odczyt w poprzek najemców: bez niego nie wiadomo, w czyim kontekście
     // otworzyć transakcję.
+    const organizationId = await this.znajdzNajemce(powiadomienie.externalId);
+    await this.zastosujStan(organizationId, powiadomienie);
+  }
+
+  /**
+   * Czyje jest to zamówienie.
+   *
+   * Jedyny odczyt w poprzek najemców: powiadomienie przychodzi bez sesji, więc
+   * bez tego nie wiadomo, w czyim kontekście otworzyć transakcję.
+   */
+  private async znajdzNajemce(externalId: string): Promise<string> {
     const wskazanie = await this.directory.subscriptionOrder.findUnique({
-      where: { externalId: powiadomienie.externalId },
+      where: { externalId },
       select: { organizationId: true },
     });
 
     if (!wskazanie) {
-      this.logger.warn(`Powiadomienie o nieznanym zamówieniu ${powiadomienie.externalId}`);
+      this.logger.warn(`Powiadomienie o nieznanym zamówieniu ${externalId}`);
       throw new NotFoundException('Nieznane zamówienie.');
     }
+    return wskazanie.organizationId;
+  }
 
-    const wynik = await this.prisma.withTenant(wskazanie.organizationId, async (tx) => {
+  /**
+   * Przenosi zamówienie do stanu, który zgłasza operator.
+   *
+   * Wspólne dla powiadomienia i dla uzgadniania — obie drogi muszą księgować
+   * identycznie, bo inaczej ta rzadziej używana rozjechałaby się po cichu.
+   *
+   * Zwraca `true`, gdy **ta** próba zaksięgowała wpłatę. Uzgadnianie po tym
+   * poznaje, że powiadomienie przepadło i trzeba nas o tym zawiadomić.
+   */
+  async zastosujStan(organizationId: string, stan: PaymentNotification): Promise<boolean> {
+    const wynik = await this.prisma.withTenant(organizationId, async (tx) => {
       const zamowienie = await tx.subscriptionOrder.findUnique({
-        where: { externalId: powiadomienie.externalId },
+        where: { externalId: stan.externalId },
       });
       if (!zamowienie) throw new NotFoundException('Nieznane zamówienie.');
 
-      // Powiadomienia przychodzą wielokrotnie — operator ponawia je, dopóki nie
-      // dostanie 200. Drugie przetworzenie tej samej wpłaty przedłużyłoby
-      // abonament dwa razy za te same pieniądze.
-      if (zamowienie.status === 'completed') return null;
-
-      if (powiadomienie.status !== 'completed') {
-        if (zamowienie.status !== 'canceled' && powiadomienie.status === 'canceled') {
-          await tx.subscriptionOrder.update({
-            where: { id: zamowienie.id },
+      if (stan.status !== 'completed') {
+        if (stan.status === 'canceled' && zamowienie.status !== 'completed') {
+          await tx.subscriptionOrder.updateMany({
+            where: { id: zamowienie.id, status: { not: 'completed' } },
             data: { status: 'canceled' },
           });
         }
         return null;
       }
 
+      // Bramka: **jedno** przejście na `completed` i ani jednego więcej.
+      //
+      // Sam odczyt statusu by nie wystarczył — powiadomienie i uzgadnianie mogą
+      // trafić na to zamówienie równocześnie, oba zobaczyć „pending" i oba
+      // przedłużyć abonament za te same pieniądze. `updateMany` z warunkiem
+      // blokuje wiersz, więc druga transakcja czeka i po odblokowaniu nie
+      // dopasowuje już niczego.
+      const przejete = await tx.subscriptionOrder.updateMany({
+        where: { id: zamowienie.id, status: { not: 'completed' } },
+        data: {
+          status: 'completed',
+          paidAt: new Date(),
+          payuOrderId: stan.providerOrderId,
+        },
+      });
+      if (przejete.count === 0) return null;
+
       // Podpis broni przed podszyciem, ale nie przed pomyłką po naszej stronie:
       // kwota inna niż wystawiona znaczy, że coś się rozjechało, i nie wolno
-      // wtedy przedłużać abonamentu w ciemno.
-      if (powiadomienie.grossCents !== zamowienie.grossCents) {
+      // wtedy przedłużać abonamentu w ciemno. Wyjątek wycofuje też bramkę
+      // powyżej, więc zamówienie zostaje w poprzednim stanie.
+      if (stan.grossCents !== zamowienie.grossCents) {
         this.logger.error(
           `Kwota nie zgadza się dla ${zamowienie.externalId}: ` +
-            `operator ${powiadomienie.grossCents}, wystawiono ${zamowienie.grossCents}`,
+            `operator ${stan.grossCents}, wystawiono ${zamowienie.grossCents}`,
         );
         throw new BadRequestException('Kwota płatności nie zgadza się z zamówieniem.');
       }
@@ -334,12 +418,7 @@ export class BillingService {
 
       const zapisane = await tx.subscriptionOrder.update({
         where: { id: zamowienie.id },
-        data: {
-          status: 'completed',
-          paidAt: new Date(),
-          paidUntil: doKiedy,
-          payuOrderId: powiadomienie.providerOrderId,
-        },
+        data: { paidUntil: doKiedy },
       });
 
       const organizacja = await tx.organization.findUniqueOrThrow({
@@ -349,7 +428,7 @@ export class BillingService {
       return { zamowienie: zapisane, organizacja };
     });
 
-    if (!wynik) return;
+    if (!wynik) return false;
 
     this.logger.log(
       `Zaksięgowano ${wynik.zamowienie.grossCents} gr od ${wynik.organizacja.name} ` +
@@ -360,6 +439,7 @@ export class BillingService {
       this.potwierdzKlientowi(wynik.organizacja, wynik.zamowienie),
       this.zglosDoFakturowania(wynik.organizacja, wynik.zamowienie),
     ]);
+    return true;
   }
 
   private get adresPanelu(): string {

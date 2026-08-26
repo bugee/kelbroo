@@ -1,10 +1,12 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
+import { ScheduleModule } from '@nestjs/schedule';
 import path from 'node:path';
 import { PrismaModule } from './prisma/prisma.module';
 import { BillingController } from './billing/billing.controller';
 import { BillingService } from './billing/billing.service';
+import { BillingReconciliationService } from './billing/billing-reconciliation.service';
 import { SubscriptionPaymentProvider } from './billing/payment-provider';
 import { PayuProvider } from './billing/payu.provider';
 import { HealthController } from './health/health.controller';
@@ -56,6 +58,10 @@ import { StaffAdminService } from './management/staff.admin.service';
     // Sekrety podajemy przy każdym podpisie i weryfikacji, bo access i refresh
     // mają osobne klucze — moduł rejestrujemy bez globalnej konfiguracji.
     JwtModule.register({}),
+    // Zadania cykliczne. Dziś jedno: uzgadnianie płatności z operatorem.
+    // Zakłada JEDNĄ instancję API — przy skalowaniu w poziomie każda
+    // uruchamiałaby je osobno i trzeba będzie dołożyć blokadę w Redisie.
+    ScheduleModule.forRoot(),
     PrismaModule,
   ],
   controllers: [
@@ -102,6 +108,7 @@ import { StaffAdminService } from './management/staff.admin.service';
     RestaurantAdminService,
     StaffAdminService,
     BillingService,
+    BillingReconciliationService,
     // Operator płatności wchodzi przez token, nie przez import: wymiana PayU
     // na innego dostawcę to jedna linia, a nie przeszukiwanie serwisów.
     { provide: SubscriptionPaymentProvider, useClass: PayuProvider },

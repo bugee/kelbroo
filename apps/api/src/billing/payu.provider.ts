@@ -185,6 +185,62 @@ export class PayuProvider extends SubscriptionPaymentProvider {
     return { redirectUri: dane.redirectUri, providerOrderId: dane.orderId };
   }
 
+  /**
+   * Stan zamówienia prosto od PayU.
+   *
+   * PayU zwraca listę, bo jedno zamówienie może mieć kilka wpisów po zwrotach;
+   * bierzemy pierwszy, bo interesuje nas bieżący stan wpłaty.
+   */
+  async fetchOrder(providerOrderId: string): Promise<PaymentNotification | null> {
+    const token = await this.autoryzuj();
+    const odpowiedz = await fetch(
+      `${this.baza}/api/v2_1/orders/${encodeURIComponent(providerOrderId)}`,
+      { headers: { authorization: `Bearer ${token}` } },
+    );
+
+    if (odpowiedz.status === 404) return null;
+    if (!odpowiedz.ok) {
+      const tresc = await odpowiedz.text().catch(() => '');
+      this.logger.error(
+        `PayU nie podał stanu zamówienia ${providerOrderId} (${odpowiedz.status}): ${tresc.slice(0, 200)}`,
+      );
+      throw new ServiceUnavailableException('Operator płatności nie odpowiada.');
+    }
+
+    const dane = (await odpowiedz.json()) as {
+      status?: { statusCode?: string };
+      orders?: {
+        orderId?: string;
+        extOrderId?: string;
+        status?: string;
+        totalAmount?: string;
+        currencyCode?: string;
+      }[];
+    };
+
+    // Nieznane zamówienie wraca jako **HTTP 200 z `DATA_NOT_FOUND`**, nie jako
+    // 404 — sprawdzone na sandboksie. Gałąź 404 wyżej zostaje na wypadek,
+    // gdyby PayU kiedyś zaczął odpowiadać zgodnie z kodem stanu.
+    if (dane.status?.statusCode === 'DATA_NOT_FOUND') return null;
+
+    const zamowienie = dane.orders?.[0];
+    if (!zamowienie?.extOrderId || !zamowienie.orderId || !zamowienie.status) return null;
+
+    const status = STATUSY[zamowienie.status];
+    if (!status) {
+      this.logger.warn(`Nieznany status PayU przy uzgadnianiu: ${zamowienie.status}`);
+      return null;
+    }
+
+    return {
+      externalId: zamowienie.extOrderId,
+      providerOrderId: zamowienie.orderId,
+      status,
+      grossCents: Number(zamowienie.totalAmount ?? 0),
+      currency: zamowienie.currencyCode ?? 'PLN',
+    };
+  }
+
   readNotification(rawBody: Buffer, signatureHeader?: string): PaymentNotification {
     const { secondKey } = this.wymagajKonfiguracji();
     this.sprawdzPodpis(rawBody, signatureHeader, secondKey);

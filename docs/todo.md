@@ -42,9 +42,10 @@ etapu 2) — oraz czterech funkcji gościa z sekcji 4.
 1. **Ścieżka gościa jest potwierdzona ręcznie, jednorazowo.** Zamawianie, koszyk
    i prośba o rachunek nie mają testu e2e (§7). To najkrótsza droga do tego, żeby
    regresja nie wróciła niezauważona.
-2. **Awarię widać dopiero wtedy, gdy ktoś zadzwoni** (§7). Odkąd w grę wchodzą
-   pieniądze, ma to nową cenę: nieprzetworzone powiadomienie o wpłacie znaczy
-   klienta, który zapłacił i nie dostał okresu — a dziś nikt się o tym nie dowie.
+2. **Awarię widać dopiero wtedy, gdy ktoś zadzwoni** (§7) — z jednym wyjątkiem:
+   płatności mają od 2026-08-26 własne uzgadnianie z operatorem, więc wpłata
+   bez powiadomienia sama się odnajduje i zgłasza. Reszta systemu takiego
+   czujnika nie ma.
 
 ---
 
@@ -134,6 +135,12 @@ do `#rejestracja`, którego nie ma.
       `SubscriptionOrder`, ceny i limity w jednym katalogu (`packages/types/plans.ts`).
       Ścieżka przetestowana na sandboksie PayU aż do bramki i z powrotem.
       Szczegóły i uzasadnienia: [architecture.md §11a](architecture.md).
+- [x] **Uzgadnianie płatności z operatorem** (2026-08-26) — co 10 minut zadanie pyta
+      PayU o stan zamówień wiszących dłużej niż 15 minut, księguje opłacone tą samą
+      drogą co powiadomienie, zamyka odrzucone i po 48 h porzucone. Alarm idzie na
+      `kontakt@kelbroo.com` tylko wtedy, gdy wpłata została odzyskana — czyli gdy
+      powiadomienia naprawdę nie działają. Podwójnemu księgowaniu zapobiega bramka
+      w bazie, pokryta testem dwóch równoczesnych prób.
 - [ ] **Przypomnienia o kończącym się okresie — priorytet wysoki, następne w kolejce.**
       3 dni przed, w dniu końca, 3 dni po. Bez nich zakup jednorazowy zamienia się
       w **cichą rezygnację**: klient nie dostaje żadnego sygnału, dopóki panel nie

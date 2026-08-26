@@ -14,7 +14,8 @@ import { addPeriod, priceFor } from '@kelbroo/types';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { BillingService } from '../src/billing/billing.service';
 import { PayuProvider } from '../src/billing/payu.provider';
-import { PaymentSignatureError } from '../src/billing/payment-provider';
+import { PaymentSignatureError, type PaymentNotification } from '../src/billing/payment-provider';
+import { BillingReconciliationService } from '../src/billing/billing-reconciliation.service';
 import type { MailService } from '../src/mail/mail.service';
 
 const direct = new PrismaClient({ datasourceUrl: process.env.DIRECT_DATABASE_URL });
@@ -328,5 +329,192 @@ describe('katalog planów', () => {
     } finally {
       process.env.PAYU_SECOND_KEY = DRUGI_KLUCZ;
     }
+  });
+});
+
+/**
+ * Uzgadnianie z operatorem.
+ *
+ * Broni przed najgorszym przypadkiem tego modułu: klient zapłacił, powiadomienie
+ * nie dotarło, abonament się nie przedłużył i nikt o tym nie wie. Samo „wisi
+ * w pending" nie odróżnia go od klienta, który rozmyślił się na bramce — dlatego
+ * pytamy operatora, zamiast zgadywać z własnej bazy.
+ */
+describe('uzgadnianie', () => {
+  /** Operator-atrapa: mówi to, co mu każe test, i liczy zapytania. */
+  class Atrapa extends PayuProvider {
+    stany = new Map<string, PaymentNotification>();
+    zapytania: string[] = [];
+    wlaczony = true;
+
+    override get configured() {
+      return this.wlaczony;
+    }
+
+    override async fetchOrder(providerOrderId: string) {
+      this.zapytania.push(providerOrderId);
+      return this.stany.get(providerOrderId) ?? null;
+    }
+  }
+
+  let atrapa: Atrapa;
+  let uzgadnianie: BillingReconciliationService;
+
+  /** Zamówienie na tyle stare, że przegląd je zauważa. */
+  async function wiszace(minutTemu: number, payuOrderId: string | null) {
+    const cena = priceFor('starter', 'month');
+    return direct.subscriptionOrder.create({
+      data: {
+        organizationId,
+        plan: 'starter',
+        period: 'month',
+        netCents: cena.netCents,
+        vatCents: cena.vatCents,
+        grossCents: cena.grossCents,
+        status: 'pending',
+        externalId: randomUUID(),
+        payuOrderId,
+        createdAt: new Date(Date.now() - minutTemu * 60_000),
+      },
+    });
+  }
+
+  beforeEach(async () => {
+    atrapa = new Atrapa();
+    uzgadnianie = new BillingReconciliationService(
+      new BillingService(prisma, atrapa, mail),
+      atrapa,
+    );
+    await direct.subscriptionOrder.deleteMany({ where: { organizationId } });
+    await ustawAbonament(new Date('2027-09-01T12:00:00Z'), 'active');
+  });
+
+  it('księguje wpłatę, o której nie przyszło powiadomienie, i zawiadamia nas', async () => {
+    const order = await wiszace(30, 'PAYU-1');
+    atrapa.stany.set('PAYU-1', {
+      externalId: order.externalId,
+      providerOrderId: 'PAYU-1',
+      status: 'completed',
+      grossCents: order.grossCents,
+      currency: 'PLN',
+    });
+
+    await uzgadnianie.przeglad();
+
+    const zapisane = await direct.subscriptionOrder.findUniqueOrThrow({ where: { id: order.id } });
+    expect(zapisane.status).toBe('completed');
+    expect(zapisane.paidUntil).not.toBeNull();
+
+    // Klient dostaje potwierdzenie, my — sygnał, że powiadomienia nie działają.
+    // Bez tego drugiego naprawilibyśmy skutek i przegapili przyczynę.
+    expect(wyslane.map((w) => w.subject)).toEqual(
+      expect.arrayContaining([expect.stringContaining('odzyskana')]),
+    );
+  });
+
+  it('nie rusza zamówienia, które u operatora wciąż czeka', async () => {
+    const order = await wiszace(30, 'PAYU-2');
+    atrapa.stany.set('PAYU-2', {
+      externalId: order.externalId,
+      providerOrderId: 'PAYU-2',
+      status: 'pending',
+      grossCents: order.grossCents,
+      currency: 'PLN',
+    });
+
+    await uzgadnianie.przeglad();
+
+    const zapisane = await direct.subscriptionOrder.findUniqueOrThrow({ where: { id: order.id } });
+    expect(zapisane.status).toBe('pending');
+    expect(wyslane).toHaveLength(0);
+  });
+
+  it('zamyka zamówienie odrzucone u operatora, nie zawiadamiając nikogo', async () => {
+    const order = await wiszace(30, 'PAYU-3');
+    atrapa.stany.set('PAYU-3', {
+      externalId: order.externalId,
+      providerOrderId: 'PAYU-3',
+      status: 'canceled',
+      grossCents: order.grossCents,
+      currency: 'PLN',
+    });
+
+    await uzgadnianie.przeglad();
+
+    const zapisane = await direct.subscriptionOrder.findUniqueOrThrow({ where: { id: order.id } });
+    expect(zapisane.status).toBe('canceled');
+    // Rezygnacja na bramce to codzienność, nie zdarzenie do zgłaszania.
+    expect(wyslane).toHaveLength(0);
+  });
+
+  it('nie pyta o zamówienie, które nigdy nie dotarło do operatora', async () => {
+    const order = await wiszace(30, null);
+
+    await uzgadnianie.przeglad();
+
+    // Bez identyfikatora operatora nie ma o co pytać. Sprawdzamy to zamówienie,
+    // a nie liczbę zapytań ogółem: przegląd z założenia idzie w poprzek
+    // najemców, więc w bazie deweloperskiej trafia też na cudze.
+    expect(atrapa.zapytania).not.toContain(order.externalId);
+    const zapisane = await direct.subscriptionOrder.findUniqueOrThrow({ where: { id: order.id } });
+    expect(zapisane.status).toBe('canceled');
+  });
+
+  it('zostawia w spokoju zamówienie sprzed chwili', async () => {
+    // Klient może właśnie wpisywać kod BLIK — pytanie o niego po minucie
+    // to zamykanie płatności, która trwa.
+    const order = await wiszace(2, 'PAYU-4');
+
+    await uzgadnianie.przeglad();
+
+    expect(atrapa.zapytania).not.toContain('PAYU-4');
+    const zapisane = await direct.subscriptionOrder.findUniqueOrThrow({ where: { id: order.id } });
+    expect(zapisane.status).toBe('pending');
+  });
+
+  it('zamyka porzucone po dwóch dobach', async () => {
+    const order = await wiszace(60 * 24 * 3, 'PAYU-5');
+
+    await uzgadnianie.przeglad();
+
+    const zapisane = await direct.subscriptionOrder.findUniqueOrThrow({ where: { id: order.id } });
+    expect(zapisane.status).toBe('canceled');
+  });
+
+  it('bez skonfigurowanego operatora nie robi nic', async () => {
+    atrapa.wlaczony = false;
+    const order = await wiszace(30, 'PAYU-6');
+
+    await uzgadnianie.przeglad();
+
+    expect(atrapa.zapytania).toHaveLength(0);
+    const zapisane = await direct.subscriptionOrder.findUniqueOrThrow({ where: { id: order.id } });
+    expect(zapisane.status).toBe('pending');
+  });
+
+  it('powiadomienie i uzgadnianie naraz dają jeden okres', async () => {
+    const order = await wiszace(30, 'PAYU-7');
+    const stan: PaymentNotification = {
+      externalId: order.externalId,
+      providerOrderId: 'PAYU-7',
+      status: 'completed',
+      grossCents: order.grossCents,
+      currency: 'PLN',
+    };
+    const usluga = new BillingService(prisma, atrapa, mail);
+    const przed = await direct.subscription.findUniqueOrThrow({ where: { organizationId } });
+
+    // Wyścig jest realny: PayU ponawia powiadomienie akurat wtedy, gdy przegląd
+    // pyta o to samo zamówienie. Obie drogi zobaczyłyby „pending".
+    const wyniki = await Promise.all([
+      usluga.zastosujStan(organizationId, stan),
+      usluga.zastosujStan(organizationId, stan),
+    ]);
+
+    expect(wyniki.filter(Boolean)).toHaveLength(1);
+    const po = await direct.subscription.findUniqueOrThrow({ where: { organizationId } });
+    expect(po.currentPeriodEnd!.toISOString()).toBe(
+      addPeriod(przed.currentPeriodEnd!, 'month').toISOString(),
+    );
   });
 });
