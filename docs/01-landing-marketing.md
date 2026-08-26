@@ -24,8 +24,8 @@ Publiczna strona, która wyjaśnia wartość kelbroo właścicielowi restauracji
 | `/pomoc`, `/pomoc/[slug]` | Baza wiedzy / dokumentacja dla klientów | ISR |
 | `/rejestracja` | Utworzenie konta | SSR (dynamiczne) |
 | `/logowanie` | Logowanie → przekierowanie do panelu | SSR |
-| `/checkout/[plan]` | Wybór planu i płatność | SSR |
-| `/checkout/sukces` | Potwierdzenie i przejście do onboardingu | SSR |
+| ~~`/checkout/[plan]`~~ | Zakup przeniesiony do panelu — `panel.kelbroo.com/abonament` (§5) | — |
+| ~~`/checkout/sukces`~~ | Powrót z bramki — `panel.kelbroo.com/abonament/wynik` | — |
 | `/regulamin`, `/prywatnosc`, `/rodo` | Dokumenty prawne | SSG |
 
 ## 3. Strona główna — sekcje (w kolejności)
@@ -84,18 +84,27 @@ Przekaz na stronie:
    ↓  (utworzenie Organization + Subscription w statusie `trialing`)
 Weryfikacja e-mail (link aktywacyjny)
    ↓
-/checkout/[plan]   ← Stripe Checkout / Elements: dane karty + dane do faktury (NIP)
-   ↓  (webhook Stripe → subscription: active|trialing)
-/checkout/sukces   → CTA "Skonfiguruj restaurację"
-   ↓
 Panel admina — onboarding (System 2)
+   ↓
+panel.kelbroo.com/abonament  ← wybór planu i okresu + dane do faktury
+   ↓  (przekierowanie do PayU: BLIK, przelew, karta, Apple/Google Pay)
+panel.kelbroo.com/abonament/wynik
+   ↓  (powiadomienie PayU → subscription: active, okres przedłużony)
+Panel działa dalej, tyle że opłacony
 ```
 
+**Checkout mieszka w panelu, nie na stronie produktowej** (2026-08-26). Pierwotny
+plan zakładał `/checkout/[plan]` pod `kelbroo.com`, ale zakup wymaga zalogowania,
+a `apps/web-marketing` jest aplikacją statyczną bez sesji. Klient i tak musi
+najpierw założyć konto, więc dokładanie drugiego mechanizmu logowania na stronie
+produktowej kupowałoby jeden krok mniej za cenę osobnej ścieżki uwierzytelnienia.
+Strona produktowa prowadzi do rejestracji; sprzedaż dzieje się w panelu.
+
 Zasady:
-- Trial 14 dni startuje **od rejestracji**, nie od podania karty — użytkownik może wejść do panelu przed checkoutem.
-- Przypomnienia e-mail: 3 dni przed końcem trialu, w dniu zakończenia, 3 dni po (win-back).
-- Zmiana planu i anulowanie: przez Stripe Customer Portal osadzony w panelu admina.
-- Faktury VAT generowane automatycznie, dostępne w panelu i wysyłane mailem.
+- Trial 14 dni startuje **od rejestracji**, nie od podania karty — użytkownik może wejść do panelu przed zakupem.
+- Przypomnienia e-mail: 3 dni przed końcem trialu, w dniu zakończenia, 3 dni po (win-back). *(Do zrobienia.)*
+- Odnawianie jest **jednorazowe za okres**, nie automatyczne z karty (decyzja 2026-08-26, [architecture.md §11a](architecture.md)). Automatyczne obciążanie wymaga tokenu karty i wyklucza BLIK, który w Polsce jest metodą dominującą.
+- Faktury VAT wystawiamy **poza kelbroo**, w programie księgowym. Po każdej wpłacie na `kontakt@kelbroo.com` przychodzi wiadomość z kompletem danych nabywcy.
 
 ## 6. FAQ — obiekcje do zaadresowania
 
@@ -129,9 +138,9 @@ Zasady:
 ## 9. Kryteria akceptacji
 
 - [ ] Strona główna i cennik osiągają wynik Lighthouse ≥ 90 we wszystkich kategoriach.
-- [ ] Pełna ścieżka rejestracja → checkout → panel działa na kartach testowych Stripe.
+- [x] Pełna ścieżka rejestracja → zakup → panel działa na sandboksie PayU (2026-08-26).
 - [ ] Trial aktywuje się bez podania karty i poprawnie wygasa po 14 dniach.
-- [ ] Faktura VAT z NIP-em generuje się automatycznie po pierwszej płatności.
+- [ ] Faktura VAT z NIP-em — dziś wystawiana ręcznie po powiadomieniu na `kontakt@kelbroo.com`.
 - [ ] Strona jest w pełni responsywna (właściciele restauracji często przeglądają na telefonie).
 - [ ] Interaktywne demo prezentuje realną apkę gościa, nie zrzuty ekranu.
 - [ ] Wszystkie treści dostępne w `pl`, kluczowe strony także w `en`.

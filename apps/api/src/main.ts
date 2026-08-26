@@ -6,7 +6,10 @@ import { RedisIoAdapter } from './realtime/redis-io.adapter';
 import { DomainExceptionFilter } from './common/domain-exception.filter';
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create(AppModule);
+  // `rawBody` jest potrzebne wyłącznie powiadomieniom od operatora płatności:
+  // podpis liczy się z dokładnie tych bajtów, które przyszły, więc ponowne
+  // złożenie JSON-a z obiektu nigdy by się nie zgodziło.
+  const app = await NestFactory.create(AppModule, { rawBody: true });
 
   app.setGlobalPrefix('api');
 

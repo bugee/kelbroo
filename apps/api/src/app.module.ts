@@ -3,6 +3,10 @@ import { ConfigModule } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import path from 'node:path';
 import { PrismaModule } from './prisma/prisma.module';
+import { BillingController } from './billing/billing.controller';
+import { BillingService } from './billing/billing.service';
+import { SubscriptionPaymentProvider } from './billing/payment-provider';
+import { PayuProvider } from './billing/payu.provider';
 import { HealthController } from './health/health.controller';
 import { TableController } from './table/table.controller';
 import { TableService } from './table/table.service';
@@ -64,6 +68,7 @@ import { StaffAdminService } from './management/staff.admin.service';
     AuthController,
     StaffController,
     ManagementController,
+    BillingController,
   ],
   providers: [
     TableService,
@@ -96,6 +101,10 @@ import { StaffAdminService } from './management/staff.admin.service';
     TablesAdminService,
     RestaurantAdminService,
     StaffAdminService,
+    BillingService,
+    // Operator płatności wchodzi przez token, nie przez import: wymiana PayU
+    // na innego dostawcę to jedna linia, a nie przeszukiwanie serwisów.
+    { provide: SubscriptionPaymentProvider, useClass: PayuProvider },
   ],
 })
 export class AppModule {}

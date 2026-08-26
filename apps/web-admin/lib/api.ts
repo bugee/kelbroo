@@ -647,6 +647,8 @@ export function connectRealtime(onChange: () => void): { close: () => void } | n
 export interface SubscriptionState {
   active: boolean;
   status: string;
+  /** `null`, gdy organizacja nie ma jeszcze wiersza abonamentu. */
+  plan: string | null;
   currentPeriodEnd: string | null;
   /** Ujemne, gdy termin minął. */
   daysLeft: number | null;
@@ -656,6 +658,90 @@ export interface SubscriptionState {
 export const fetchSubscription = () => authorized<SubscriptionState>('/staff/subscription');
 
 export const fetchBadges = () => authorized<Record<string, number>>('/staff/badges');
+
+// ------------------------------------------------------------------ abonament
+
+export type BillingPeriod = 'month' | 'year';
+
+export interface PlanPrice {
+  netCents: number;
+  vatCents: number;
+  grossCents: number;
+}
+
+export interface PlanOffer {
+  id: string;
+  name: string;
+  limits: { tableLimit: number; languageLimit: number };
+  /** `null`, gdy planu nie da się kupić samodzielnie (bezpłatny albo na wycenę). */
+  prices: Record<BillingPeriod, PlanPrice | null>;
+}
+
+export interface PlanCatalog {
+  /** Czy operator płatności jest w ogóle podłączony. */
+  enabled: boolean;
+  vatRatePercent: number;
+  plans: PlanOffer[];
+}
+
+export interface BillingOrder {
+  id: string;
+  plan: string;
+  period: BillingPeriod;
+  netCents: number;
+  vatCents: number;
+  grossCents: number;
+  currency: string;
+  status: 'new' | 'pending' | 'completed' | 'canceled';
+  externalId: string;
+  paidAt: string | null;
+  paidUntil: string | null;
+  createdAt: string;
+}
+
+export interface InvoiceDetails {
+  nip: string;
+  address: string;
+  postalCode: string;
+  city: string;
+  billingEmail: string;
+}
+
+export const fetchPlans = () => authorized<PlanCatalog>('/billing/plans');
+
+/** Dane nabywcy znane z rejestracji — żeby nie przepisywać NIP-u drugi raz. */
+export const fetchInvoiceDetails = () =>
+  authorized<InvoiceDetails & { name: string }>('/billing/invoice');
+
+export const fetchBillingOrders = () => authorized<BillingOrder[]>('/billing/orders');
+
+export const fetchOrderStatus = (externalId: string) =>
+  authorized<
+    Pick<BillingOrder, 'plan' | 'period' | 'grossCents' | 'currency' | 'status'> & {
+      paidUntil: string | null;
+    }
+  >(`/billing/orders/${externalId}`);
+
+/**
+ * Rozpoczyna płatność. Zwraca adres operatora — **nie** potwierdzenie zakupu;
+ * abonament rusza się dopiero po powiadomieniu od operatora.
+ */
+export const startCheckout = (plan: string, period: BillingPeriod, invoice: InvoiceDetails) =>
+  authorized<{ redirectUri: string; externalId: string }>('/billing/checkout', {
+    method: 'POST',
+    // Pola wypisane co do jednego, nie `...invoice`: serwer odrzuca żądanie
+    // z nadmiarowym polem, a `invoice` bywa obiektem z odpowiedzi, w której
+    // jest go więcej niż w formularzu.
+    body: JSON.stringify({
+      plan,
+      period,
+      nip: invoice.nip,
+      address: invoice.address,
+      postalCode: invoice.postalCode,
+      city: invoice.city,
+      billingEmail: invoice.billingEmail,
+    }),
+  });
 
 export const money = (cents: number, currency: string) =>
   new Intl.NumberFormat('pl-PL', { style: 'currency', currency }).format(cents / 100);

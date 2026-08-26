@@ -156,7 +156,10 @@ async function main() {
   const organization = await prisma.organization.create({
     data: {
       name: 'Bistro Widok sp. z o.o.',
-      nip: '5252445397',
+      // Poprawny NIP: dane demo przechodzą tę samą sumę kontrolną, co rejestracja
+      // i checkout. Wcześniejszy numer jej nie przechodził, więc zakup abonamentu
+      // na koncie demo kończył się błędem walidacji.
+      nip: '5252445394',
       billingEmail: 'ksiegowosc@demo.kelbroo.pl',
       subscription: {
         create: {

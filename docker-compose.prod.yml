@@ -111,6 +111,23 @@ services:
       MAIL_NOTIFY: ${MAIL_NOTIFY:-kontakt@kelbroo.com}
       # Adres w odnośnikach wysyłanych do klientów.
       PUBLIC_SITE_URL: https://${LANDING_DOMAIN}
+      # Panel, do którego wraca klient po zapłacie.
+      PANEL_URL: https://${ADMIN_DOMAIN}
+      # Adres, pod który operator płatności wysyła powiadomienie o wpłacie.
+      # Musi być **publicznie osiągalny** — Caddy kieruje /api na tej domenie
+      # do API, więc to ten sam origin co panel.
+      PUBLIC_API_URL: https://${ADMIN_DOMAIN}/api
+      # PayU. Bez kompletu tych zmiennych zakup abonamentu jest wyłączony,
+      # a panel mówi o tym wprost zamiast pokazywać martwy przycisk „Zapłać".
+      # `sandbox` do testów, `production` na koncie produkcyjnym — pomyłka
+      # kieruje prawdziwe pieniądze do środowiska testowego albo odwrotnie.
+      PAYU_ENV: ${PAYU_ENV:-sandbox}
+      PAYU_POS_ID: ${PAYU_POS_ID:-}
+      PAYU_CLIENT_ID: ${PAYU_CLIENT_ID:-}
+      PAYU_CLIENT_SECRET: ${PAYU_CLIENT_SECRET:-}
+      # Drugi klucz (MD5) — służy **wyłącznie** do sprawdzania podpisu
+      # powiadomień. To on decyduje, czy komuś przedłużyć abonament.
+      PAYU_SECOND_KEY: ${PAYU_SECOND_KEY:-}
       # Za proxy przeglądarka i tak nie przekracza originu, ale nagłówek Origin
       # przychodzi — musi być na liście, inaczej API odrzuci własne aplikacje.
       CORS_ORIGINS: https://${GUEST_DOMAIN},https://${ADMIN_DOMAIN}

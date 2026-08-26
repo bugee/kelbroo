@@ -276,6 +276,14 @@ model Organization {
   blockedAt     DateTime? @map("blocked_at")
   blockedReason String?   @map("blocked_reason")
 
+  /// Adres do faktury. Sprzedaż jest B2B, więc faktura VAT jest obowiązkowa,
+  /// a na fakturze musi stać adres nabywcy — przy rejestracji zbieramy tylko
+  /// nazwę, NIP i e-mail, więc reszta dopisuje się przy pierwszym zakupie.
+  billingAddress    String? @map("billing_address")
+  billingPostalCode String? @map("billing_postal_code")
+  billingCity       String? @map("billing_city")
+  billingCountry    String  @default("PL") @map("billing_country")
+
   termsAcceptedAt   DateTime? @map("terms_accepted_at")
   termsVersion      String?   @map("terms_version")
   privacyAcceptedAt DateTime? @map("privacy_accepted_at")
@@ -284,10 +292,11 @@ model Organization {
   createdAt         DateTime  @default(now()) @map("created_at")
   updatedAt         DateTime  @updatedAt @map("updated_at")
 
-  subscription Subscription?
-  restaurants  Restaurant[]
-  staff        StaffMember[]
-  auditLogs    AuditLog[]
+  subscription       Subscription?
+  subscriptionOrders SubscriptionOrder[]
+  restaurants        Restaurant[]
+  staff              StaffMember[]
+  auditLogs          AuditLog[]
 
   @@map("organization")
 }
@@ -309,6 +318,64 @@ model Subscription {
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@map("subscription")
+}
+
+/// Status zamówienia abonamentu. Odwzorowuje stany PayU, bo tłumaczenie ich
+/// na własne nazwy tylko utrudniałoby czytanie powiadomień obok bazy.
+enum SubscriptionOrderStatus {
+  /// Utworzone u nas, jeszcze nie wysłane do operatora.
+  new
+  /// Klient został przekierowany do PayU; pieniądze nie wpłynęły.
+  pending
+  /// Operator potwierdził wpłatę. **Tylko ten status przedłuża abonament.**
+  completed
+  /// Odrzucone albo porzucone. Abonament bez zmian.
+  canceled
+}
+
+/// Pojedyncza próba zakupu okresu abonamentowego.
+///
+/// Jeden wiersz na jedno podejście do płatności, także nieudane — inaczej nie
+/// dałoby się odpowiedzieć klientowi, dlaczego pieniądze wyszły z konta,
+/// a abonament się nie przedłużył.
+///
+/// Kwoty są zamrożone w chwili zakupu (`netCents`, `vatCents`, `grossCents`).
+/// To ta sama zasada, co snapshot pozycji w rachunku gościa: zmiana cennika
+/// nie może przepisać historii, bo za tym wierszem stoi faktura.
+model SubscriptionOrder {
+  id             String                  @id @default(uuid()) @db.Uuid
+  organizationId String                  @map("organization_id") @db.Uuid
+  plan           SubscriptionPlan
+  /// `month` albo `year`. Trzymane jako tekst, bo to pojęcie cennika,
+  /// nie bazy danych — enum wymuszałby migrację przy każdej zmianie oferty.
+  period         String
+  netCents       Int                     @map("net_cents")
+  vatCents       Int                     @map("vat_cents")
+  grossCents     Int                     @map("gross_cents")
+  currency       String                  @default("PLN") @db.Char(3)
+  status         SubscriptionOrderStatus @default(new)
+
+  /// Nasz identyfikator wysłany do operatora (`extOrderId`) — po nim odnajdujemy
+  /// zamówienie w powiadomieniu. Losowy, nie sekwencyjny.
+  externalId  String  @unique @map("external_id")
+  /// Identyfikator nadany przez operatora. Pusty, dopóki zamówienie nie wyszło.
+  payuOrderId String? @map("payu_order_id")
+
+  /// Do kiedy przedłużył abonament. Zapisane w chwili zaksięgowania, żeby po
+  /// latach dało się odtworzyć, za co klient zapłacił.
+  paidUntil DateTime? @map("paid_until")
+  paidAt    DateTime? @map("paid_at")
+
+  /// Kto kliknął „Zapłać". Konto pracownika może zniknąć, a zamówienie zostaje.
+  initiatedByStaffId String? @map("initiated_by_staff_id") @db.Uuid
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, createdAt])
+  @@map("subscription_order")
 }
 
 model Restaurant {

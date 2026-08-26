@@ -720,3 +720,109 @@ Warto to wiedzieć, a nie odkryć później:
 > (`ssh -L 3004:localhost:3004 root@serwer`) i praca na `http://localhost:3004`.
 > Wymaga wystawienia portu kontenera na localhost serwera. Przy jednoosobowym
 > zespole bywa rozsądniejszy niż publiczny adres.
+
+## Włączenie płatności za abonament (PayU)
+
+Do tej pory abonamenty przedłużało się ręcznie z zaplecza. Ta procedura włącza
+sprzedaż: klient wybiera plan w panelu i płaci BLIK-iem, przelewem albo kartą.
+
+**Zanim zaczniesz — jedna rzecz, której nie da się cofnąć jednym poleceniem.**
+`PAYU_ENV` decyduje, czy pieniądze są prawdziwe. `sandbox` to środowisko testowe
+(nic nie wpływa), `production` to Twoje konto. Pomyłka w tej jednej zmiennej jest
+najdroższym błędem w całym wdrożeniu: przy `sandbox` klient „zapłaci", abonament
+się przedłuży, a na koncie nie będzie ani grosza.
+
+### Krok 1. Wypisz dane z panelu PayU
+
+Zaloguj się na [secure.payu.com](https://secure.payu.com) → **Moje sklepy** →
+punkt płatności (POS). Potrzebujesz czterech rzeczy:
+
+| Co | Gdzie w panelu PayU |
+|---|---|
+| **ID punktu płatności** (POS ID) | przy nazwie punktu |
+| **Klucz OAuth — client_id** | sekcja „Klucze konfiguracji / OAuth" |
+| **Klucz OAuth — client_secret** | tamże |
+| **Drugi klucz (MD5)** | sekcja „Klucze konfiguracji" |
+
+Drugi klucz nie służy do płacenia — służy do **sprawdzania podpisu powiadomień
+o wpłacie**. To on rozstrzyga, komu przedłużyć abonament, więc traktuj go jak
+hasło do konta bankowego. Kto go zna, może sobie opłacić dowolny abonament.
+
+### Krok 2. Ustaw adres powiadomień w PayU
+
+W konfiguracji POS-u wskaż adres powiadomień (notify URL):
+
+```
+https://panel.kelbroo.com/api/billing/notify
+```
+
+Ten adres musi być publicznie osiągalny — Caddy kieruje `/api` na domenie panelu
+do API, więc żadnej dodatkowej konfiguracji nie trzeba. Sprawdź, że odpowiada:
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" -X POST https://panel.kelbroo.com/api/billing/notify
+```
+
+Oczekiwane **401** — żądanie bez podpisu ma być odrzucone. `404` znaczy, że API
+nie zostało jeszcze przebudowane; `200` znaczyłoby, że coś jest bardzo źle.
+
+Jeśli PayU wymaga też adresu powrotu, podaj `https://panel.kelbroo.com/abonament/wynik`.
+
+### Krok 3. Uzupełnij `.env.prod`
+
+```bash
+cd /root/kelbroo
+nano .env.prod
+```
+
+Dopisz (wzór w `.env.prod.example`):
+
+```
+PAYU_ENV=production
+PAYU_POS_ID=<ID punktu płatności>
+PAYU_CLIENT_ID=<client_id>
+PAYU_CLIENT_SECRET=<client_secret>
+PAYU_SECOND_KEY=<drugi klucz MD5>
+```
+
+Zanim przejdziesz dalej — przeczytaj `PAYU_ENV` jeszcze raz.
+
+### Krok 4. Wdróż
+
+```bash
+cd /root/kelbroo
+git pull
+docker compose -f docker-compose.prod.yml up -d --build api web-admin
+```
+
+Migracja dokłada tabelę zamówień abonamentu i dane do faktury na organizacji.
+
+### Krok 5. Sprawdź na żywo
+
+Zaloguj się na `https://panel.kelbroo.com` jako właściciel i wejdź w
+**Ustawienia → Abonament**. Powinieneś zobaczyć plany z cenami. Komunikat
+„Płatności online nie są jeszcze uruchomione" znaczy, że którejś zmiennej brakuje
+— API czyta je przy starcie, więc po poprawce trzeba przebudować kontener.
+
+Pierwszy zakup zrób sam, najtańszym planem, prawdziwymi pieniędzmi. Przelew na
+własne konto firmowe kosztuje tylko prowizję PayU, a jest jedynym sposobem, żeby
+sprawdzić, że **produkcyjne** klucze działają. Po zapłacie:
+
+```bash
+docker compose -f docker-compose.prod.yml logs api | grep -i "zaksięgowano"
+```
+
+Ma pokazać kwotę i datę, do której przedłużył się abonament. Na
+`kontakt@kelbroo.com` przyjdzie wiadomość „Faktura do wystawienia" z kompletem
+danych nabywcy.
+
+### Czego ta procedura nie załatwia
+
+- **Faktury wystawiasz ręcznie.** kelbroo przysyła dane, resztę robisz w programie
+  księgowym. Faktura VAT przy sprzedaży B2B jest obowiązkowa, nie opcjonalna —
+  a termin liczy się od sprzedaży, nie od tego, kiedy zajrzysz do skrzynki.
+- **Abonament nie odnawia się sam.** Klient płaci za okres i po jego końcu panel
+  przestaje przyjmować zamówienia. Przypomnień jeszcze nie ma, więc do czasu ich
+  wdrożenia terminy trzeba pilnować z zaplecza (lista klientów pokazuje „aktywny do").
+- **Zwroty robisz w panelu PayU.** kelbroo ich nie zna i nie cofnie po nich
+  abonamentu — trzeba go skrócić ręcznie z zaplecza.

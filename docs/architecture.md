@@ -50,7 +50,7 @@ kelbroo to wielodostępowa (multi-tenant) platforma SaaS złożona z jednego bac
 | Cache / pub-sub | **Redis** | Kolejka realtime (WS fan-out), cache menu, rate limiting, sesje gości |
 | Storage plików | **S3 / Cloudflare R2 + CDN** | Zdjęcia dań, logotypy, wygenerowane PDF-y z kodami QR |
 | Płatności gości | **Stripe (karty, Apple/Google Pay) + Przelewy24 lub Stripe BLIK** | BLIK niezbędny w PL; abstrakcja `PaymentProvider` pozwala wymienić dostawcę na innych rynkach |
-| Subskrypcje | **Stripe Billing** | Płatności cykliczne, faktury, obsługa trialu, portal klienta out-of-the-box |
+| Subskrypcje | **PayU (płatności jednorazowe za okres)** | Wybrane 2026-08-26 zamiast Stripe Billing. PayU nie ma odpowiednika Billing: cykl rozliczeniowy, przedłużanie okresu i przypomnienia są po naszej stronie (§11a). W zamian daje BLIK, który w Polsce jest metodą dominującą |
 | Auth (personel) | **JWT (access + refresh) / Auth.js** | Standardowe logowanie e-mail+hasło, później SSO dla Enterprise |
 | Auth (gość) | **Anonimowa sesja podpisana tokenem** | Zero rejestracji — token sesji powiązany ze stolikiem, ważny czasowo |
 | Aplikacje natywne (Faza 2) | **React Native (Expo)** | Współdzielenie logiki i typów z web; jeden zespół na iOS + Android |
@@ -436,6 +436,55 @@ Brak płatności z góry oznacza realne ryzyko fałszywych zamówień i strat. W
 | Wymogi fiskalizacji w PL | Blokada wdrożenia produkcyjnego | Start w trybie `pay_at_table` (fiskalizacja poza systemem), decyzja o docelowej ścieżce wg §12 |
 | Fałszywe zamówienia w trybie bez przedpłaty | Straty restauracji, utrata zaufania do produktu | Warstwy zabezpieczeń z §6.4, domyślnie włączone potwierdzanie przez obsługę |
 | Rosnąca liczba lokali (skala) | Spadek wydajności realtime | Redis pub/sub, sharding kanałów per restauracja, monitoring od dnia 1 |
+
+## 11a. Abonament i płatności za niego
+
+Operator: **PayU**, płatności **jednorazowe za okres** (miesiąc albo rok).
+Wybór z 2026-08-26; wcześniejsze wersje tego dokumentu zakładały Stripe Billing.
+
+**Co PayU daje, a czego nie.** Daje przyjęcie pieniędzy wszystkimi metodami
+używanymi w Polsce: BLIK, przelew, karta, Apple/Google Pay. Nie daje niczego
+z tego, co Stripe nazywa Billing — nie ma cyklu rozliczeniowego, portalu klienta,
+faktur, proracji ani ponawiania nieudanych obciążeń. **Silnik abonamentowy jest
+nasz**, PayU jest wyłącznie kasą.
+
+**Bramka jest jedna i jest nią powiadomienie.** Abonament przedłuża wyłącznie
+podpisane powiadomienie od operatora (`POST /api/billing/notify`), nigdy powrót
+przeglądarki na `continueUrl`. To ta sama zasada, która trzyma bramkę do kuchni
+na webhooku płatności, a nie na odpowiedzi klienta. Powrót przeglądarki służy
+jedynie do zapytania serwera, co wie.
+
+**Podpis jest całym uwierzytelnieniem tego wejścia.** Adres jest publiczny, a treść
+mówi, komu przedłużyć abonament — bez sprawdzenia podpisu wystarczyłby jeden `curl`,
+żeby opłacić sobie rok. Podpis liczy się ze **surowych bajtów** żądania i drugiego
+klucza (MD5 albo SHA-256, zależnie od konfiguracji POS-u), stąd `rawBody: true`
+w `main.ts`.
+
+**Powtórki są stanem normalnym.** Operator ponawia powiadomienie, dopóki nie
+dostanie 200. Przetworzenie jest idempotentne: zamówienie już zaksięgowane nie
+przedłuża abonamentu drugi raz.
+
+**Kwoty.** Cennik podaje netto (odbiorcą jest firma), operator inkasuje brutto.
+Przeliczenie żyje w `packages/types/src/plans.ts` i jest jedynym miejscem, w którym
+dolicza się VAT. Kwoty zamrażane są w `SubscriptionOrder` w chwili zakupu — zmiana
+cennika nie może przepisać historii, bo za tym wierszem stoi faktura.
+
+**Okres to miesiąc kalendarzowy, nie 30 dni**, z przycięciem dnia do długości
+krótszego miesiąca. Zakup przy trwającym abonamencie dolicza się do jego końca,
+a nie od dziś.
+
+**Odczyt w poprzek najemców.** Powiadomienie przychodzi bez sesji, więc jeden wąski
+odczyt (`subscription_order` po `external_id`) idzie połączeniem katalogowym, żeby
+ustalić najemcę; cała reszta pracy przez `withTenant`. To trzecia — po logowaniu do
+zaplecza i liście klientów — świadomie wybrana droga omijająca RLS.
+
+**Faktury VAT wystawiamy poza kelbroo** (decyzja 2026-08-26). Po zaksięgowanej
+wpłacie na `kontakt@kelbroo.com` idzie wiadomość z kompletem danych nabywcy.
+Integracja z systemem księgowym jest do zrobienia, gdy liczba klientów to uzasadni.
+
+**Czego jeszcze nie ma:** automatycznego odnawiania (token karty), przypomnień przed
+końcem okresu i ponawiania nieudanych płatności. Zakup jednorazowy jest warunkiem
+koniecznym dla każdej z tych rzeczy, więc nic z tej pracy nie przepadnie.
 
 ## 12. Fiskalizacja i paragony (Polska)
 

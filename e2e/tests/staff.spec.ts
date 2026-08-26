@@ -196,7 +196,10 @@ test.describe('zespół', () => {
     await expect(menu.getByRole('menuitem', { name: 'Zmień hasło' })).toBeVisible();
     await expect(menu.getByRole('menuitem', { name: 'Zespół' })).toHaveCount(0);
     await expect(menu.getByRole('menuitem', { name: 'Menu' })).toHaveCount(0);
-    await expect(menu.getByRole('menuitem', { name: 'Lokale i abonament' })).toHaveCount(0);
+    await expect(menu.getByRole('menuitem', { name: 'Lokal', exact: true })).toHaveCount(0);
+    // Abonament jest zobowiązaniem firmy — nie widzi go nawet manager, a tym
+    // bardziej kuchnia.
+    await expect(menu.getByRole('menuitem', { name: 'Abonament' })).toHaveCount(0);
   });
 
   test('właściciel ma w ustawieniach komplet pozycji', async ({ page }) => {
@@ -204,7 +207,7 @@ test.describe('zespół', () => {
     await page.getByRole('button', { name: 'Ustawienia' }).click();
 
     const menu = page.getByRole('menu');
-    for (const label of ['Menu', 'Stoliki i QR', 'Zespół', 'Zmień hasło', 'Lokale i abonament']) {
+    for (const label of ['Menu', 'Stoliki i QR', 'Zespół', 'Zmień hasło', 'Lokal', 'Abonament']) {
       await expect(menu.getByRole('menuitem', { name: label })).toBeVisible();
     }
 

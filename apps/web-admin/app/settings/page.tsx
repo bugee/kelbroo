@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
 import { StaffShell } from '@/components/StaffShell';
 import { fetchRestaurant, money, updateRestaurant, type RestaurantSettings } from '@/lib/api';
 
@@ -179,6 +180,12 @@ function Settings() {
               języków
             </span>
           </Row>
+          <p className="mt-2 text-xs text-[var(--muted)]">
+            <Link href="/abonament" className="underline">
+              Kup lub przedłuż abonament
+            </Link>{' '}
+            — plany, płatność i historia faktur.
+          </p>
         </Card>
       )}
 

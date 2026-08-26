@@ -112,6 +112,9 @@ export function tekstem(dane: Ramka): string {
 
 const bezZnacznikow = (tekst: string): string =>
   tekst
+    // Łamanie wiersza jest treścią, nie ozdobnikiem: bez tego adres nabywcy
+    // skleja się w wersji tekstowej w jedną nieczytelną linię.
+    .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<[^>]+>/g, '')
     .replace(/&amp;/g, '&')
     .replace(/&lt;/g, '<')

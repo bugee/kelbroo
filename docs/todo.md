@@ -116,7 +116,22 @@ do `#rejestracja`, którego nie ma.
       potwierdzeniem; token ważny 48 h, jednorazowy, w bazie tylko jako skrót.
 - [x] **Wygaśnięcie abonamentu wyłącza zamawianie** (2026-08-24) — u gościa i w panelu,
       z zachowaniem rozliczania otwartych rachunków. Dane nie są kasowane.
-- [ ] **Zakup abonamentu Starter i Pro** — pole `stripeSubscriptionId` czeka w schemacie.
+- [x] **Zakup abonamentu Starter i Pro** (2026-08-26) — PayU, płatność jednorazowa
+      za miesiąc albo rok, ekran `panel.kelbroo.com/abonament`. Abonament przedłuża
+      **wyłącznie** podpisane powiadomienie operatora, nigdy powrót przeglądarki;
+      powtórzone powiadomienie nie daje drugiego okresu. Kwoty zamrożone w
+      `SubscriptionOrder`, ceny i limity w jednym katalogu (`packages/types/plans.ts`).
+      Ścieżka przetestowana na sandboksie PayU aż do bramki i z powrotem.
+      Szczegóły i uzasadnienia: [architecture.md §11a](architecture.md).
+- [ ] **Przypomnienia o kończącym się okresie** — 3 dni przed, w dniu końca, 3 dni po.
+      Bez nich zakup jednorazowy zamienia się w cichą rezygnację: klient nie dostaje
+      żadnego sygnału, dopóki panel nie przestanie przyjmować zamówień.
+- [ ] **Automatyczne odnawianie z karty** — token PayU, obciążanie bez udziału klienta.
+      Wymaga włączenia „płatności automatycznych" na POS-ie i wyklucza BLIK, więc
+      wchodzi jako **wybór klienta obok** płatności jednorazowej, nie zamiast niej.
+- [ ] **Faktury VAT automatycznie** — dziś wystawiamy je ręcznie po powiadomieniu
+      na `kontakt@kelbroo.com` (decyzja 2026-08-26). Do rozstrzygnięcia przy większej
+      liczbie klientów: integracja z systemem księgowym przez API.
 - [x] **CTA podpięte do rejestracji** (2026-08-24) — wszystkie sześć prowadzi
       do `/rejestracja`.
 

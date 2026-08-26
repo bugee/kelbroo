@@ -1,15 +1,20 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, PrismaClient, type SubscriptionPlan } from '@prisma/client';
+import { PLANS } from '@kelbroo/types';
 import { PrismaService } from '../prisma/prisma.service';
 import { readSubscription } from '../common/subscription';
 import type { PlatformAdminContext } from './platform-auth.service';
 
-/** Limity planów — te same, którymi opisany jest cennik. */
+/**
+ * Limity planów pochodzą z katalogu w `@kelbroo/types` — tego samego, z którego
+ * liczy się cennik i checkout. Trzy kopie tej tabeli rozjechałyby się przy
+ * pierwszej zmianie oferty, a rozjazd byłby widoczny dopiero u klienta.
+ */
 const LIMITY: Record<SubscriptionPlan, { tableLimit: number; languageLimit: number }> = {
-  menu: { tableLimit: 999, languageLimit: 1 },
-  starter: { tableLimit: 12, languageLimit: 2 },
-  pro: { tableLimit: 40, languageLimit: 6 },
-  enterprise: { tableLimit: 9999, languageLimit: 99 },
+  menu: PLANS.menu.limits,
+  starter: PLANS.starter.limits,
+  pro: PLANS.pro.limits,
+  enterprise: PLANS.enterprise.limits,
 };
 
 const DZIEN = 24 * 60 * 60 * 1000;

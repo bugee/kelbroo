@@ -761,6 +761,15 @@ export default function LandingPage() {
                 </p>
               </details>
               <details>
+                <summary>Jak płacę za abonament?</summary>
+                <p>
+                  Po założeniu konta wybierasz plan w panelu i płacisz BLIK-iem, przelewem albo
+                  kartą — obsługuje to PayU. Możesz zapłacić za miesiąc albo za rok (wtedy dwa
+                  miesiące taniej). Fakturę VAT wystawiamy na dane Twojej firmy i wysyłamy mailem.
+                  Nie pobieramy żadnej prowizji od zamówień gości.
+                </p>
+              </details>
+              <details>
                 <summary>Ile trwa wdrożenie?</summary>
                 <p>
                   Konfiguracja lokalu, wprowadzenie menu i wydruk kodów QR to zwykle jeden dzień.

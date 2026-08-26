@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
-import { isValidNip, normalizeNip, formatNip } from '@kelbroo/types';
+import { PLANS, isValidNip, normalizeNip, formatNip } from '@kelbroo/types';
 import { PrismaService } from '../prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
 import { ramka, tekstem, type Ramka } from '../mail/templates';
@@ -16,8 +16,8 @@ import { ramka, tekstem, type Ramka } from '../mail/templates';
 /** Okres próbny: 14 dni planu Pro, bez podawania karty (obietnica ze strony). */
 export const TRIAL_DAYS = 14;
 
-/** Limity planu Pro — te same, którymi opisany jest w cenniku. */
-const PRO_LIMITS = { tableLimit: 40, languageLimit: 6 };
+/** Limity planu Pro — z katalogu planów, jednego dla cennika i checkoutu. */
+const PRO_LIMITS = PLANS.pro.limits;
 
 /** Ile czasu ma klient na kliknięcie w odnośnik z wiadomości. */
 const WAZNOSC_TOKENU_H = 48;

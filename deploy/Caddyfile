@@ -69,10 +69,10 @@ www.{$LANDING_DOMAIN} {
 # --- zaplecze kelbroo (System 4) -------------------------------------------
 # Obsługuje NAS, nie restauracje: widzi wszystkich klientów.
 #
-# Dostęp chroni **wyłącznie logowanie**. Ograniczenie po adresie IP zostało
-# świadomie odłożone (decyzja z 2026-08-26) — wróci wraz z 2FA, bo dziś hasło
-# jest jedynym czynnikiem. Nazwa subdomeny nie jest zabezpieczeniem: certyfikat
-# trafia do publicznych rejestrów Certificate Transparency.
+# Dostęp chroni logowanie dwuskładnikowe: hasło plus kod z poczty (2026-08-26).
+# Ograniczenie po adresie IP zostało świadomie odłożone — drugi składnik był
+# pilniejszy. Nazwa subdomeny nie jest zabezpieczeniem: certyfikat trafia
+# do publicznych rejestrów Certificate Transparency.
 {$BACKOFFICE_DOMAIN} {
 	handle /api/* {
 		reverse_proxy api:4000

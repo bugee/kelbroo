@@ -42,7 +42,10 @@ const SETTINGS_NAV: NavItem[] = [
   { href: '/qr', label: 'Stoliki i QR', roles: ['owner', 'manager'] },
   { href: '/staff', label: 'Zespół', roles: ['owner', 'manager'] },
   { href: '/password', label: 'Zmień hasło', roles: ['owner', 'manager', 'waiter', 'kitchen'] },
-  { href: '/settings', label: 'Lokale i abonament', roles: ['owner', 'manager'] },
+  { href: '/settings', label: 'Lokal', roles: ['owner', 'manager'] },
+  // Abonament to zobowiązanie firmy, nie ustawienie lokalu — stąd osobna
+  // pozycja i wyłącznie dla właściciela.
+  { href: '/abonament', label: 'Abonament', roles: ['owner'] },
 ];
 
 export function StaffShell({ children }: { children: (staff: Staff) => React.ReactNode }) {
@@ -174,7 +177,11 @@ function SubscriptionBanner({ stan }: { stan: SubscriptionState }) {
         className="mono border-b border-[var(--orange)] bg-[var(--orange-wash)] px-4 py-2.5 text-center text-sm print:hidden"
       >
         <strong>Abonament wygasł.</strong> Nowe zamówienia są wstrzymane — otwarte rachunki
-        rozliczysz normalnie. Napisz na kontakt@kelbroo.com.
+        rozliczysz normalnie.{' '}
+        <Link href="/abonament" className="underline">
+          Opłać abonament
+        </Link>
+        .
       </p>
     );
   }
@@ -182,7 +189,11 @@ function SubscriptionBanner({ stan }: { stan: SubscriptionState }) {
   if (stan.trial && stan.daysLeft !== null && stan.daysLeft <= 3) {
     return (
       <p className="mono border-b border-[var(--line)] bg-[var(--teal-wash)] px-4 py-2.5 text-center text-sm text-[var(--teal)] print:hidden">
-        Okres próbny kończy się {stan.daysLeft === 0 ? 'dziś' : `za ${stan.daysLeft} dni`}.
+        Okres próbny kończy się {stan.daysLeft === 0 ? 'dziś' : `za ${stan.daysLeft} dni`}.{' '}
+        <Link href="/abonament" className="underline">
+          Wybierz plan
+        </Link>
+        .
       </p>
     );
   }
