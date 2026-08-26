@@ -176,3 +176,45 @@ export async function register(input: RegistrationInput): Promise<RegistrationRe
       'Spróbuj ponownie za chwilę albo napisz na kontakt@kelbroo.com.',
   );
 }
+
+// ------------------------------------------------------------------- kontakt
+
+export interface ContactInput {
+  purpose: 'pytanie' | 'prezentacja';
+  name: string;
+  company?: string;
+  email: string;
+  phone?: string;
+  preferredTime?: string;
+  message: string;
+  /** Pułapka na roboty — człowiek zostawia to pole puste. */
+  website?: string;
+}
+
+/**
+ * Wysyła zgłoszenie z formularza kontaktowego.
+ *
+ * Serwer ogranicza liczbę zgłoszeń z jednego adresu, więc 429 nie jest awarią
+ * i ma swój własny komunikat — inaczej ktoś, kto poprawił literówkę i wysłał
+ * ponownie, zobaczyłby „coś poszło nie tak".
+ */
+export async function sendContact(input: ContactInput): Promise<void> {
+  const response = await fetch(`${API}/contact`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(input),
+  });
+
+  if (response.status === 429) {
+    throw new Error(
+      'Wysłałeś już kilka wiadomości. Odezwiemy się na pierwszą — a jeśli sprawa pilna, ' +
+        'napisz wprost na kontakt@kelbroo.com.',
+    );
+  }
+
+  if (!response.ok) {
+    const tresc = await response.json().catch(() => null);
+    const komunikat = Array.isArray(tresc?.message) ? tresc.message[0] : tresc?.message;
+    throw new Error(komunikat ?? 'Nie udało się wysłać wiadomości. Spróbuj ponownie.');
+  }
+}

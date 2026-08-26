@@ -103,9 +103,9 @@ Modele są w schemacie od pierwszej migracji i nie mają ani jednego odwołania 
 ## 5. System 1 — strona produktowa i sprzedaż
 
 Pod `kelbroo.com` stoi `apps/web-marketing`. Rejestracja i dokumenty prawne działają;
-**11 z 33 odnośników wciąż nie ma celu** —
-klikając cokolwiek poza nawigacją i logowaniem, użytkownik zostaje na miejscu.
-Poniższe zadania to dokładnie ta lista braków.
+**8 z 33 odnośników wciąż nie ma celu** (2026-08-26, po dodaniu sekcji kontaktowej) —
+klikając cokolwiek poza nawigacją, logowaniem i kontaktem, użytkownik zostaje
+na miejscu. Poniższe zadania to dokładnie ta lista braków.
 
 ### 5a. Rejestracja i okres próbny
 
@@ -176,16 +176,26 @@ do `#rejestracja`, którego nie ma.
 
 ### 5b. Kontakt i prezentacja
 
-Sekcja `#kontakt` nie istnieje, a wskazują na nią **trzy** przyciski: „Porozmawiajmy",
-„Umów prezentację" i „Kontakt" w stopce.
+Sekcja istnieje od 2026-08-26 i wszystkie trzy przyciski w nią trafiają:
+„Porozmawiajmy" z planu Enterprise, „Umów prezentację" z sekcji końcowej
+i „Kontakt" w stopce.
 
-- [ ] **Sekcja lub podstrona kontaktowa** (`#kontakt`).
-- [ ] **„Umów prezentację"** — formularz z terminem i danymi kontaktowymi; to główne CTA
-      dla większych lokali i sieci, które nie założą konta samodzielnie.
-- [ ] **Dane firmy** — nazwa, adres, NIP, e-mail. Od 2026-08-26 to **zaległość wobec
-      prawa, nie brak treści**: sprzedajemy usługę za pieniądze, a ustawa o świadczeniu
-      usług drogą elektroniczną każe podać dane identyfikujące usługodawcę w sposób
-      łatwo dostępny. Dziś nie ma ich nigdzie na stronie.
+Formularz jest publiczny i **wysyła pocztę na cudze polecenie**, więc ma dwie
+niezależne bariery: limit pięciu zgłoszeń na godzinę z jednego adresu IP oraz
+ukryte pole-pułapkę. Robot, który w nią wpadnie, dostaje **tę samą odpowiedź
+co człowiek** — automat, któremu powiemy „odrzucono", spróbuje inaczej.
+
+- [x] **Sekcja kontaktowa** (2026-08-26) — `#kontakt` na stronie głównej, jeden formularz
+      na dwie sprawy. Wszystkie trzy przyciski mają wreszcie cel.
+- [x] **„Umów prezentację"** (2026-08-26) — ten sam formularz z przełącznikiem celu;
+      kotwica `#prezentacja` ustawia go z góry, więc nikt nie wybiera dwa razy. Przy
+      prezentacji dochodzi pole preferowanego terminu. Enterprise z cennika prowadzi
+      teraz tutaj, a nie na ogólne pytanie — sieci nie zakładają konta samodzielnie.
+- [x] **Dane firmy** (2026-08-26) — nazwa, adres i NIP w sekcji kontaktowej. To był
+      wymóg ustawy o świadczeniu usług drogą elektroniczną, nie brak treści.
+- [ ] **Kalendarz prezentacji** — dziś klient wpisuje preferowany termin słowami,
+      a my odpisujemy ręcznie. Wystarczy przy kilku zgłoszeniach tygodniowo; przy
+      większej liczbie wróci jako integracja z kalendarzem.
 
 ### 5c. Treści prawne w stopce
 

@@ -2,9 +2,12 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { ScheduleModule } from '@nestjs/schedule';
+import { ThrottlerModule } from '@nestjs/throttler';
 import path from 'node:path';
 import { PrismaModule } from './prisma/prisma.module';
 import { BillingController } from './billing/billing.controller';
+import { ContactController } from './contact/contact.controller';
+import { ContactService } from './contact/contact.service';
 import { BillingService } from './billing/billing.service';
 import { BillingReconciliationService } from './billing/billing-reconciliation.service';
 import { SubscriptionRemindersService } from './billing/subscription-reminders.service';
@@ -63,6 +66,11 @@ import { StaffAdminService } from './management/staff.admin.service';
     // Zakłada JEDNĄ instancję API — przy skalowaniu w poziomie każda
     // uruchamiałaby je osobno i trzeba będzie dołożyć blokadę w Redisie.
     ScheduleModule.forRoot(),
+    // Limit żądań. Sam moduł niczego nie ogranicza — strażnik jest podpinany
+    // punktowo tam, gdzie ma działać (dziś: formularz kontaktowy). Licznik
+    // trzyma się w pamięci procesu, co wystarcza przy jednej instancji API
+    // (ta sama uwaga co przy ScheduleModule).
+    ThrottlerModule.forRoot([{ name: 'default', ttl: 3_600_000, limit: 5 }]),
     PrismaModule,
   ],
   controllers: [
@@ -76,6 +84,7 @@ import { StaffAdminService } from './management/staff.admin.service';
     StaffController,
     ManagementController,
     BillingController,
+    ContactController,
   ],
   providers: [
     TableService,
@@ -111,6 +120,7 @@ import { StaffAdminService } from './management/staff.admin.service';
     BillingService,
     BillingReconciliationService,
     SubscriptionRemindersService,
+    ContactService,
     // Operator płatności wchodzi przez token, nie przez import: wymiana PayU
     // na innego dostawcę to jedna linia, a nie przeszukiwanie serwisów.
     { provide: SubscriptionPaymentProvider, useClass: PayuProvider },

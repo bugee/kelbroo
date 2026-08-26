@@ -12,6 +12,7 @@
  */
 import { LandingMotion } from '@/components/LandingMotion';
 import { Pricing } from '@/components/Pricing';
+import { ContactForm } from '@/components/ContactForm';
 
 export default function LandingPage() {
   return (
@@ -793,13 +794,68 @@ export default function LandingPage() {
                 <a className="btn btn-primary" href="/rejestracja">
                   Zacznij za darmo
                 </a>
-                <a className="btn btn-ghost" href="#kontakt">
+                <a className="btn btn-ghost" href="#prezentacja">
                   Umów prezentację
                 </a>
               </div>
               <p className="cta-fine">
                 Bez karty · bez umowy na czas określony · bez prowizji od zamówień
               </p>
+            </div>
+          </div>
+        </section>
+
+        {/* ============ KONTAKT ============ */}
+        <section className="section" id="kontakt">
+          <div className="wrap">
+            <div className="section-head rv">
+              <h2>Porozmawiajmy</h2>
+              <p>
+                Napisz, jeśli masz pytanie — albo umów prezentację, na której pokażemy panel na żywo
+                i przejdziemy przez zamówienie od skanu kodu QR do wydania z kuchni. Odpowiadamy w
+                ciągu jednego dnia roboczego.
+              </p>
+            </div>
+
+            {/* `align-items: center` z .split-wrap zostawiłoby prawą kolumnę
+                zawieszoną w pionie obok wysokiego formularza. */}
+            <div
+              className="split-wrap rv"
+              id="prezentacja"
+              style={{
+                alignItems: 'flex-start',
+                // Nagłówek jest przyklejony do góry: bez tego skok do
+                // `#prezentacja` chowa początek formularza pod paskiem.
+                scrollMarginTop: '96px',
+              }}
+            >
+              <ContactForm />
+
+              <div>
+                <h3>Wolisz napisać wprost?</h3>
+                <p>
+                  <a href="mailto:kontakt@kelbroo.com">kontakt@kelbroo.com</a>
+                </p>
+
+                {/* Dane identyfikujące usługodawcę. Nie jest to sekcja „o nas":
+                    przy sprzedaży usług drogą elektroniczną muszą być podane
+                    w sposób łatwo dostępny. */}
+                <h3 style={{ marginTop: '28px' }}>Dane firmy</h3>
+                <address className="mono" style={{ fontStyle: 'normal', lineHeight: 1.7 }}>
+                  Kelbroo
+                  <br />
+                  ul. Rodła 24/4
+                  <br />
+                  01-496 Warszawa
+                  <br />
+                  NIP: 5222269366
+                </address>
+
+                <p style={{ marginTop: '20px' }}>
+                  Warunki współpracy opisuje <a href="/regulamin">regulamin</a>, a przetwarzanie
+                  danych — <a href="/prywatnosc">polityka prywatności</a>.
+                </p>
+              </div>
             </div>
           </div>
         </section>

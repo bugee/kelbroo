@@ -74,7 +74,9 @@ const PLANY: Plan[] = [
       'Własna domena i branding',
       'Opiekun klienta i SLA 99,9%',
     ],
-    cta: { etykieta: 'Porozmawiajmy', href: '#kontakt' },
+    // Enterprise to sieci i hotele — te nie zakładają konta samodzielnie,
+    // więc kierujemy je od razu na prezentację, a nie na ogólne pytanie.
+    cta: { etykieta: 'Porozmawiajmy', href: '#prezentacja' },
   },
 ];
 
