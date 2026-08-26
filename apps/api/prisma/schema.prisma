@@ -268,6 +268,14 @@ model Organization {
   nip          String?
   billingEmail String  @map("billing_email")
 
+  /// Restauracja pokazowa wystawiona publicznie, nie klient.
+  ///
+  /// Wyróżniona flagą, a nie nazwą, bo pyta o nią kilka miejsc naraz: zaplecze
+  /// (żeby nie liczyć jej jako klienta), przypomnienia o abonamencie (nie ma
+  /// komu przypominać) i sprzątanie, które co pół godziny kasuje ślady po
+  /// zwiedzających.
+  isDemo Boolean @default(false) @map("is_demo")
+
   /// Zgody z formularza rejestracji. Trzymamy moment **i wersję dokumentu** —
   /// samo „zaakceptował" nie broni się przy sporze, gdy regulamin się zmieniał.
   /// Blokada nałożona przez kelbroo — stan **osobny od wygaśnięcia abonamentu**.

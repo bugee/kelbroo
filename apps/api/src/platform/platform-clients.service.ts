@@ -16,6 +16,12 @@ export interface KlientPlatformy {
   status: string;
   /** `true` dla okresu próbnego — najczęstsze pytanie o tę listę. */
   demo: boolean;
+  /**
+   * Restauracja pokazowa wystawiona publicznie, nie klient. Zostaje na liście,
+   * bo ukrywanie czegokolwiek przed administratorem jest gorsze niż etykieta,
+   * ale nie liczy się do statystyk sprzedaży.
+   */
+  pokazowa: boolean;
   aktywny: boolean;
   aktywnyDo: Date | null;
   dniDoKonca: number | null;
@@ -77,6 +83,7 @@ export class PlatformClientsService {
         plan: organizacja.subscription?.plan ?? null,
         status: organizacja.subscription?.status ?? 'brak',
         demo: organizacja.subscription?.status === 'trialing',
+        pokazowa: organizacja.isDemo,
         aktywny: subscriptionActive(organizacja.subscription),
         aktywnyDo: koniec,
         dniDoKonca: koniec ? Math.ceil((koniec.getTime() - Date.now()) / DZIEN) : null,

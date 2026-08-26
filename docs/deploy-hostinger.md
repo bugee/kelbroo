@@ -865,3 +865,50 @@ Jeśli po kwadransie nic się nie zmieniło, sprawdź, co PayU mówi o tym zamó
 ```bash
 docker compose -f docker-compose.prod.yml --env-file .env.prod logs api | grep -i "PayU nie podał"
 ```
+
+## Restauracja pokazowa (demo menu)
+
+Sekcja „Zobacz to oczami gościa" na stronie produktowej prowadzi do
+`menu.kelbroo.com/t/demo`. Ten adres nie zadziała, dopóki restauracja pokazowa
+nie zostanie założona — a to jednorazowa czynność na środowisko.
+
+### Krok 1. Załóż ją
+
+```bash
+cd /root/kelbroo
+docker compose -f docker-compose.prod.yml --env-file .env.prod \
+  run --rm migrate pnpm exec tsx scripts/seed-public-demo.ts
+```
+
+Skrypt jest bezpieczny do powtórzenia — drugie uruchomienie nie utworzy drugiej
+restauracji ani nie zduplikuje menu. Uruchamiaj go przez usługę **`migrate`**,
+nie `api`: obraz produkcyjny API zawiera wyłącznie skompilowany `dist`.
+
+### Krok 2. Sprawdź
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" https://menu.kelbroo.com/t/demo
+```
+
+Oczekiwane `200`. Potem otwórz ten adres w przeglądarce — na samej górze musi
+stać pomarańczowy pasek **„To jest wersja demonstracyjna — zamówienia nie
+trafiają do żadnej kuchni"**. Jeśli go nie ma, restauracja została założona bez
+flagi i trzeba to naprawić, zanim ktokolwiek zamówi w przekonaniu, że dostanie
+jedzenie.
+
+### Co dzieje się dalej samo
+
+- **Co pół godziny znikają wizyty zwiedzających** starsze niż 30 minut, razem
+  z ich zamówieniami. Bez tego stolik pokazowy po tygodniu pokazywałby nowemu
+  odwiedzającemu cudzy rachunek sprzed dni.
+- Menu, stolik i sama restauracja zostają — sprzątanie ich nie dotyka.
+- Restauracja pokazowa **nie liczy się jako klient**: nie ma jej w statystykach
+  zaplecza i nie dostaje przypomnień o abonamencie.
+
+### Czego ta procedura nie załatwia
+
+Przy stoliku pokazowym siedzą naraz nieznajomi z internetu i **widzą nawzajem
+swoje zamówienia oraz notatki do dań** — dokładnie tak, jak działa wspólny
+rachunek w prawdziwym lokalu. Nie ma tam moderacji; jedyną ochroną jest to, że
+wszystko znika po pół godzinie. Gdyby okazało się to problemem, następnym krokiem
+jest skrócenie tego czasu albo wyłączenie pola notatki w restauracji pokazowej.

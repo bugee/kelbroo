@@ -137,7 +137,9 @@ export class BillingService {
       where: {
         currentPeriodEnd: { gte: najwczesniej, lte: najpozniej },
         status: { in: ['trialing', 'active', 'past_due'] },
-        organization: { blockedAt: null },
+        // Restauracja pokazowa nie jest klientem — nie ma komu przypominać
+        // o abonamencie, którego nikt nie płaci.
+        organization: { blockedAt: null, isDemo: false },
       },
       select: {
         organizationId: true,

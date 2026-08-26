@@ -8,6 +8,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { BillingController } from './billing/billing.controller';
 import { ContactController } from './contact/contact.controller';
 import { ContactService } from './contact/contact.service';
+import { PublicDemoService } from './demo/public-demo.service';
 import { BillingService } from './billing/billing.service';
 import { BillingReconciliationService } from './billing/billing-reconciliation.service';
 import { SubscriptionRemindersService } from './billing/subscription-reminders.service';
@@ -121,6 +122,7 @@ import { StaffAdminService } from './management/staff.admin.service';
     BillingReconciliationService,
     SubscriptionRemindersService,
     ContactService,
+    PublicDemoService,
     // Operator płatności wchodzi przez token, nie przez import: wymiana PayU
     // na innego dostawcę to jedna linia, a nie przeszukiwanie serwisów.
     { provide: SubscriptionPaymentProvider, useClass: PayuProvider },

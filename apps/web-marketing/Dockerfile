@@ -21,6 +21,10 @@ COPY apps/web-marketing apps/web-marketing
 # Regulamin i polityka prywatności są renderowane przy budowaniu — to treść
 # strony, nie dokumentacja. Reszta `docs` zostaje poza obrazem (.dockerignore).
 COPY docs/legal docs/legal
+# Adres aplikacji gościa wchodzi do statycznych stron w chwili budowania —
+# odnośnik „Otwórz demo menu" musi prowadzić na właściwą domenę.
+ARG NEXT_PUBLIC_GUEST_URL
+ENV NEXT_PUBLIC_GUEST_URL=$NEXT_PUBLIC_GUEST_URL
 # `@kelbroo/types` jest publikowany jako `dist`, a `dist` nie wchodzi do obrazu
 # (.dockerignore) — bez tego kroku Next nie rozwiąże importu. Formularz
 # rejestracji sprawdza NIP tą samą funkcją co serwer.

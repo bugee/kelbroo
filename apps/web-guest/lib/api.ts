@@ -70,6 +70,8 @@ export interface TableEntry {
     supportedLocales: string[];
     orderingMode: 'prepaid' | 'pay_at_table' | 'guest_choice';
     minOrderCents: number;
+    /** Restauracja pokazowa — zamówienie nigdy nie trafi do żadnej kuchni. */
+    isDemo: boolean;
   };
   table: { id: string; label: string; zone: string | null };
   session: {

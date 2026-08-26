@@ -103,9 +103,8 @@ Modele są w schemacie od pierwszej migracji i nie mają ani jednego odwołania 
 ## 5. System 1 — strona produktowa i sprzedaż
 
 Pod `kelbroo.com` stoi `apps/web-marketing`. Rejestracja i dokumenty prawne działają;
-**8 z 33 odnośników wciąż nie ma celu** (2026-08-26, po dodaniu sekcji kontaktowej) —
-klikając cokolwiek poza nawigacją, logowaniem i kontaktem, użytkownik zostaje
-na miejscu. Poniższe zadania to dokładnie ta lista braków.
+**6 z 33 odnośników wciąż nie ma celu** (2026-08-26, po dodaniu kontaktu i demo) —
+zostają baza wiedzy i pięć podstron segmentowych. Poniższe zadania to dokładnie ta lista braków.
 
 ### 5a. Rejestracja i okres próbny
 
@@ -219,8 +218,13 @@ co człowiek** — automat, któremu powiemy „odrzucono", spróbuje inaczej.
 
 ### 5d. Pozostałe treści z odnośników
 
-- [ ] **Demo menu** (`#demo`) — wskazują na nie dwa CTA i stopka. Potrzebna publiczna
-      restauracja demonstracyjna, oddzielona od danych klientów.
+- [x] **Demo menu** (`#demo`) (2026-08-26) — publiczna restauracja pokazowa pod
+      `/t/demo`, zakładana skryptem `scripts/seed-public-demo.ts`. Oddzielona od
+      klientów flagą `Organization.isDemo`: nie liczy się w statystykach zaplecza
+      i nie dostaje przypomnień o abonamencie. Potwierdzanie przez kelnera jest w niej
+      wyłączone, bo żadnego kelnera tam nie ma — z włączonym zwiedzający zobaczyłby
+      zamówienie wiszące w nieskończoność. Gość widzi u góry pasek, że to demonstracja.
+      Wizyty starsze niż 30 minut kasuje zadanie cykliczne.
 - [ ] **Baza wiedzy** (`#pomoc`) — instrukcje dla restauratora: dodanie menu, wydruk QR,
       obsługa KDS.
 - [ ] **Pięć podstron segmentowych** ze stopki: restauracje, kawiarnie, bary i puby,

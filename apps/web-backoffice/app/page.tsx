@@ -52,15 +52,19 @@ function Klienci() {
       )
     : klienci;
 
-  const proby = klienci.filter((klient) => klient.demo && klient.aktywny).length;
-  const wygasli = klienci.filter((klient) => !klient.aktywny).length;
+  // Restauracja pokazowa stoi na tej liście, ale nie jest klientem — liczenie
+  // jej do statystyk zawyżałoby każdą z nich o jeden.
+  const klienciRzeczywisci = klienci.filter((klient) => !klient.pokazowa);
+  const proby = klienciRzeczywisci.filter((klient) => klient.demo && klient.aktywny).length;
+  const wygasli = klienciRzeczywisci.filter((klient) => !klient.aktywny).length;
 
   return (
     <>
       <div className="mb-4 flex flex-wrap items-baseline gap-x-6 gap-y-2">
         <h1 className="text-xl">Klienci</h1>
         <span className="mono text-sm text-[var(--muted)]">
-          {klienci.length} razem · {proby} na okresie próbnym · {wygasli} bez aktywnego abonamentu
+          {klienciRzeczywisci.length} razem · {proby} na okresie próbnym · {wygasli} bez aktywnego
+          abonamentu
         </span>
         <input
           value={szukaj}
@@ -179,7 +183,7 @@ function StanAbonamentu({ klient }: { klient: Klient }) {
       }`}
     >
       {etykieta}
-      {klient.demo ? ' · okres próbny' : ''}
+      {klient.pokazowa ? ' · pokazowa' : klient.demo ? ' · okres próbny' : ''}
     </span>
   );
 }

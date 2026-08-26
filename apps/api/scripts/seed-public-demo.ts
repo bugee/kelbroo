@@ -1,0 +1,152 @@
+/**
+ * Publiczna restauracja pokazowa — ta spod `/t/demo`.
+ *
+ * Uruchamiana ręcznie, raz na środowisko:
+ *   docker compose -f docker-compose.prod.yml --env-file .env.prod \
+ *     run --rm migrate pnpm exec tsx scripts/seed-public-demo.ts
+ *
+ * Idempotentna: powtórzone uruchomienie odświeża menu i ustawienia, ale nie
+ * tworzy drugiej restauracji.
+ *
+ * **To nie jest seed lokalny.** Ta restauracja jest widoczna z internetu dla
+ * każdego, kto kliknie „Zobacz demo", więc nie ma w niej ani jednego konta
+ * pracownika i nie da się przez nią wejść do panelu.
+ */
+import path from 'node:path';
+import { config as loadEnv } from 'dotenv';
+import { PrismaClient } from '@prisma/client';
+import { CURRENCY, MENU, VAT_FOOD } from '../prisma/demo-menu';
+
+loadEnv({ path: path.resolve(__dirname, '../../../.env'), quiet: true });
+
+const datasourceUrl = process.env.DIRECT_DATABASE_URL;
+if (!datasourceUrl) {
+  throw new Error('Brak DIRECT_DATABASE_URL — skrypt musi działać rolą omijającą RLS.');
+}
+
+const prisma = new PrismaClient({ datasourceUrl });
+
+/** Adres jest wpisywany w treść strony produktowej, więc musi być stały. */
+export const DEMO_QR_TOKEN = 'demo';
+export const DEMO_SLUG = 'demo-kelbroo';
+
+async function main() {
+  const istniejaca = await prisma.restaurant.findUnique({ where: { slug: DEMO_SLUG } });
+
+  const organizationId =
+    istniejaca?.organizationId ??
+    (
+      await prisma.organization.create({
+        data: {
+          name: 'kelbroo — restauracja pokazowa',
+          billingEmail: 'kontakt@kelbroo.com',
+          isDemo: true,
+          subscription: {
+            create: {
+              plan: 'pro',
+              status: 'active',
+              // Data odległa, nie `null`: pusty termin znaczy „abonament bez końca",
+              // a chcemy, żeby pokazowa przechodziła tę samą ścieżkę co klienci.
+              currentPeriodEnd: new Date('2099-12-31T00:00:00Z'),
+              tableLimit: 40,
+              languageLimit: 6,
+            },
+          },
+        },
+      })
+    ).id;
+
+  const restaurant = await prisma.restaurant.upsert({
+    where: { slug: DEMO_SLUG },
+    update: {},
+    create: {
+      organizationId,
+      name: 'Bistro Widok',
+      slug: DEMO_SLUG,
+      address: 'ul. Próżna 12, 00-107 Warszawa',
+      currency: CURRENCY,
+      defaultLocale: 'pl',
+      supportedLocales: ['pl', 'en'],
+      orderingMode: 'pay_at_table',
+      // **Wyłączone celowo.** Potwierdzenie czeka na kelnera, a przy pokazowej
+      // restauracji nie ma żadnego — zwiedzający zobaczyłby zamówienie, które
+      // wisi w nieskończoność, i uznał, że produkt nie działa.
+      requireStaffConfirmation: false,
+      tableActivationRequired: false,
+      // Gospodarz nie zatwierdza wchodzących: przy stoliku pokazowym siedzą
+      // nieznajomi z całego internetu i nikt nikogo nie wpuści.
+      hostApprovesGuests: false,
+      fiscalizationMode: 'none',
+      minOrderCents: 0,
+      openBillLimitCents: 30000,
+    },
+  });
+
+  await prisma.table.upsert({
+    where: { qrToken: DEMO_QR_TOKEN },
+    update: { restaurantId: restaurant.id, organizationId },
+    create: {
+      organizationId,
+      restaurantId: restaurant.id,
+      label: 'Stolik pokazowy',
+      zone: 'Sala',
+      seats: 4,
+      qrToken: DEMO_QR_TOKEN,
+    },
+  });
+
+  // Menu budujemy tylko raz — powtórzone uruchomienie nie ma go duplikować.
+  const maMenu = await prisma.menuCategory.count({ where: { restaurantId: restaurant.id } });
+  if (maMenu === 0) {
+    for (const [categoryIndex, category] of MENU.entries()) {
+      const created = await prisma.menuCategory.create({
+        data: {
+          organizationId,
+          restaurantId: restaurant.id,
+          sortOrder: categoryIndex,
+          translations: {
+            create: [
+              { organizationId, locale: 'pl', name: category.pl },
+              { organizationId, locale: 'en', name: category.en },
+            ],
+          },
+        },
+      });
+
+      for (const [itemIndex, item] of category.items.entries()) {
+        await prisma.menuItem.create({
+          data: {
+            organizationId,
+            restaurantId: restaurant.id,
+            categoryId: created.id,
+            sortOrder: itemIndex,
+            priceCents: item.priceCents,
+            currency: CURRENCY,
+            vatRate: item.vatRate ?? VAT_FOOD,
+            allergens: item.allergens ?? [],
+            dietaryTags: item.dietaryTags ?? [],
+            prepTimeMinutes: item.prepTimeMinutes,
+            isFeatured: item.isFeatured ?? false,
+            translations: {
+              create: [
+                { organizationId, locale: 'pl', ...item.pl },
+                { organizationId, locale: 'en', ...item.en },
+              ],
+            },
+          },
+        });
+      }
+    }
+  }
+
+  console.log(`Restauracja pokazowa: ${restaurant.name} (${restaurant.slug})`);
+  console.log(`Adres dla gościa: /t/${DEMO_QR_TOKEN}`);
+  console.log(maMenu === 0 ? 'Menu utworzone.' : 'Menu już istniało — pominięte.');
+}
+
+main()
+  .catch((przyczyna) => {
+    console.error(przyczyna);
+    process.exitCode = 1;
+  })
+  .finally(() => void prisma.$disconnect());

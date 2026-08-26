@@ -28,6 +28,11 @@ export interface TableEntry {
     orderingMode: OrderingMode;
     tippingEnabled: boolean;
     minOrderCents: number;
+    /**
+     * Restauracja pokazowa. Gość **musi** to wiedzieć: bez ostrzeżenia ktoś
+     * zamawia z przekonaniem, że dostanie jedzenie.
+     */
+    isDemo: boolean;
   };
   table: { id: string; label: string; zone: string | null };
   session: {
@@ -143,10 +148,18 @@ export class TableService {
     // menu, ale nie zamawia. Nie mówimy mu, który z tych powodów zadziałał —
     // to sprawa między lokalem a nami.
     const [organizacja, subscription] = await Promise.all([
-      tx.organization.findUnique({ where: { id: organizationId }, select: { blockedAt: true } }),
+      tx.organization.findUnique({
+        where: { id: organizationId },
+        select: { blockedAt: true, isDemo: true },
+      }),
       tx.subscription.findUnique({ where: { organizationId } }),
     ]);
     const subscriptionActive = czyAbonamentDziala(subscription) && !organizacja?.blockedAt;
+
+    // Flagę doklejamy do obiektu restauracji zamiast przekazywać ją osobnym
+    // argumentem przez sześć wywołań — jedno przeoczone i gość zamawia
+    // w restauracji pokazowej bez ostrzeżenia.
+    const restaurantView = { ...restaurant, isDemo: organizacja?.isDemo ?? false };
 
     const locale = this.menu.resolveLocale(
       options.requestedLocale,
@@ -173,17 +186,17 @@ export class TableService {
      * dwóch minutach, a token trzeba rozpoznać także później.
      */
     if (await this.belongsToFinishedVisit(tx, options.existingGuestToken, table.id)) {
-      return this.blockedEntry(restaurant, table, locale, menu, 'visit_finished');
+      return this.blockedEntry(restaurantView, table, locale, menu, 'visit_finished');
     }
 
     // Stolik zablokowany: przez obsługę albo automatycznie po zamknięciu rachunku.
     // Gość może wtedy wyłącznie poprosić o otwarcie wizyty.
     if (!openSession && table.blockedUntil && table.blockedUntil > new Date()) {
-      return this.blockedEntry(restaurant, table, locale, menu, 'table_blocked');
+      return this.blockedEntry(restaurantView, table, locale, menu, 'table_blocked');
     }
 
     if (!openSession && restaurant.tableActivationRequired) {
-      return this.blockedEntry(restaurant, table, locale, menu, 'awaiting_staff_activation');
+      return this.blockedEntry(restaurantView, table, locale, menu, 'awaiting_staff_activation');
     }
 
     if (!openSession) {
@@ -215,7 +228,7 @@ export class TableService {
     const reused = await this.reuseGuestSession(tx, options.existingGuestToken, openSession.id);
     if (reused) {
       return {
-        ...this.baseEntry(restaurant, table, locale, menu),
+        ...this.baseEntry(restaurantView, table, locale, menu),
         session: {
           id: openSession.id,
           number: openSession.sessionNumber,
@@ -280,7 +293,7 @@ export class TableService {
     });
 
     return {
-      ...this.baseEntry(restaurant, table, locale, menu),
+      ...this.baseEntry(restaurantView, table, locale, menu),
       session: {
         id: openSession.id,
         number: openSession.sessionNumber,
@@ -389,6 +402,7 @@ export class TableService {
       orderingMode: string;
       tippingEnabled: boolean;
       minOrderCents: number;
+      isDemo: boolean;
     },
     table: { id: string; label: string; zone: string | null },
     locale: string,
@@ -405,6 +419,7 @@ export class TableService {
         orderingMode: restaurant.orderingMode as OrderingMode,
         tippingEnabled: restaurant.tippingEnabled,
         minOrderCents: restaurant.minOrderCents,
+        isDemo: restaurant.isDemo,
       },
       table: { id: table.id, label: table.label, zone: table.zone },
       menu,

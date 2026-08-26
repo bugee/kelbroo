@@ -33,7 +33,6 @@ import { DishSheet } from './DishSheet';
 
 type View = 'menu' | 'cart' | 'status';
 
-
 export function GuestApp({ qrToken }: { qrToken: string }) {
   const [entry, setEntry] = useState<TableEntry | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -178,6 +177,19 @@ export function GuestApp({ qrToken }: { qrToken: string }) {
 
   return (
     <div className="mx-auto max-w-lg pb-28">
+      {/*
+        Ostrzeżenie o demonstracji. Nad nagłówkiem i nie do zamknięcia, bo to
+        jedyna rzecz na tym ekranie, której przeoczenie kosztuje kogoś czekanie
+        na jedzenie, które nigdy nie przyjdzie.
+      */}
+      {entry.restaurant.isDemo && (
+        <p
+          role="status"
+          className="mono bg-[var(--orange)] px-4 py-2 text-center text-xs font-semibold text-white"
+        >
+          To jest wersja demonstracyjna — zamówienia nie trafiają do żadnej kuchni.
+        </p>
+      )}
       <header className="sticky top-0 z-20 border-b border-[var(--line)] bg-[var(--surface)]/95 px-4 py-3 backdrop-blur">
         <div className="flex items-baseline justify-between gap-3">
           <h1 className="truncate text-lg">{entry.restaurant.name}</h1>
@@ -474,7 +486,7 @@ function StatusView({
                     <span>
                       <span className="mono">{item.quantity}× </span>
                       {item.name}
-                    {/* Gość musi widzieć, że coś na jego rachunku pojawiło się
+                      {/* Gość musi widzieć, że coś na jego rachunku pojawiło się
                         nie z jego ręki — inaczej rachunek jest nieweryfikowalny. */}
                       {item.addedByStaff && (
                         <span className="mono ml-2 text-xs text-[var(--muted)]">
@@ -768,7 +780,9 @@ function CallWaiterButton({ qrToken, tick }: { qrToken: string; tick: number }) 
       // się do nazwy, zamiast ją zastępować.
       title={doWycofania ? 'Stuknij ponownie, żeby wycofać' : undefined}
       className={`mono min-h-12 shrink-0 rounded-[var(--radius-control)] border px-3 text-sm font-semibold disabled:opacity-100 ${
-        idzie ? 'border-[var(--teal)] bg-[var(--teal-wash)] text-[var(--teal)]' : 'border-[var(--line)]'
+        idzie
+          ? 'border-[var(--teal)] bg-[var(--teal-wash)] text-[var(--teal)]'
+          : 'border-[var(--line)]'
       }`}
     >
       {label}

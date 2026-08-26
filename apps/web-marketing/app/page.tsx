@@ -14,6 +14,12 @@ import { LandingMotion } from '@/components/LandingMotion';
 import { Pricing } from '@/components/Pricing';
 import { ContactForm } from '@/components/ContactForm';
 
+/**
+ * Adres aplikacji gościa. Wkompilowywany przy budowaniu, tak samo jak w panelu,
+ * bo strona jest statyczna i nie ma skąd go wziąć w czasie działania.
+ */
+const GUEST_URL = process.env.NEXT_PUBLIC_GUEST_URL || 'https://menu.kelbroo.com';
+
 export default function LandingPage() {
   return (
     <>
@@ -800,6 +806,40 @@ export default function LandingPage() {
               </div>
               <p className="cta-fine">
                 Bez karty · bez umowy na czas określony · bez prowizji od zamówień
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* ============ DEMO ============ */}
+        <section className="section" id="demo">
+          <div className="wrap">
+            <div className="section-head rv">
+              <h2>Zobacz to oczami gościa</h2>
+              <p>
+                Otwórz menu pokazowej restauracji dokładnie tak, jak zrobiłby to gość po
+                zeskanowaniu kodu QR przy stoliku. Bez zakładania konta i bez instalowania
+                czegokolwiek — to ta sama aplikacja, którą dostaje Twój lokal.
+              </p>
+            </div>
+
+            <div className="cta-band rv">
+              <h2>Bistro Widok — stolik pokazowy</h2>
+              <p>
+                Przejrzysz kartę w dwóch językach, dodasz danie do koszyka i złożysz zamówienie.
+                Zobaczysz też, jak wygląda wspólny rachunek, gdy przy stoliku siedzi więcej osób.
+              </p>
+              <div className="cta-actions">
+                <a className="btn btn-primary" href={`${GUEST_URL}/t/demo`}>
+                  Otwórz demo menu
+                </a>
+                <a className="btn btn-ghost" href="#prezentacja">
+                  Pokaż mi panel kuchni
+                </a>
+              </div>
+              <p className="cta-fine">
+                Zamówienia z demo nie trafiają do żadnej kuchni. Panel obsługi i KDS pokazujemy na
+                żywo podczas prezentacji.
               </p>
             </div>
           </div>

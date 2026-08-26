@@ -56,6 +56,8 @@ export interface Klient {
   plan: string | null;
   status: string;
   demo: boolean;
+  /** Restauracja pokazowa wystawiona publicznie — nie jest klientem. */
+  pokazowa: boolean;
   aktywny: boolean;
   aktywnyDo: string | null;
   dniDoKonca: number | null;
