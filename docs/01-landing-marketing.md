@@ -138,7 +138,8 @@ Zasady:
 ## 9. Kryteria akceptacji
 
 - [ ] Strona główna i cennik osiągają wynik Lighthouse ≥ 90 we wszystkich kategoriach.
-- [x] Pełna ścieżka rejestracja → zakup → panel działa na sandboksie PayU (2026-08-26).
+- [x] Pełna ścieżka rejestracja → zakup → panel działa na produkcji, na koncie
+      sprzedawcy PayU (2026-08-26).
 - [ ] Trial aktywuje się bez podania karty i poprawnie wygasa po 14 dniach.
 - [ ] Faktura VAT z NIP-em — dziś wystawiana ręcznie po powiadomieniu na `kontakt@kelbroo.com`.
 - [ ] Strona jest w pełni responsywna (właściciele restauracji często przeglądają na telefonie).

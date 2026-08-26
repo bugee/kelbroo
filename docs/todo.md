@@ -23,11 +23,18 @@ drukują się, backupy bazy są ustawione.
 weryfikowany, regulamin i polityka prywatności są opublikowane, a wygaśnięcie
 abonamentu wyłącza zamawianie bez kasowania danych.
 
-**Sprzedaż jest zbudowana, ale jeszcze nie przyjmuje pieniędzy** (2026-08-26):
-zakup abonamentu przez PayU działa od ekranu do bramki i z powrotem, sprawdzony
-na sandboksie. Na produkcji PayU odrzuca autoryzację (401) — **rejestracja konta
-sprzedawcy nie jest dokończona**, co jest sprawą po stronie operatora, nie kodu.
-Do czasu aktywacji abonamenty przedłuża się z zaplecza.
+**Sprzedaż działa na produkcji** (2026-08-26): konto sprzedawcy PayU jest aktywne,
+a klient kupuje abonament sam — miesięcznie albo rocznie, BLIK-iem, przelewem lub
+kartą. Wpłaty uzgadniamy z operatorem co dziesięć minut, więc zgubione powiadomienie
+odnajduje się samo i zgłasza. Klient dostaje trzy przypomnienia o kończącym się
+okresie; poczta wychodząca też działa.
+
+Wraz z tym **kelbroo przetwarza prawdziwe pieniądze**, a to zmienia wagę trzech
+rzeczy. Faktury VAT wystawiamy ręcznie po powiadomieniu na `kontakt@kelbroo.com`
+(termin liczy się od sprzedaży, nie od zajrzenia do skrzynki). Zwroty robione
+w panelu PayU nie cofają abonamentu — trzeba go skrócić z zaplecza. I najpilniejsze:
+**polityka prywatności nie wymienia PayU wśród odbiorców danych**, choć przy każdym
+zakupie trafia tam adres e-mail i IP nabywcy ([docs/legal §8 poz. 4](legal/README.md)).
 
 **System 4 — zaplecze kelbroo** stoi i ma logowanie dwuskładnikowe, listę klientów,
 kartę klienta oraz operacje na abonamencie z dziennikiem. Obsługa klienta nie
@@ -133,7 +140,8 @@ do `#rejestracja`, którego nie ma.
       **wyłącznie** podpisane powiadomienie operatora, nigdy powrót przeglądarki;
       powtórzone powiadomienie nie daje drugiego okresu. Kwoty zamrożone w
       `SubscriptionOrder`, ceny i limity w jednym katalogu (`packages/types/plans.ts`).
-      Ścieżka przetestowana na sandboksie PayU aż do bramki i z powrotem.
+      Ścieżka przetestowana na sandboksie aż do bramki i z powrotem, a od 2026-08-26
+      działa na koncie produkcyjnym PayU.
       Szczegóły i uzasadnienia: [architecture.md §11a](architecture.md).
 - [x] **Uzgadnianie płatności z operatorem** (2026-08-26) — co 10 minut zadanie pyta
       PayU o stan zamówień wiszących dłużej niż 15 minut, księguje opłacone tą samą

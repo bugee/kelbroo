@@ -155,10 +155,14 @@ przez gości zostaje wyłączone, ale **dane restauracji nie są kasowane**.
 
 ## 8. Rozbieżności między dokumentami a działającym systemem
 
-Sprawdzone z kodem 2026-08-24, zweryfikowane ponownie po dodaniu rejestracji.
-**Dwie obietnice nadal nie mają pokrycia**, dwie zostały domknięte (jedna z nich
-wymaga jeszcze poprawki w treści regulaminu). Nie unieważnia
-to dokumentów, ale każdą trzeba zamknąć kodem albo poprawką w treści.
+Sprawdzone z kodem 2026-08-24, zweryfikowane ponownie po dodaniu rejestracji,
+a 2026-08-26 po uruchomieniu sprzedaży abonamentów przez PayU. **Pięć pozycji jest
+otwartych** (pierwsza z nich jest domknięta kodem i czeka wyłącznie na poprawkę
+w treści regulaminu), jedna zamknięta. Nie unieważnia to dokumentów, ale każdą
+trzeba zamknąć kodem albo poprawką w treści.
+
+Dwie ostatnie pozycje (4 i 5) powstały **dopiero wraz z przyjmowaniem pieniędzy** —
+wcześniej dokumenty opisywały rzeczywistość poprawnie.
 
 ### Otwarte
 
@@ -190,12 +194,40 @@ to dokumentów, ale każdą trzeba zamknąć kodem albo poprawką w treści.
    też drogę mailową i klient nie zostaje bez wyjścia. *Domknięcie:* przycisk
    w ustawieniach albo skreślenie tych czterech słów z regulaminu.
 
+4. **Polityka §6 — PayU nie jest wymienione wśród odbiorców danych. Najpilniejsze
+   z całej listy, bo dotyczy stanu faktycznego od 2026-08-26.**
+   Paragraf wymienia wyłącznie Hostingera. Od uruchomienia sprzedaży przy każdym
+   zakupie wysyłamy do PayU **adres e-mail nabywcy i jego adres IP** — to są dane
+   osobowe, a PayU jest ich odbiorcą.
+
+   Uwaga na fałszywy trop: §9 ust. 3 mówi o bramce płatności, ale dotyczy
+   **przyszłych płatności gości** („po udostępnieniu rozliczeń online"), a nie
+   restauratora płacącego nam za abonament. Ta druga sytuacja dzieje się już dziś
+   i nie jest opisana nigdzie.
+
+   *Domknięcie:* dopisanie PayU do §6 wraz z zakresem danych. Wymaga też
+   sprawdzenia, czy potrzebna jest umowa powierzenia — PayU bywa w tej relacji
+   odrębnym administratorem, nie procesorem, co zmienia podstawę i treść zapisu.
+
+5. **Regulamin §1 ust. 8 i §5 ust. 2 — okres rozliczeniowy i cennik nie obejmują
+   płatności rocznej.**
+   Definicja mówi „miesiąc kalendarzowy", a tabela podaje wyłącznie ceny
+   miesięczne. Sprzedajemy tymczasem **także rok** (1 590 zł Starter, 3 490 zł Pro,
+   −17%), a miesiąc liczymy **od dnia zakupu**, z przycięciem dnia do długości
+   krótszego miesiąca — zakup 31 stycznia kończy się ostatniego lutego. To nie jest
+   miesiąc kalendarzowy w rozumieniu definicji.
+
+   Rozbieżność jest po stronie dokumentu, nie kodu: sposób liczenia okresu jest
+   uczciwszy dla klienta niż rozliczanie od pierwszego dnia miesiąca. *Domknięcie:*
+   poszerzenie definicji o okres roczny i o liczenie od dnia zakupu oraz dopisanie
+   cen rocznych do tabeli.
+
 ### Domknięte
 
-4. ~~**Polityka §5 — NIP i adres działalności.**~~ NIP zbieramy od 2026-08-24,
-   ze sprawdzeniem sumy kontrolnej. **Adresu działalności nadal nie zbieramy** —
-   przy pierwszej fakturze VAT i tak będzie potrzebny, więc zostaje do dołożenia
-   razem z fakturowaniem.
+6. ~~**Polityka §5 — NIP i adres działalności.**~~ NIP zbieramy od 2026-08-24
+   ze sprawdzeniem sumy kontrolnej, a **adres firmy od 2026-08-26** — jest polem
+   obowiązkowym przy zakupie abonamentu, bo faktura VAT bez adresu nabywcy nie
+   jest fakturą.
 
 > Do potwierdzenia przez Ciebie, bo tego nie sprawdzę z kodu: czy infrastruktura
 > naprawdę stoi we **Frankfurcie** (Polityka §6) — dokument opiera na tym twierdzenie
