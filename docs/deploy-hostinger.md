@@ -691,16 +691,21 @@ klientów. Użyj menedżera haseł, nie wymyślaj.
 curl -s -o /dev/null -w "%{http_code}\n" https://admin.kelbroo.com/login
 ```
 
-Oczekiwane `200`. Potem zaloguj się w przeglądarce i sprawdź, czy widzisz listę
-klientów.
+Oczekiwane `200`. Potem zaloguj się w przeglądarce: po haśle panel poprosi
+o sześciocyfrowy kod wysłany na adres administratora. Jeśli kod nie przychodzi,
+sprawdź `docker compose logs api | grep -i poczt` — brak konfiguracji SMTP
+zatrzymuje logowanie na tym kroku.
 
 ### Czego ta procedura nie załatwia
 
 Zaplecze widzi dane wszystkich klientów, a **chroni je dziś wyłącznie hasło**.
 Warto to wiedzieć, a nie odkryć później:
 
-- **Brak 2FA.** Wyciek hasła z twojego komputera to wyciek dostępu do zaplecza.
-  Najpilniejsza pozycja w [planie §6a](todo.md).
+- **Drugi składnik idzie pocztą.** Logowanie wymaga kodu z e-maila, więc samo
+  hasło nie wystarcza — ale przejęta skrzynka administratora już tak. Konto
+  pocztowe użyte przy zakładaniu administratora **musi mieć własne 2FA**.
+  Wymaga to działającego SMTP (`SMTP_HOST` i reszta w `.env.prod`): bez poczty
+  kod nigdzie nie dotrze i **nikt się nie zaloguje**.
 - **Brak ograniczenia po adresie IP.** Zostało świadomie odłożone (2026-08-26).
   Gdy zechcesz je włączyć, wraca jako blok `client_ip` w Caddyfile i zamyka
   dostęp wszystkim spoza listy — najskuteczniejsza pojedyncza zmiana, jeśli

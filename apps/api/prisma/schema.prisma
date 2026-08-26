@@ -214,7 +214,30 @@ model PlatformAdmin {
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @updatedAt @map("updated_at")
 
+  loginChallenges PlatformLoginChallenge[]
+
   @@map("platform_admin")
+}
+
+/// Drugi składnik logowania do zaplecza: kod wysłany na adres administratora.
+///
+/// Osobna tabela, nie kolumny na koncie — dzięki temu `challengeId` jest
+/// nieprzewidywalnym uchwytem, a drugi krok logowania nie musi znów przyjmować
+/// adresu ani hasła. Kod trzymamy jako skrót: wgląd w bazę nie ma dawać wejścia.
+model PlatformLoginChallenge {
+  id        String        @id @default(uuid()) @db.Uuid
+  adminId   String        @map("admin_id") @db.Uuid
+  admin     PlatformAdmin @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  codeHash  String        @map("code_hash")
+  expiresAt DateTime      @map("expires_at")
+  /// Sześć cyfr to milion kombinacji — bez licznika prób kod jest do zgadnięcia
+  /// w kilka minut. Po wyczerpaniu limitu próba przepada w całości.
+  attempts  Int           @default(0)
+  usedAt    DateTime?     @map("used_at")
+  createdAt DateTime      @default(now()) @map("created_at")
+
+  @@index([expiresAt])
+  @@map("platform_login_challenge")
 }
 
 /// Dziennik działań w zapleczu kelbroo.
@@ -223,14 +246,14 @@ model PlatformAdmin {
 /// rachunek", ten na „kto z nas ruszył konto klienta". Append-only, jak historia
 /// zamówienia — wpisu nie da się poprawić, bo to jego jedyna wartość.
 model PlatformAuditLog {
-  id       String @id @default(uuid()) @db.Uuid
-  adminId  String @map("admin_id") @db.Uuid
+  id             String   @id @default(uuid()) @db.Uuid
+  adminId        String   @map("admin_id") @db.Uuid
   /// Kogo dotyczy. Bez klucza obcego: wpis ma przeżyć skasowanie organizacji.
-  organizationId String? @map("organization_id") @db.Uuid
-  action   String
-  reason   String?
-  payload  Json?
-  createdAt DateTime @default(now()) @map("created_at")
+  organizationId String?  @map("organization_id") @db.Uuid
+  action         String
+  reason         String?
+  payload        Json?
+  createdAt      DateTime @default(now()) @map("created_at")
 
   @@index([organizationId, createdAt])
   @@map("platform_audit_log")
@@ -240,10 +263,10 @@ model PlatformAuditLog {
 
 /// Klient SaaS i płatnik abonamentu. Korzeń izolacji danych.
 model Organization {
-  id             String   @id @default(uuid()) @db.Uuid
-  name           String
-  nip            String?
-  billingEmail   String   @map("billing_email")
+  id           String  @id @default(uuid()) @db.Uuid
+  name         String
+  nip          String?
+  billingEmail String  @map("billing_email")
 
   /// Zgody z formularza rejestracji. Trzymamy moment **i wersję dokumentu** —
   /// samo „zaakceptował" nie broni się przy sporze, gdy regulamin się zmieniał.
@@ -257,9 +280,9 @@ model Organization {
   termsVersion      String?   @map("terms_version")
   privacyAcceptedAt DateTime? @map("privacy_accepted_at")
   privacyVersion    String?   @map("privacy_version")
-  stripeCustomerId String? @unique @map("stripe_customer_id")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  stripeCustomerId  String?   @unique @map("stripe_customer_id")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
 
   subscription Subscription?
   restaurants  Restaurant[]
@@ -289,21 +312,21 @@ model Subscription {
 }
 
 model Restaurant {
-  id             String @id @default(uuid()) @db.Uuid
-  organizationId String @map("organization_id") @db.Uuid
+  id             String  @id @default(uuid()) @db.Uuid
+  organizationId String  @map("organization_id") @db.Uuid
   name           String
-  slug           String @unique
+  slug           String  @unique
   address        String?
-  timezone       String @default("Europe/Warsaw")
-  currency       String @default("PLN") @db.Char(3)
+  timezone       String  @default("Europe/Warsaw")
+  currency       String  @default("PLN") @db.Char(3)
 
   /// Fallback treści menu: brak tłumaczenia → defaultLocale, nigdy pusty ekran.
   defaultLocale    String   @default("pl") @map("default_locale")
   supportedLocales String[] @default(["pl"]) @map("supported_locales")
 
-  logoUrl     String? @map("logo_url")
-  theme       Json?
-  openingHours Json?  @map("opening_hours")
+  logoUrl      String? @map("logo_url")
+  theme        Json?
+  openingHours Json?   @map("opening_hours")
 
   orderingMode             OrderingMode @default(pay_at_table) @map("ordering_mode")
   /// W trybie pay_at_table domyślnie włączone (docs/architecture.md §6.4).
@@ -316,13 +339,13 @@ model Restaurant {
   hostApprovesGuests       Boolean      @default(false) @map("host_approves_guests")
   /// Czy wolno rozliczyć część stolika i zostawić resztę otwartą. Wyłączone
   /// znaczy: rachunek zamyka się w całości albo wcale.
-  partialSettlementEnabled Boolean      @default(true)  @map("partial_settlement_enabled")
+  partialSettlementEnabled Boolean      @default(true) @map("partial_settlement_enabled")
 
-  tippingEnabled Boolean @default(false) @map("tipping_enabled")
-  tipPresets     Int[]   @default([]) @map("tip_presets")
-  minOrderCents  Int     @default(0) @map("min_order_cents")
+  tippingEnabled     Boolean @default(false) @map("tipping_enabled")
+  tipPresets         Int[]   @default([]) @map("tip_presets")
+  minOrderCents      Int     @default(0) @map("min_order_cents")
   /// Próg rachunku bez płatności → wymusza potwierdzenie kolejnych zamówień.
-  openBillLimitCents Int? @map("open_bill_limit_cents")
+  openBillLimitCents Int?    @map("open_bill_limit_cents")
 
   fiscalizationMode FiscalizationMode @default(none) @map("fiscalization_mode")
 
@@ -336,17 +359,17 @@ model Restaurant {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  organization    Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  staff           StaffMember[]
-  tables          Table[]
-  menuCategories  MenuCategory[]
-  menuItems       MenuItem[]
-  tableSessions   TableSession[]
-  guestSessions   GuestSession[]
-  orders          Order[]
-  reviews         Review[]
-  waiterCalls     WaiterCall[]
-  dailyCounters   DailyCounter[]
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  staff          StaffMember[]
+  tables         Table[]
+  menuCategories MenuCategory[]
+  menuItems      MenuItem[]
+  tableSessions  TableSession[]
+  guestSessions  GuestSession[]
+  orders         Order[]
+  reviews        Review[]
+  waiterCalls    WaiterCall[]
+  dailyCounters  DailyCounter[]
 
   @@index([organizationId])
   @@map("restaurant")
@@ -366,30 +389,30 @@ model StaffMember {
   /// niepotwierdzony — takie konto nie może się zalogować. Konta zakładane przez
   /// restaurację z panelu są potwierdzone z urzędu: adres podał ktoś, kto już
   /// przeszedł weryfikację.
-  emailVerifiedAt          DateTime? @map("email_verified_at")
+  emailVerifiedAt     DateTime? @map("email_verified_at")
   /// Skrót tokenu z odnośnika w wiadomości. Trzymamy skrót, nie token — wyciek
   /// bazy nie może dawać gotowego klucza do cudzych kont.
-  emailTokenHash           String?   @map("email_token_hash")
-  emailTokenExpiresAt      DateTime? @map("email_token_expires_at")
-  mustChangePassword Boolean @default(true) @map("must_change_password")
-  lastLoginAt    DateTime? @map("last_login_at")
-  createdAt      DateTime  @default(now()) @map("created_at")
-  updatedAt      DateTime  @updatedAt @map("updated_at")
+  emailTokenHash      String?   @map("email_token_hash")
+  emailTokenExpiresAt DateTime? @map("email_token_expires_at")
+  mustChangePassword  Boolean   @default(true) @map("must_change_password")
+  lastLoginAt         DateTime? @map("last_login_at")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   restaurant   Restaurant?  @relation(fields: [restaurantId], references: [id], onDelete: SetNull)
 
-  openedSessions     TableSession[] @relation("session_opened_by")
-  closedSessions     TableSession[] @relation("session_closed_by")
+  openedSessions      TableSession[]     @relation("session_opened_by")
+  closedSessions      TableSession[]     @relation("session_closed_by")
   createdParticipants TableParticipant[] @relation("participant_created_by")
-  createdOrders      Order[]        @relation("order_created_by")
-  confirmedOrders    Order[]        @relation("order_confirmed_by")
-  addedItems         OrderItem[]    @relation("item_added_by")
-  editedItems        OrderItem[]    @relation("item_last_edited_by")
-  orderEvents        OrderEvent[]
-  collectedPayments  Payment[]
-  acknowledgedCalls  WaiterCall[]
-  auditLogs          AuditLog[]
+  createdOrders       Order[]            @relation("order_created_by")
+  confirmedOrders     Order[]            @relation("order_confirmed_by")
+  addedItems          OrderItem[]        @relation("item_added_by")
+  editedItems         OrderItem[]        @relation("item_last_edited_by")
+  orderEvents         OrderEvent[]
+  collectedPayments   Payment[]
+  acknowledgedCalls   WaiterCall[]
+  auditLogs           AuditLog[]
 
   /// Para w obrębie organizacji — dla czytelności modelu.
   @@unique([organizationId, email])
@@ -403,23 +426,23 @@ model StaffMember {
 // --------------------------------------------------------------------- menu
 
 model Table {
-  id             String  @id @default(uuid()) @db.Uuid
-  organizationId String  @map("organization_id") @db.Uuid
-  restaurantId   String  @map("restaurant_id") @db.Uuid
+  id             String    @id @default(uuid()) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  restaurantId   String    @map("restaurant_id") @db.Uuid
   label          String
   zone           String?
   seats          Int?
   /// Losowy, niezgadywalny (min. 128-bit) — nigdy sekwencyjne ID stolika.
-  qrToken        String  @unique @map("qr_token")
+  qrToken        String    @unique @map("qr_token")
   /// Inkrementacja unieważnia stary wydruk QR.
-  qrVersion      Int     @default(1) @map("qr_version")
-  isActive       Boolean @default(true) @map("is_active")
+  qrVersion      Int       @default(1) @map("qr_version")
+  isActive       Boolean   @default(true) @map("is_active")
   /// Stolik zablokowany do tej chwili — ręcznie przez obsługę albo automatycznie
   /// po zamknięciu rachunku. Gość widzi wtedy wyłącznie prośbę o otwarcie wizyty,
   /// więc odświeżenie strony przez poprzednich gości nie otwiera nowej.
   blockedUntil   DateTime? @map("blocked_until")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
 
   restaurant    Restaurant     @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   tableSessions TableSession[]
@@ -433,17 +456,17 @@ model Table {
 }
 
 model MenuCategory {
-  id             String  @id @default(uuid()) @db.Uuid
-  organizationId String  @map("organization_id") @db.Uuid
-  restaurantId   String  @map("restaurant_id") @db.Uuid
-  sortOrder      Int     @default(0) @map("sort_order")
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  restaurantId   String   @map("restaurant_id") @db.Uuid
+  sortOrder      Int      @default(0) @map("sort_order")
   /// Widoczna w menu gościa. Wyłączenie ukrywa całą kategorię (np. śniadania po 12).
-  isActive       Boolean @default(true) @map("is_active")
+  isActive       Boolean  @default(true) @map("is_active")
   /// Wycofana z karty na stałe. Nie kasujemy, bo zamówienia historyczne
   /// odwołują się do pozycji — a snapshot nie zastąpi analityki per danie.
-  isArchived     Boolean @default(false) @map("is_archived")
+  isArchived     Boolean  @default(false) @map("is_archived")
   /// np. kategoria dostępna wyłącznie w godzinach śniadaniowych
-  availableHours Json?   @map("available_hours")
+  availableHours Json?    @map("available_hours")
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
@@ -472,28 +495,28 @@ model MenuCategoryTranslation {
 }
 
 model MenuItem {
-  id             String   @id @default(uuid()) @db.Uuid
-  organizationId String   @map("organization_id") @db.Uuid
-  restaurantId   String   @map("restaurant_id") @db.Uuid
-  categoryId     String   @map("category_id") @db.Uuid
-  sku            String?
-  priceCents     Int      @map("price_cents")
-  currency       String   @db.Char(3)
-  vatRate        Decimal  @map("vat_rate") @db.Decimal(5, 4)
-  imageUrl       String?  @map("image_url")
+  id              String   @id @default(uuid()) @db.Uuid
+  organizationId  String   @map("organization_id") @db.Uuid
+  restaurantId    String   @map("restaurant_id") @db.Uuid
+  categoryId      String   @map("category_id") @db.Uuid
+  sku             String?
+  priceCents      Int      @map("price_cents")
+  currency        String   @db.Char(3)
+  vatRate         Decimal  @map("vat_rate") @db.Decimal(5, 4)
+  imageUrl        String?  @map("image_url")
   /// Dostępność na dziś — „skończyło się", pozycja zostaje w karcie wyszarzona.
-  isAvailable    Boolean  @default(true) @map("is_available")
+  isAvailable     Boolean  @default(true) @map("is_available")
   /// Wycofane z karty na stałe. To inna decyzja niż brak dostępności i gość
   /// nie może zobaczyć jednego jako drugiego.
-  isArchived     Boolean  @default(false) @map("is_archived")
-  sortOrder      Int      @default(0) @map("sort_order")
-  allergens      String[] @default([])
-  dietaryTags    String[] @default([]) @map("dietary_tags")
-  calories       Int?
-  prepTimeMinutes Int?    @map("prep_time_minutes")
-  isFeatured     Boolean  @default(false) @map("is_featured")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  isArchived      Boolean  @default(false) @map("is_archived")
+  sortOrder       Int      @default(0) @map("sort_order")
+  allergens       String[] @default([])
+  dietaryTags     String[] @default([]) @map("dietary_tags")
+  calories        Int?
+  prepTimeMinutes Int?     @map("prep_time_minutes")
+  isFeatured      Boolean  @default(false) @map("is_featured")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
 
   restaurant     Restaurant              @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   category       MenuCategory            @relation(fields: [categoryId], references: [id], onDelete: Restrict)
@@ -562,7 +585,7 @@ model MenuItemModifier {
   isAvailable     Boolean @default(true) @map("is_available")
   sortOrder       Int     @default(0) @map("sort_order")
 
-  group        MenuItemModifierGroup            @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  group        MenuItemModifierGroup         @relation(fields: [groupId], references: [id], onDelete: Cascade)
   translations MenuItemModifierTranslation[]
 
   @@index([groupId, sortOrder])
@@ -627,8 +650,8 @@ model TableSession {
   lastSeenAt DateTime @default(now()) @map("last_seen_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
-  restaurant   Restaurant   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  table        Table        @relation(fields: [tableId], references: [id], onDelete: Restrict)
+  restaurant    Restaurant   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  table         Table        @relation(fields: [tableId], references: [id], onDelete: Restrict)
   openedByStaff StaffMember? @relation("session_opened_by", fields: [openedByStaffId], references: [id], onDelete: SetNull)
   closedByStaff StaffMember? @relation("session_closed_by", fields: [closedByStaffId], references: [id], onDelete: SetNull)
 
@@ -715,13 +738,13 @@ model TableParticipant {
   createdByStaff  StaffMember?     @relation("participant_created_by", fields: [createdByStaffId], references: [id], onDelete: SetNull)
   settlementGroup SettlementGroup? @relation(fields: [settlementGroupId], references: [id], onDelete: SetNull)
 
-  guestSession    GuestSession?
-  createdOrders   Order[]         @relation("order_created_by_participant")
-  itemsFor        OrderItem[]     @relation("item_for_participant")
-  itemsAdded      OrderItem[]     @relation("item_added_by_participant")
-  itemShares      OrderItemShare[]
-  payingGroups    SettlementGroup[] @relation("group_payer")
-  orderEvents     OrderEvent[]
+  guestSession  GuestSession?
+  createdOrders Order[]           @relation("order_created_by_participant")
+  itemsFor      OrderItem[]       @relation("item_for_participant")
+  itemsAdded    OrderItem[]       @relation("item_added_by_participant")
+  itemShares    OrderItemShare[]
+  payingGroups  SettlementGroup[] @relation("group_payer")
+  orderEvents   OrderEvent[]
 
   @@index([tableSessionId])
   @@index([organizationId])
@@ -745,8 +768,8 @@ model SettlementGroup {
   createdAt          DateTime  @default(now()) @map("created_at")
   updatedAt          DateTime  @updatedAt @map("updated_at")
 
-  tableSession TableSession      @relation(fields: [tableSessionId], references: [id], onDelete: Cascade)
-  payer        TableParticipant? @relation("group_payer", fields: [payerParticipantId], references: [id], onDelete: SetNull)
+  tableSession TableSession       @relation(fields: [tableSessionId], references: [id], onDelete: Cascade)
+  payer        TableParticipant?  @relation("group_payer", fields: [payerParticipantId], references: [id], onDelete: SetNull)
   participants TableParticipant[]
   payments     Payment[]
 
@@ -758,11 +781,11 @@ model SettlementGroup {
 // ---------------------------------------------------------------- zamówienia
 
 model Order {
-  id             String @id @default(uuid()) @db.Uuid
-  organizationId String @map("organization_id") @db.Uuid
-  restaurantId   String @map("restaurant_id") @db.Uuid
-  tableId        String @map("table_id") @db.Uuid
-  tableSessionId String @map("table_session_id") @db.Uuid
+  id             String  @id @default(uuid()) @db.Uuid
+  organizationId String  @map("organization_id") @db.Uuid
+  restaurantId   String  @map("restaurant_id") @db.Uuid
+  tableId        String  @map("table_id") @db.Uuid
+  tableSessionId String  @map("table_session_id") @db.Uuid
   guestSessionId String? @map("guest_session_id") @db.Uuid
 
   /// Doba biznesowa, do której należy zamówienie.
@@ -772,8 +795,8 @@ model Order {
 
   /// Kto złożył zamówienie: gość ze swojego telefonu czy kelner w jego imieniu.
   source                 ActorType
-  createdByParticipantId String? @map("created_by_participant_id") @db.Uuid
-  createdByStaffId       String? @map("created_by_staff_id") @db.Uuid
+  createdByParticipantId String?   @map("created_by_participant_id") @db.Uuid
+  createdByStaffId       String?   @map("created_by_staff_id") @db.Uuid
 
   /// Realizacja i rozliczenie to dwa niezależne cykle życia — sklejenie ich
   /// w jedno pole było błędem pierwszej wersji modelu.
@@ -796,13 +819,13 @@ model Order {
   rejectedReason     String?   @map("rejected_reason")
   updatedAt          DateTime  @updatedAt @map("updated_at")
 
-  restaurant         Restaurant        @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  table              Table             @relation(fields: [tableId], references: [id], onDelete: Restrict)
-  tableSession       TableSession      @relation(fields: [tableSessionId], references: [id], onDelete: Cascade)
-  guestSession       GuestSession?     @relation(fields: [guestSessionId], references: [id], onDelete: SetNull)
+  restaurant           Restaurant        @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  table                Table             @relation(fields: [tableId], references: [id], onDelete: Restrict)
+  tableSession         TableSession      @relation(fields: [tableSessionId], references: [id], onDelete: Cascade)
+  guestSession         GuestSession?     @relation(fields: [guestSessionId], references: [id], onDelete: SetNull)
   createdByParticipant TableParticipant? @relation("order_created_by_participant", fields: [createdByParticipantId], references: [id], onDelete: SetNull)
-  createdByStaff     StaffMember?      @relation("order_created_by", fields: [createdByStaffId], references: [id], onDelete: SetNull)
-  confirmedByStaff   StaffMember?      @relation("order_confirmed_by", fields: [confirmedByStaffId], references: [id], onDelete: SetNull)
+  createdByStaff       StaffMember?      @relation("order_created_by", fields: [createdByStaffId], references: [id], onDelete: SetNull)
+  confirmedByStaff     StaffMember?      @relation("order_confirmed_by", fields: [confirmedByStaffId], references: [id], onDelete: SetNull)
 
   items    OrderItem[]
   events   OrderEvent[]
@@ -819,48 +842,48 @@ model Order {
 /// Snapshot nazwy, ceny i modyfikatorów — zmiana cennika nie może zmienić
 /// historycznego rachunku.
 model OrderItem {
-  id             String @id @default(uuid()) @db.Uuid
-  organizationId String @map("organization_id") @db.Uuid
-  orderId        String @map("order_id") @db.Uuid
+  id             String  @id @default(uuid()) @db.Uuid
+  organizationId String  @map("organization_id") @db.Uuid
+  orderId        String  @map("order_id") @db.Uuid
   menuItemId     String? @map("menu_item_id") @db.Uuid
 
-  nameSnapshot      String @map("name_snapshot")
+  nameSnapshot      String  @map("name_snapshot")
   quantity          Int
-  unitPriceCents    Int    @map("unit_price_cents")
+  unitPriceCents    Int     @map("unit_price_cents")
   /// Stawka VAT z chwili zamówienia — snapshot, tak samo jak nazwa i cena.
   /// Bez niej edycja pozycji przez kelnera nie miałaby z czego przeliczyć
   /// podatku, a sięgnięcie po bieżącą stawkę z menu zmieniałoby historyczny rachunek.
   vatRate           Decimal @default(0) @map("vat_rate") @db.Decimal(5, 4)
-  modifiersSnapshot Json   @default("[]") @map("modifiers_snapshot")
+  modifiersSnapshot Json    @default("[]") @map("modifiers_snapshot")
   itemNote          String? @map("item_note")
 
   status OrderItemStatus @default(queued)
 
   /// Trzy niezależne atrybucje (docs/architecture.md §13.1):
   /// dla kogo jest pozycja — podstawa podziału rachunku,
-  forParticipantId String? @map("for_participant_id") @db.Uuid
+  forParticipantId     String?    @map("for_participant_id") @db.Uuid
   /// dzielona między uczestników → rozbicie w OrderItemShare,
-  isShared         Boolean @default(false) @map("is_shared")
+  isShared             Boolean    @default(false) @map("is_shared")
   /// kto ją wprowadził,
-  addedBy               ActorType @map("added_by")
-  addedByParticipantId  String?   @map("added_by_participant_id") @db.Uuid
-  addedByStaffId        String?   @map("added_by_staff_id") @db.Uuid
+  addedBy              ActorType  @map("added_by")
+  addedByParticipantId String?    @map("added_by_participant_id") @db.Uuid
+  addedByStaffId       String?    @map("added_by_staff_id") @db.Uuid
   /// i kto ostatnio zmienił. To zwykle trzy różne osoby.
   ///
   /// Pola lastEditedBy* to wyłącznie denormalizacja pod listę — źródłem prawdy
   /// o historii jest append-only OrderEvent.
-  lastEditedBy        ActorType? @map("last_edited_by")
-  lastEditedByStaffId String?    @map("last_edited_by_staff_id") @db.Uuid
-  lastEditedAt        DateTime?  @map("last_edited_at")
+  lastEditedBy         ActorType? @map("last_edited_by")
+  lastEditedByStaffId  String?    @map("last_edited_by_staff_id") @db.Uuid
+  lastEditedAt         DateTime?  @map("last_edited_at")
 
   createdAt DateTime @default(now()) @map("created_at")
 
-  order               Order             @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  menuItem            MenuItem?         @relation(fields: [menuItemId], references: [id], onDelete: SetNull)
-  forParticipant      TableParticipant? @relation("item_for_participant", fields: [forParticipantId], references: [id], onDelete: SetNull)
-  addedByParticipant  TableParticipant? @relation("item_added_by_participant", fields: [addedByParticipantId], references: [id], onDelete: SetNull)
-  addedByStaff        StaffMember?      @relation("item_added_by", fields: [addedByStaffId], references: [id], onDelete: SetNull)
-  lastEditedByStaff   StaffMember?      @relation("item_last_edited_by", fields: [lastEditedByStaffId], references: [id], onDelete: SetNull)
+  order              Order             @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItem           MenuItem?         @relation(fields: [menuItemId], references: [id], onDelete: SetNull)
+  forParticipant     TableParticipant? @relation("item_for_participant", fields: [forParticipantId], references: [id], onDelete: SetNull)
+  addedByParticipant TableParticipant? @relation("item_added_by_participant", fields: [addedByParticipantId], references: [id], onDelete: SetNull)
+  addedByStaff       StaffMember?      @relation("item_added_by", fields: [addedByStaffId], references: [id], onDelete: SetNull)
+  lastEditedByStaff  StaffMember?      @relation("item_last_edited_by", fields: [lastEditedByStaffId], references: [id], onDelete: SetNull)
 
   shares OrderItemShare[]
   events OrderEvent[]
@@ -901,10 +924,10 @@ model OrderEvent {
 
   type OrderEventType
 
-  actorType          ActorType @map("actor_type")
-  actorParticipantId String?   @map("actor_participant_id") @db.Uuid
-  actorGuestSessionId String?  @map("actor_guest_session_id") @db.Uuid
-  actorStaffId       String?   @map("actor_staff_id") @db.Uuid
+  actorType           ActorType @map("actor_type")
+  actorParticipantId  String?   @map("actor_participant_id") @db.Uuid
+  actorGuestSessionId String?   @map("actor_guest_session_id") @db.Uuid
+  actorStaffId        String?   @map("actor_staff_id") @db.Uuid
 
   before Json?
   after  Json?
@@ -938,8 +961,8 @@ model Payment {
   method            PaymentMethod
   status            PaymentState    @default(pending)
 
-  amountCents Int    @map("amount_cents")
-  currency    String @db.Char(3)
+  amountCents Int       @map("amount_cents")
+  currency    String    @db.Char(3)
   paidAt      DateTime? @map("paid_at")
 
   /// Kto przyjął płatność offline — podstawa rozliczenia kelnera.
@@ -962,9 +985,9 @@ model Payment {
 }
 
 model Review {
-  id             String @id @default(uuid()) @db.Uuid
-  organizationId String @map("organization_id") @db.Uuid
-  restaurantId   String @map("restaurant_id") @db.Uuid
+  id             String  @id @default(uuid()) @db.Uuid
+  organizationId String  @map("organization_id") @db.Uuid
+  restaurantId   String  @map("restaurant_id") @db.Uuid
   tableSessionId String? @map("table_session_id") @db.Uuid
   orderId        String? @map("order_id") @db.Uuid
   /// null = ocena ogólna wizyty, nie konkretnego dania
@@ -973,7 +996,7 @@ model Review {
   rating  Int
   comment String?
   target  ReviewTarget
-  isRead  Boolean @default(false) @map("is_read")
+  isRead  Boolean      @default(false) @map("is_read")
 
   createdAt DateTime @default(now()) @map("created_at")
 
@@ -988,10 +1011,10 @@ model Review {
 }
 
 model WaiterCall {
-  id             String @id @default(uuid()) @db.Uuid
-  organizationId String @map("organization_id") @db.Uuid
-  restaurantId   String @map("restaurant_id") @db.Uuid
-  tableId        String @map("table_id") @db.Uuid
+  id             String  @id @default(uuid()) @db.Uuid
+  organizationId String  @map("organization_id") @db.Uuid
+  restaurantId   String  @map("restaurant_id") @db.Uuid
+  tableId        String  @map("table_id") @db.Uuid
   tableSessionId String? @map("table_session_id") @db.Uuid
   guestSessionId String? @map("guest_session_id") @db.Uuid
 
@@ -1003,11 +1026,11 @@ model WaiterCall {
   acknowledgedAt        DateTime? @map("acknowledged_at")
   resolvedAt            DateTime? @map("resolved_at")
 
-  restaurant         Restaurant    @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  table              Table         @relation(fields: [tableId], references: [id], onDelete: Cascade)
-  tableSession       TableSession? @relation(fields: [tableSessionId], references: [id], onDelete: SetNull)
-  guestSession       GuestSession? @relation(fields: [guestSessionId], references: [id], onDelete: SetNull)
-  acknowledgedByStaff StaffMember? @relation(fields: [acknowledgedByStaffId], references: [id], onDelete: SetNull)
+  restaurant          Restaurant    @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  table               Table         @relation(fields: [tableId], references: [id], onDelete: Cascade)
+  tableSession        TableSession? @relation(fields: [tableSessionId], references: [id], onDelete: SetNull)
+  guestSession        GuestSession? @relation(fields: [guestSessionId], references: [id], onDelete: SetNull)
+  acknowledgedByStaff StaffMember?  @relation(fields: [acknowledgedByStaffId], references: [id], onDelete: SetNull)
 
   @@index([restaurantId, status])
   @@index([organizationId])
@@ -1036,12 +1059,12 @@ model DailyCounter {
 }
 
 model AuditLog {
-  id             String @id @default(uuid()) @db.Uuid
-  organizationId String @map("organization_id") @db.Uuid
-  actorStaffId   String? @map("actor_staff_id") @db.Uuid
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  actorStaffId   String?  @map("actor_staff_id") @db.Uuid
   action         String
   entity         String
-  entityId       String? @map("entity_id") @db.Uuid
+  entityId       String?  @map("entity_id") @db.Uuid
   payload        Json?
   createdAt      DateTime @default(now()) @map("created_at")
 

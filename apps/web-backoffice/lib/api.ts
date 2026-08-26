@@ -95,11 +95,28 @@ async function odczytaj<T>(response: Response): Promise<T> {
   return payload as T;
 }
 
-export async function login(email: string, password: string): Promise<Admin> {
+/**
+ * Pierwszy krok: hasło. Nie kończy logowania — odsyła uchwyt do kroku drugiego,
+ * a kod idzie na skrzynkę administratora.
+ */
+export async function login(
+  email: string,
+  password: string,
+): Promise<{ challengeId: string; expiresInMinutes: number }> {
   const response = await zapytaj('/platform/login', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ email, password }),
+  });
+  return odczytaj<{ challengeId: string; expiresInMinutes: number }>(response);
+}
+
+/** Drugi krok: kod z poczty. Dopiero on zakłada sesję. */
+export async function verifyCode(challengeId: string, code: string): Promise<Admin> {
+  const response = await zapytaj('/platform/login/verify', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ challengeId, code }),
   });
   const wynik = await odczytaj<{ accessToken: string; admin: Admin }>(response);
   writeToken(wynik.accessToken);

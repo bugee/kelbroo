@@ -206,14 +206,19 @@ Do rozstrzygnięcia **przed** napisaniem pierwszego ekranu:
       że konkretny widok bez tego nie powstanie.
 - [x] **Osobna subdomena i osobne uwierzytelnienie** — `admin.kelbroo.com`
       (2026-08-26). Panel restauracji i zaplecze nie dzielą sesji ani ciasteczek.
-- [ ] **2FA dla kont zaplecza — najpilniejsza pozycja w całym planie.**
-      Panel z danymi **wszystkich klientów** wisi w internecie i chroni go
-      **jedno hasło**. Ograniczenie po adresie IP zostało świadomie odłożone
-      (2026-08-26), więc drugi czynnik jest jedyną barierą, jaka może dojść.
+- [x] **2FA dla kont zaplecza** — kod sześciocyfrowy na adres administratora
+      (2026-08-26). Hasło otwiera już tylko pierwszy krok: `POST /platform/login`
+      nie wydaje tokenu, a jedynie uchwyt do `POST /platform/login/verify`.
+      Kod jest ważny 10 minut, działa raz, pięć pomyłek unieważnia całą próbę,
+      a nowe logowanie kasuje kod z poprzedniego. W bazie leży wyłącznie skrót
+      SHA-256 — podgląd tabeli nie pozwala się zalogować.
 
-      Wyciek hasła z laptopa to wyciek dostępu do wszystkiego, co mamy o klientach.
-      Skala rośnie z każdym nowym lokalem, a koszt wdrożenia nie — dlatego to jest
-      zadanie na teraz, nie na „gdy urośniemy".
+      Ograniczenie po adresie IP zostało świadomie odłożone (2026-08-26), więc
+      poczta jest dziś jedyną drugą barierą. Wybrana zamiast TOTP, bo nie wymaga
+      zakładania aplikacji uwierzytelniającej ani ścieżki odzyskiwania konta przy
+      zgubionym telefonie; **jej ceną jest to, że przejęta skrzynka administratora
+      wystarcza za drugi składnik** — dlatego adresy administratorów muszą mieć
+      własne 2FA u dostawcy poczty.
 
 > **Prawnie:** wobec danych lokalu jesteśmy **podmiotem przetwarzającym**
 > ([docs/legal](legal/README.md) §2). Administrator kelbroo oglądający zamówienia gości

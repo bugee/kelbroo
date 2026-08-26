@@ -9,7 +9,17 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { IsEmail, IsIn, IsInt, IsString, Length, Max, Min, MinLength } from 'class-validator';
+import {
+  IsEmail,
+  IsIn,
+  IsInt,
+  IsString,
+  IsUUID,
+  Length,
+  Max,
+  Min,
+  MinLength,
+} from 'class-validator';
 import type { SubscriptionPlan } from '@prisma/client';
 import { PlatformClientService } from './platform-client.service';
 import { PlatformAuthService } from './platform-auth.service';
@@ -36,6 +46,15 @@ class PlanDto extends PowodDto {
   plan!: SubscriptionPlan;
 }
 
+class VerifyCodeDto {
+  @IsUUID()
+  challengeId!: string;
+
+  @IsString()
+  @Length(6, 6)
+  code!: string;
+}
+
 class PlatformLoginDto {
   @IsEmail()
   email!: string;
@@ -60,10 +79,21 @@ export class PlatformController {
     private readonly client: PlatformClientService,
   ) {}
 
+  /**
+   * Pierwszy krok logowania. **Nie zwraca tokenu** — odsyła uchwyt, a kod idzie
+   * na adres administratora.
+   */
   @Post('login')
   @HttpCode(HttpStatus.OK)
   login(@Body() dto: PlatformLoginDto) {
     return this.auth.login(dto.email, dto.password);
+  }
+
+  /** Drugi krok: kod ze skrzynki. Dopiero on wydaje token. */
+  @Post('login/verify')
+  @HttpCode(HttpStatus.OK)
+  verifyCode(@Body() dto: VerifyCodeDto) {
+    return this.auth.verifyCode(dto.challengeId, dto.code);
   }
 
   @Get('me')

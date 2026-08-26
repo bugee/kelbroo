@@ -62,7 +62,20 @@ export class MailService {
 
   async send(wiadomosc: Wiadomosc): Promise<boolean> {
     if (!this.skonfigurowana) {
-      this.logger.log(`[poczta wyłączona] do ${wiadomosc.to}: ${wiadomosc.subject}`);
+      /**
+       * Bez SMTP wypisujemy **całą treść**, nie sam temat.
+       *
+       * Wygląda to na wyciek i wymaga uzasadnienia: bez poczty nic nie jest
+       * doręczane, więc log jest jedynym kanałem — a bez niego nie da się
+       * zalogować do zaplecza (kod drugiego składnika idzie mailem) ani dokończyć
+       * rejestracji lokalnie. Na produkcji SMTP jest skonfigurowany, więc ta gałąź
+       * nie wykonuje się nigdy; gdyby konfiguracja zniknęła, logowanie i tak
+       * byłoby zepsute, a kod w logu serwera trafia do tej samej osoby, która
+       * ma dostęp do bazy.
+       */
+      this.logger.warn(
+        `[poczta wyłączona] do ${wiadomosc.to}: ${wiadomosc.subject}\n${wiadomosc.text}`,
+      );
       return false;
     }
 

@@ -13,6 +13,7 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { AuthService } from '../src/auth/auth.service';
 import { PlatformAuthService } from '../src/platform/platform-auth.service';
+import type { MailService } from '../src/mail/mail.service';
 import { PlatformClientsService } from '../src/platform/platform-clients.service';
 import { PlatformClientService } from '../src/platform/platform-client.service';
 import { PrismaService } from '../src/prisma/prisma.service';
@@ -20,6 +21,31 @@ import { wymagajCzynnegoKonta } from '../src/common/subscription';
 
 const direct = new PrismaClient({ datasourceUrl: process.env.DIRECT_DATABASE_URL });
 const prisma = new PrismaService();
+
+/** Atrapa poczty: kod z drugiego składnika odczytujemy z przechwyconej treści. */
+const wyslane: { to: string; subject: string; text: string }[] = [];
+const mail = {
+  send: async (w: { to: string; subject: string; text: string }) => {
+    wyslane.push(w);
+    return true;
+  },
+  skrzynkaKelbroo: 'kontakt@kelbroo.com',
+  adresStrony: 'https://kelbroo.com',
+} as unknown as MailService;
+
+/** Kod z ostatniej wysłanej wiadomości. */
+function kodZeSkrzynki(): string {
+  const kod = /\b(\d{6})\b/.exec(wyslane.at(-1)?.subject ?? '')?.[1];
+  if (!kod) throw new Error('Kod nie dotarł na skrzynkę.');
+  return kod;
+}
+
+/** Pełne logowanie: hasło, potem kod ze skrzynki. */
+async function zaloguj(adres = email, haslo = HASLO) {
+  wyslane.length = 0;
+  const { challengeId } = await platform.login(adres, haslo);
+  return platform.verifyCode(challengeId, kodZeSkrzynki());
+}
 
 const HASLO = 'bardzo-tajne-haslo-123';
 const SEKRET = 'sekret-zaplecza-na-testy';
@@ -35,7 +61,7 @@ let pracownikEmail: string;
 
 beforeAll(async () => {
   process.env.ADMIN_JWT_SECRET = SEKRET;
-  platform = new PlatformAuthService(new JwtService({}));
+  platform = new PlatformAuthService(new JwtService({}), mail);
   clients = new PlatformClientsService();
   client = new PlatformClientService(prisma);
 
@@ -88,8 +114,8 @@ afterAll(async () => {
 });
 
 describe('logowanie do zaplecza', () => {
-  it('wpuszcza po poprawnym haśle i notuje logowanie', async () => {
-    const wynik = await platform.login(email, HASLO);
+  it('wpuszcza po haśle i kodzie ze skrzynki, i notuje logowanie', async () => {
+    const wynik = await zaloguj();
 
     expect(wynik.admin.email).toBe(email);
     expect(wynik.accessToken).toBeTruthy();
@@ -126,6 +152,95 @@ describe('logowanie do zaplecza', () => {
   });
 });
 
+/**
+ * Drugi składnik.
+ *
+ * Hasło do zaplecza otwiera dane wszystkich restauracji, a panel stoi pod
+ * odgadywalnym adresem bez ograniczenia po IP — kod ze skrzynki jest jedyną
+ * rzeczą, której nie da się wykraść razem z hasłem.
+ */
+describe('kod z poczty', () => {
+  it('samo hasło nie wydaje tokenu', async () => {
+    wyslane.length = 0;
+    const wynik = await platform.login(email, HASLO);
+
+    expect(wynik).not.toHaveProperty('accessToken');
+    expect(wynik.challengeId).toBeTruthy();
+    // Kod idzie wyłącznie na adres administratora — nie wraca w odpowiedzi.
+    expect(JSON.stringify(wynik)).not.toContain(kodZeSkrzynki());
+    expect(wyslane.at(-1)?.to).toBe(email);
+  });
+
+  it('zły kod nie wpuszcza', async () => {
+    const { challengeId } = await platform.login(email, HASLO);
+
+    await expect(platform.verifyCode(challengeId, '000000')).rejects.toThrow(/nieprawidłowy/i);
+  });
+
+  it('kod działa tylko raz', async () => {
+    wyslane.length = 0;
+    const { challengeId } = await platform.login(email, HASLO);
+    const kod = kodZeSkrzynki();
+
+    await expect(platform.verifyCode(challengeId, kod)).resolves.toHaveProperty('accessToken');
+    // Podsłuchany kod nie przyda się drugi raz — także temu, kto go przechwycił.
+    await expect(platform.verifyCode(challengeId, kod)).rejects.toThrow(/nieprawidłowy/i);
+  });
+
+  it('po pięciu pomyłkach próba przepada razem z prawidłowym kodem', async () => {
+    wyslane.length = 0;
+    const { challengeId } = await platform.login(email, HASLO);
+    const kod = kodZeSkrzynki();
+
+    for (let i = 0; i < 5; i++) {
+      await expect(platform.verifyCode(challengeId, '111111')).rejects.toThrow();
+    }
+    // Sześciocyfrowy kod ma milion kombinacji; bez tego limitu zgadywanie
+    // w pętli byłoby kwestią minut.
+    await expect(platform.verifyCode(challengeId, kod)).rejects.toThrow(/nieprawidłowy/i);
+  });
+
+  it('kod przeterminowany nie wpuszcza', async () => {
+    wyslane.length = 0;
+    const { challengeId } = await platform.login(email, HASLO);
+    const kod = kodZeSkrzynki();
+    await direct.platformLoginChallenge.update({
+      where: { id: challengeId },
+      data: { expiresAt: new Date(Date.now() - 1000) },
+    });
+
+    await expect(platform.verifyCode(challengeId, kod)).rejects.toThrow(/nieprawidłowy/i);
+  });
+
+  it('nowe logowanie unieważnia kod z poprzedniego', async () => {
+    wyslane.length = 0;
+    const pierwsze = await platform.login(email, HASLO);
+    const staryKod = kodZeSkrzynki();
+    await platform.login(email, HASLO);
+
+    await expect(platform.verifyCode(pierwsze.challengeId, staryKod)).rejects.toThrow();
+  });
+
+  it('złe hasło nie wysyła kodu', async () => {
+    wyslane.length = 0;
+    await expect(platform.login(email, 'zupelnie-inne-haslo')).rejects.toThrow();
+
+    expect(wyslane).toHaveLength(0);
+  });
+
+  it('konto wyłączone między krokami nie dokończy logowania', async () => {
+    wyslane.length = 0;
+    const { challengeId } = await platform.login(email, HASLO);
+    const kod = kodZeSkrzynki();
+    await direct.platformAdmin.update({ where: { id: adminId }, data: { isActive: false } });
+    try {
+      await expect(platform.verifyCode(challengeId, kod)).rejects.toThrow(/nieprawidłowy/i);
+    } finally {
+      await direct.platformAdmin.update({ where: { id: adminId }, data: { isActive: true } });
+    }
+  });
+});
+
 describe('granica między systemami', () => {
   it('token pracownika restauracji nie otwiera zaplecza', async () => {
     const auth = new AuthService(new JwtService({}));
@@ -136,14 +251,14 @@ describe('granica między systemami', () => {
   });
 
   it('token zaplecza nie otwiera panelu restauracji', async () => {
-    const { accessToken } = await platform.login(email, HASLO);
+    const { accessToken } = await zaloguj();
     const auth = new AuthService(new JwtService({}));
 
     await expect(auth.verifyAccessToken(accessToken)).rejects.toThrow();
   });
 
   it('token przestaje działać, gdy konto zostanie wyłączone', async () => {
-    const { accessToken } = await platform.login(email, HASLO);
+    const { accessToken } = await zaloguj();
     await expect(platform.verify(accessToken)).resolves.toMatchObject({ adminId });
 
     await direct.platformAdmin.update({ where: { id: adminId }, data: { isActive: false } });
