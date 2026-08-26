@@ -206,10 +206,14 @@ Do rozstrzygnięcia **przed** napisaniem pierwszego ekranu:
       że konkretny widok bez tego nie powstanie.
 - [x] **Osobna subdomena i osobne uwierzytelnienie** — `admin.kelbroo.com`
       (2026-08-26). Panel restauracji i zaplecze nie dzielą sesji ani ciasteczek.
-- [ ] **2FA dla kont zaplecza** — **hasło jest dziś jedynym czynnikiem**.
-      Ograniczenie po adresie IP zostało świadomie odłożone (2026-08-26), więc
-      zaplecze widzące wszystkich klientów chroni wyłącznie hasło. To najpilniejsza
-      pozycja w tej sekcji.
+- [ ] **2FA dla kont zaplecza — najpilniejsza pozycja w całym planie.**
+      Panel z danymi **wszystkich klientów** wisi w internecie i chroni go
+      **jedno hasło**. Ograniczenie po adresie IP zostało świadomie odłożone
+      (2026-08-26), więc drugi czynnik jest jedyną barierą, jaka może dojść.
+
+      Wyciek hasła z laptopa to wyciek dostępu do wszystkiego, co mamy o klientach.
+      Skala rośnie z każdym nowym lokalem, a koszt wdrożenia nie — dlatego to jest
+      zadanie na teraz, nie na „gdy urośniemy".
 
 > **Prawnie:** wobec danych lokalu jesteśmy **podmiotem przetwarzającym**
 > ([docs/legal](legal/README.md) §2). Administrator kelbroo oglądający zamówienia gości
@@ -278,9 +282,10 @@ Do rozstrzygnięcia **przed** napisaniem pierwszego ekranu:
 
 ### 6f. Zakładanie kont przez nas
 
-- [ ] **Formularz zakładania konta w imieniu klienta** — logika już istnieje
-      (`RegistrationService`), brakuje wejścia dla administratora. Przydatne przy
-      sprzedaży przez telefon i przy większych lokalach, które nie założą konta same.
+- [ ] **Formularz zakładania konta w imieniu klienta** — **tanie, wynika wprost
+      z tego, co jest**: `RegistrationService` robi już całą pracę, brakuje wejścia
+      dla administratora. Przydatne przy sprzedaży przez telefon i przy większych
+      lokalach, które nie założą konta same.
 - [ ] **Zaproszenie zamiast hasła** — zakładamy konto, klient sam ustawia hasło
       z jednorazowego odnośnika. **Wymaga poczty** (ta sama blokada co §4 i §5a).
 - [ ] **Zgody przy koncie zakładanym przez nas** — kto i kiedy zaakceptował regulamin,
@@ -290,7 +295,8 @@ Do rozstrzygnięcia **przed** napisaniem pierwszego ekranu:
 ### 6g. Okresy próbne
 
 - [ ] **Lista trwających okresów próbnych** z datą końca i tym, czy klient w ogóle
-      zaczął korzystać.
+      zaczął korzystać. **Tanie**: lista klientów ma już wszystkie te dane, brakuje
+      filtra i sortowania po dacie końca. To ekran, na który patrzy się rano.
 - [x] **Przedłużenie okresu próbnego** (2026-08-26) — o 1–365 dni, z powodem.
       Liczone od dziś, gdy termin już minął.
 - [ ] **Konwersja na płatny plan** bez zakładania konta od nowa.
@@ -305,8 +311,15 @@ Do rozstrzygnięcia **przed** napisaniem pierwszego ekranu:
       sesja wsparcia, wygasania po godzinie, i **wpisu w dzienniku przy każdym wejściu**.
       Bez tych trzech rzeczy nie budować.
 - [x] **Dziennik działań administratora** (2026-08-26) — `PlatformAuditLog`, osobny
-      od `AuditLog` restauracji, poza zasięgiem roli aplikacyjnej. **Notuje operacje,
-      nie podglądy** — kto co obejrzał, wciąż nie wiadomo.
+      od `AuditLog` restauracji, poza zasięgiem roli aplikacyjnej.
+- [ ] **Dziennik podglądów** — dziś wiadomo, **kto co zmienił**, ale nie **kto co
+      obejrzał**. Przy jednym administratorze to niewielka luka; przy pierwszym
+      pracowniku wsparcia przestaje taka być, bo wtedy „ktoś przeglądał dane klienta"
+      staje się pytaniem, na które trzeba umieć odpowiedzieć.
+
+      Wobec danych lokalu jesteśmy podmiotem przetwarzającym ([legal §2](legal/README.md)),
+      więc to nie jest wyłącznie higiena — umowa powierzenia opisuje dostęp
+      Usługodawcy do powierzonych danych i powinna dać się z tego rozliczyć.
 - [ ] **Ograniczenie dostępu do danych gości** — panel administracyjny nie potrzebuje
       treści zamówień do żadnego z ekranów powyżej. Domyślnie ich nie pokazuje.
 - [ ] **Usunięcie konta klienta i eksport danych** — obiecane w szkicu regulaminu (§9),
