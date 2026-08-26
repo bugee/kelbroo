@@ -123,15 +123,28 @@ do `#rejestracja`, którego nie ma.
       `SubscriptionOrder`, ceny i limity w jednym katalogu (`packages/types/plans.ts`).
       Ścieżka przetestowana na sandboksie PayU aż do bramki i z powrotem.
       Szczegóły i uzasadnienia: [architecture.md §11a](architecture.md).
-- [ ] **Przypomnienia o kończącym się okresie** — 3 dni przed, w dniu końca, 3 dni po.
-      Bez nich zakup jednorazowy zamienia się w cichą rezygnację: klient nie dostaje
-      żadnego sygnału, dopóki panel nie przestanie przyjmować zamówień.
-- [ ] **Automatyczne odnawianie z karty** — token PayU, obciążanie bez udziału klienta.
-      Wymaga włączenia „płatności automatycznych" na POS-ie i wyklucza BLIK, więc
-      wchodzi jako **wybór klienta obok** płatności jednorazowej, nie zamiast niej.
-- [ ] **Faktury VAT automatycznie** — dziś wystawiamy je ręcznie po powiadomieniu
-      na `kontakt@kelbroo.com` (decyzja 2026-08-26). Do rozstrzygnięcia przy większej
-      liczbie klientów: integracja z systemem księgowym przez API.
+- [ ] **Przypomnienia o kończącym się okresie — priorytet wysoki, następne w kolejce.**
+      3 dni przed, w dniu końca, 3 dni po. Bez nich zakup jednorazowy zamienia się
+      w **cichą rezygnację**: klient nie dostaje żadnego sygnału, dopóki panel nie
+      przestanie przyjmować zamówień — a wtedy dowiaduje się o tym od kelnera
+      w środku serwisu. To jedyna rzecz, która dziś dzieli działającą sprzedaż
+      od utrzymania klienta.
+- [ ] **Automatyczne odnawianie z karty — priorytet średni.** Token PayU, obciążanie
+      bez udziału klienta. Wymaga włączenia „płatności automatycznych" na POS-ie
+      i wyklucza BLIK, więc wchodzi jako **wybór klienta obok** płatności
+      jednorazowej, nie zamiast niej. Zakup jednorazowy (zrobiony) jest jego
+      warunkiem koniecznym — nic z tamtej pracy nie przepada.
+- [ ] **Faktury VAT automatycznie — priorytet niski, świadomie odłożone (2026-08-26).**
+      **Obsługujemy je ręcznie** i tak zostaje: po każdej wpłacie na
+      `kontakt@kelbroo.com` przychodzi komplet danych nabywcy, a fakturę wystawiasz
+      w programie księgowym. Przy kilku klientach to minuty miesięcznie, a numeracja
+      i archiwum zostają tam, gdzie i tak muszą być.
+
+      Jedna rzecz do pilnowania po ludzku, dopóki to nie jest zautomatyzowane:
+      **termin wystawienia liczy się od sprzedaży, nie od zajrzenia do skrzynki.**
+      Wraca do rozważenia dopiero wtedy, gdy liczba wpłat sprawi, że ręczne
+      wystawianie zacznie się opóźniać — wtedy integracja z systemem księgowym
+      przez API (Fakturownia, wFirma, InFakt).
 - [x] **CTA podpięte do rejestracji** (2026-08-24) — wszystkie sześć prowadzi
       do `/rejestracja`.
 
@@ -281,8 +294,11 @@ Do rozstrzygnięcia **przed** napisaniem pierwszego ekranu:
       operację z powodem i podpisem administratora; ostatnie 20 wpisów na karcie.
 - [ ] **Stan rozliczenia** — opłacone do kiedy, ile zalega, od ilu dni.
 - [ ] **Zaległości** — lista klientów po terminie, posortowana po tym, jak długo.
-- [ ] **Faktury VAT za abonament** — sprzedaż B2B w Polsce, więc nie opcja. Do
-      rozstrzygnięcia: wystawiamy u siebie czy przez zewnętrzny system księgowy.
+- [x] **Faktury VAT za abonament — rozstrzygnięte (2026-08-26): wystawiamy ręcznie
+      poza kelbroo.** Sprzedaż B2B w Polsce, więc faktura nie jest opcją, ale
+      numeracja i archiwum to obowiązki ustawowe — zostają w programie księgowym,
+      nie w naszym kodzie. Po każdej wpłacie idzie na `kontakt@kelbroo.com`
+      wiadomość z kompletem danych nabywcy. Automatyzacja: §5a, priorytet niski.
 - [ ] **Ręczna korekta** — rabat, przedłużenie, anulowanie należności. Każda z powodem
       i podpisem osoby, która ją wprowadziła.
 
