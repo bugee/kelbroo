@@ -20,6 +20,7 @@ import { MailService } from './mail/mail.service';
 import { PlatformController } from './platform/platform.controller';
 import { PlatformAuthService } from './platform/platform-auth.service';
 import { PlatformClientsService } from './platform/platform-clients.service';
+import { PlatformClientService } from './platform/platform-client.service';
 import { StaffAuthGuard } from './auth/staff.guard';
 import { StaffController } from './staff/staff.controller';
 import { StaffOrdersService } from './staff/staff-orders.service';
@@ -77,6 +78,7 @@ import { StaffAdminService } from './management/staff.admin.service';
     MailService,
     PlatformAuthService,
     PlatformClientsService,
+    PlatformClientService,
     StaffAuthGuard,
     StaffOrdersService,
     StaffOrderingService,

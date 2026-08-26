@@ -11,7 +11,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { DailyCounterService } from '../common/daily-counter.service';
 import { businessDateFor, toDateColumn, type BusinessDate } from '../common/business-date';
 import { recalculateSessionTotals } from '../common/session-totals';
-import { subscriptionActive } from '../common/subscription';
+import { wymagajCzynnegoKonta } from '../common/subscription';
 import { MenuService } from '../menu/menu.service';
 import {
   OrderPricingService,
@@ -56,12 +56,7 @@ export class StaffOrderingService {
     tx: Prisma.TransactionClient,
     organizationId: string,
   ): Promise<void> {
-    const subscription = await tx.subscription.findUnique({ where: { organizationId } });
-    if (subscriptionActive(subscription)) return;
-
-    throw new ForbiddenException(
-      'Abonament wygasł — nowe zamówienia są wstrzymane. Otwarte rachunki możesz rozliczyć normalnie.',
-    );
+    return wymagajCzynnegoKonta(tx, organizationId);
   }
 
   private restaurantOf(staff: StaffContext): string {

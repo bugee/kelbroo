@@ -1,9 +1,40 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
-import { IsEmail, IsString, MinLength } from 'class-validator';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
+import { IsEmail, IsIn, IsInt, IsString, Length, Max, Min, MinLength } from 'class-validator';
+import type { SubscriptionPlan } from '@prisma/client';
+import { PlatformClientService } from './platform-client.service';
 import { PlatformAuthService } from './platform-auth.service';
 import { PlatformClientsService } from './platform-clients.service';
 import { Admin, PlatformAuthGuard } from './platform.guard';
 import type { PlatformAdminContext } from './platform-auth.service';
+
+/** Powód jest wymagany przy każdej operacji — bez niego decyzji nie da się odtworzyć. */
+class PowodDto {
+  @IsString()
+  @Length(3, 300)
+  reason!: string;
+}
+
+class ExtendDto extends PowodDto {
+  @IsInt()
+  @Min(1)
+  @Max(365)
+  days!: number;
+}
+
+class PlanDto extends PowodDto {
+  @IsIn(['menu', 'starter', 'pro', 'enterprise'])
+  plan!: SubscriptionPlan;
+}
 
 class PlatformLoginDto {
   @IsEmail()
@@ -26,6 +57,7 @@ export class PlatformController {
   constructor(
     private readonly auth: PlatformAuthService,
     private readonly clients: PlatformClientsService,
+    private readonly client: PlatformClientService,
   ) {}
 
   @Post('login')
@@ -45,5 +77,56 @@ export class PlatformController {
   @UseGuards(PlatformAuthGuard)
   listClients() {
     return this.clients.list();
+  }
+
+  /** Wszystko o jednym kliencie: lokale, personel, zgody, historia operacji. */
+  @Get('clients/:id')
+  @UseGuards(PlatformAuthGuard)
+  clientDetail(@Param('id', ParseUUIDPipe) id: string) {
+    return this.client.detail(id);
+  }
+
+  @Post('clients/:id/extend')
+  @UseGuards(PlatformAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  extend(
+    @Admin() admin: PlatformAdminContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: ExtendDto,
+  ) {
+    return this.client.extend(admin, id, dto.days, dto.reason);
+  }
+
+  @Post('clients/:id/plan')
+  @UseGuards(PlatformAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  changePlan(
+    @Admin() admin: PlatformAdminContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: PlanDto,
+  ) {
+    return this.client.changePlan(admin, id, dto.plan, dto.reason);
+  }
+
+  @Post('clients/:id/block')
+  @UseGuards(PlatformAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  block(
+    @Admin() admin: PlatformAdminContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: PowodDto,
+  ) {
+    return this.client.block(admin, id, dto.reason);
+  }
+
+  @Post('clients/:id/unblock')
+  @UseGuards(PlatformAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  unblock(
+    @Admin() admin: PlatformAdminContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: PowodDto,
+  ) {
+    return this.client.unblock(admin, id, dto.reason);
   }
 }

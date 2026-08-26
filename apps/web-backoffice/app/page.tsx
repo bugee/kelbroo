@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { Shell } from '@/components/Shell';
+import Link from 'next/link';
 import { dzien, fetchClients, type Klient } from '@/lib/api';
 
 export default function ClientsPage() {
@@ -92,7 +93,12 @@ function Klienci() {
                   className="border-b border-[var(--line)] last:border-0"
                 >
                   <td className="px-3 py-3 align-top">
-                    <span className="block font-semibold">{klient.nazwa}</span>
+                    <Link
+                      href={`/klienci/${klient.organizationId}`}
+                      className="block font-semibold text-[var(--teal)] underline"
+                    >
+                      {klient.nazwa}
+                    </Link>
                     <span className="mono block text-xs text-[var(--muted)]">
                       {klient.nip ?? 'bez NIP-u'} · {klient.emailRozliczeniowy}
                     </span>

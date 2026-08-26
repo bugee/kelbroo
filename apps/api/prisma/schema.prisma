@@ -217,6 +217,25 @@ model PlatformAdmin {
   @@map("platform_admin")
 }
 
+/// Dziennik działań w zapleczu kelbroo.
+///
+/// Osobny od `AuditLog` restauracji: tamten odpowiada na „kto z obsługi zmienił
+/// rachunek", ten na „kto z nas ruszył konto klienta". Append-only, jak historia
+/// zamówienia — wpisu nie da się poprawić, bo to jego jedyna wartość.
+model PlatformAuditLog {
+  id       String @id @default(uuid()) @db.Uuid
+  adminId  String @map("admin_id") @db.Uuid
+  /// Kogo dotyczy. Bez klucza obcego: wpis ma przeżyć skasowanie organizacji.
+  organizationId String? @map("organization_id") @db.Uuid
+  action   String
+  reason   String?
+  payload  Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([organizationId, createdAt])
+  @@map("platform_audit_log")
+}
+
 // ------------------------------------------------------------------- tenant
 
 /// Klient SaaS i płatnik abonamentu. Korzeń izolacji danych.
@@ -228,6 +247,12 @@ model Organization {
 
   /// Zgody z formularza rejestracji. Trzymamy moment **i wersję dokumentu** —
   /// samo „zaakceptował" nie broni się przy sporze, gdy regulamin się zmieniał.
+  /// Blokada nałożona przez kelbroo — stan **osobny od wygaśnięcia abonamentu**.
+  /// Wygaśnięcie dzieje się samo i mija po opłaceniu; blokada jest decyzją człowieka
+  /// i tylko człowiek ją zdejmuje. Nigdy nie kasuje danych (CLAUDE.md).
+  blockedAt     DateTime? @map("blocked_at")
+  blockedReason String?   @map("blocked_reason")
+
   termsAcceptedAt   DateTime? @map("terms_accepted_at")
   termsVersion      String?   @map("terms_version")
   privacyAcceptedAt DateTime? @map("privacy_accepted_at")

@@ -138,9 +138,15 @@ export class TableService {
       throw new NotFoundException('Nieaktywny lub nieznany kod QR.');
     }
 
-    // Ta sama reguła, którą stosuje panel — jedna definicja „abonament działa".
-    const subscription = await tx.subscription.findUnique({ where: { organizationId } });
-    const subscriptionActive = czyAbonamentDziala(subscription);
+    // Ta sama reguła, którą stosuje panel — jedna definicja „konto jest czynne".
+    // Blokada administracyjna liczy się tak samo jak wygasły abonament: gość widzi
+    // menu, ale nie zamawia. Nie mówimy mu, który z tych powodów zadziałał —
+    // to sprawa między lokalem a nami.
+    const [organizacja, subscription] = await Promise.all([
+      tx.organization.findUnique({ where: { id: organizationId }, select: { blockedAt: true } }),
+      tx.subscription.findUnique({ where: { organizationId } }),
+    ]);
+    const subscriptionActive = czyAbonamentDziala(subscription) && !organizacja?.blockedAt;
 
     const locale = this.menu.resolveLocale(
       options.requestedLocale,

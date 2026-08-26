@@ -226,7 +226,10 @@ Do rozstrzygnięcia **przed** napisaniem pierwszego ekranu:
 - [x] **Lista klientów** (2026-08-25) — organizacja, NIP, lokale, plan, status
       abonamentu, okres próbny, termin ważności, liczba stolików i kont, ostatnie
       logowanie. Z wyszukiwaniem i podsumowaniem u góry.
-- [ ] **Karta klienta** — wszystko o jednym kliencie w jednym miejscu.
+- [x] **Karta klienta** (2026-08-26) — abonament z limitami, lokale, personel
+      z ostatnim logowaniem, zgody z wersją dokumentu i historia operacji.
+      Czyta przez `withTenant` — patrzymy na jedną organizację, więc nie ma powodu
+      omijać RLS.
 - [x] **Wyszukiwanie** po nazwie, NIP-ie, adresie e-mail i nazwie lokalu (2026-08-25).
 - [~] **Zdrowie wdrożenia** — lista pokazuje już liczbę stolików, kont personelu
       i **ostatnie logowanie** (klient, który nigdy nie wszedł, jest oznaczony).
@@ -236,7 +239,8 @@ Do rozstrzygnięcia **przed** napisaniem pierwszego ekranu:
 
 ### 6c. Parametryzacja klienta
 
-- [ ] **Limity planu** (`tableLimit`, `languageLimit`) — dziś tylko w bazie.
+- [x] **Limity planu** (2026-08-26) — widoczne na karcie i przestawiane razem
+      ze zmianą planu. Osobnego nadpisania ponad plan wciąż nie ma.
 - [ ] **Ustawienia lokalu z poziomu wsparcia** — te same przełączniki, które ma manager
       (tryb zamawiania, potwierdzanie, zgoda hosta, rozliczanie po jednym).
 - [ ] **Przełączniki funkcji per klient** — pilotaż nowej funkcji u jednego lokalu bez
@@ -249,7 +253,8 @@ Do rozstrzygnięcia **przed** napisaniem pierwszego ekranu:
 > **Zależy od etapu 2.** Dopóki nie ma operatora płatności, ta część sprowadza się
 > do ewidencji: co komu wystawiono i co wpłynęło. Ma to sens także bez Stripe'a.
 
-- [ ] **Historia abonamentu** — zmiany planu, przedłużenia, wygaśnięcia.
+- [x] **Historia abonamentu** (2026-08-26) — dziennik zaplecza notuje każdą
+      operację z powodem i podpisem administratora; ostatnie 20 wpisów na karcie.
 - [ ] **Stan rozliczenia** — opłacone do kiedy, ile zalega, od ilu dni.
 - [ ] **Zaległości** — lista klientów po terminie, posortowana po tym, jak długo.
 - [ ] **Faktury VAT za abonament** — sprzedaż B2B w Polsce, więc nie opcja. Do
@@ -259,14 +264,15 @@ Do rozstrzygnięcia **przed** napisaniem pierwszego ekranu:
 
 ### 6e. Blokowanie i odblokowywanie
 
-- [ ] **Blokada administracyjna** jako stan **osobny od wygaśnięcia abonamentu**.
-      Wygaśnięcie wyłącza zamawianie automatycznie i już działa; blokada to decyzja
-      człowieka, z innym powodem i inną drogą wyjścia.
-- [ ] **Stopnie blokady** — do rozstrzygnięcia, czy blokujemy tylko zamawianie przez
-      gości (lokal działa dalej, kelner obsługuje ręcznie), czy cały dostęp do panelu.
-      Pierwsze jest łagodniejsze i prawie zawsze wystarczy.
-- [ ] **Powód i termin** — blokada bez powodu wpisanego w chwili nakładania jest
-      po tygodniu nie do odtworzenia.
+- [x] **Blokada administracyjna** (2026-08-26) — stan osobny od wygaśnięcia,
+      wstrzymuje nowe zamówienia u gościa i w panelu, **nie kasuje danych**.
+      Zdejmuje ją człowiek, też z powodem.
+- [x] **Stopnie blokady** — rozstrzygnięte 2026-08-26: blokada wstrzymuje **nowe
+      zamówienia**, zostawiając rozliczanie otwartych rachunków i wgląd w panel.
+      Ta sama granica co przy wygasłym abonamencie. Odcięcie całego panelu uwięziłoby
+      lokalowi gotówkę i zrobiło z naszej decyzji jego awarię.
+- [x] **Powód wymagany** przy każdej operacji zaplecza (2026-08-26) — przedłużeniu,
+      zmianie planu, blokadzie i odblokowaniu. Trafia do dziennika.
 - [ ] **Nigdy nie kasuje danych** — zasada z [CLAUDE.md](../CLAUDE.md) obowiązuje tak
       samo przy blokadzie ręcznej, jak przy wygaśnięciu.
 
@@ -285,7 +291,8 @@ Do rozstrzygnięcia **przed** napisaniem pierwszego ekranu:
 
 - [ ] **Lista trwających okresów próbnych** z datą końca i tym, czy klient w ogóle
       zaczął korzystać.
-- [ ] **Przedłużenie okresu próbnego** — z powodem.
+- [x] **Przedłużenie okresu próbnego** (2026-08-26) — o 1–365 dni, z powodem.
+      Liczone od dziś, gdy termin już minął.
 - [ ] **Konwersja na płatny plan** bez zakładania konta od nowa.
 - [ ] **Co się dzieje po wygaśnięciu** — dziś zamawianie się wyłącza. Do rozstrzygnięcia,
       czy przechodzimy na darmowy plan Menu, czy zostawiamy konto martwe.
@@ -297,8 +304,9 @@ Do rozstrzygnięcia **przed** napisaniem pierwszego ekranu:
       niebezpieczna w całym systemie. Wymaga: wyraźnego oznaczenia na ekranie, że to
       sesja wsparcia, wygasania po godzinie, i **wpisu w dzienniku przy każdym wejściu**.
       Bez tych trzech rzeczy nie budować.
-- [ ] **Dziennik działań administratora** — osobny od `AuditLog` restauracji. Kto co
-      zmienił, komu i dlaczego. Append-only, jak historia zamówień.
+- [x] **Dziennik działań administratora** (2026-08-26) — `PlatformAuditLog`, osobny
+      od `AuditLog` restauracji, poza zasięgiem roli aplikacyjnej. **Notuje operacje,
+      nie podglądy** — kto co obejrzał, wciąż nie wiadomo.
 - [ ] **Ograniczenie dostępu do danych gości** — panel administracyjny nie potrzebuje
       treści zamówień do żadnego z ekranów powyżej. Domyślnie ich nie pokazuje.
 - [ ] **Usunięcie konta klienta i eksport danych** — obiecane w szkicu regulaminu (§9),

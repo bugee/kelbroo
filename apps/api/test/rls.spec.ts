@@ -170,6 +170,17 @@ describe('izolacja tenantów (RLS)', () => {
 });
 
 describe('kompletność ochrony', () => {
+  /**
+   * Tabele zaplecza kelbroo. Mają `organization_id`, bo notują, kogo dotyczyła
+   * operacja — ale **nie są danymi najemcy** i rola aplikacyjna nie ma do nich
+   * żadnych uprawnień. RLS byłby tam pustym gestem: chroni przed rolą, która
+   * i tak nie może ich dotknąć.
+   *
+   * Wyjątek jest wąski i pilnowany testem niżej: gdyby ktoś nadał tej roli
+   * uprawnienia, brak RLS przestałby być bezpieczny i test to wykryje.
+   */
+  const POZA_NAJEMCAMI = ['platform_audit_log'];
+
   it('każda tabela z organization_id ma włączony RLS', async () => {
     // Prisma generuje wyłącznie DDL schematu — polityki bezpieczeństwa trzeba
     // dopisać ręcznie w migracji. Ten test wyłapuje moment, w którym ktoś
@@ -188,7 +199,24 @@ describe('kompletność ochrony', () => {
       ORDER BY c.relname
     `;
 
-    expect(unprotected.map((row) => row.relname)).toEqual([]);
+    expect(
+      unprotected.map((row) => row.relname).filter((n) => !POZA_NAJEMCAMI.includes(n)),
+    ).toEqual([]);
+  });
+
+  it('tabele zaplecza są nieosiągalne dla roli aplikacyjnej', async () => {
+    // To jest cena wyjątku powyżej: skoro nie chroni ich RLS, muszą być
+    // odcięte uprawnieniami. Dotyczy też `platform_admin`, gdzie leżą skróty
+    // haseł do zaplecza całej platformy.
+    for (const tabela of [...POZA_NAJEMCAMI, 'platform_admin']) {
+      const [{ ma }] = await direct.$queryRawUnsafe<{ ma: boolean }[]>(
+        `SELECT bool_or(privilege_type IS NOT NULL) AS ma
+           FROM information_schema.table_privileges
+          WHERE table_schema = 'public' AND table_name = $1 AND grantee = 'kelbroo_app'`,
+        tabela,
+      );
+      expect(ma, `rola aplikacyjna ma uprawnienia do ${tabela}`).not.toBe(true);
+    }
   });
 
   it('każda tabela z włączonym RLS ma politykę izolacji', async () => {
