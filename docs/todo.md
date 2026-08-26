@@ -182,7 +182,10 @@ Sekcja `#kontakt` nie istnieje, a wskazują na nią **trzy** przyciski: „Poroz
 - [ ] **Sekcja lub podstrona kontaktowa** (`#kontakt`).
 - [ ] **„Umów prezentację"** — formularz z terminem i danymi kontaktowymi; to główne CTA
       dla większych lokali i sieci, które nie założą konta samodzielnie.
-- [ ] **Dane firmy** — nazwa, adres, NIP, e-mail. Przy sprzedaży B2B to wymóg, nie ozdobnik.
+- [ ] **Dane firmy** — nazwa, adres, NIP, e-mail. Od 2026-08-26 to **zaległość wobec
+      prawa, nie brak treści**: sprzedajemy usługę za pieniądze, a ustawa o świadczeniu
+      usług drogą elektroniczną każe podać dane identyfikujące usługodawcę w sposób
+      łatwo dostępny. Dziś nie ma ich nigdzie na stronie.
 
 ### 5c. Treści prawne w stopce
 
@@ -201,7 +204,8 @@ Sekcja `#kontakt` nie istnieje, a wskazują na nią **trzy** przyciski: „Poroz
       [docs/legal/README.md §8](legal/README.md): usunięcie danych po 6 miesiącach
       (żadnego mechanizmu retencji nie ma) i wypowiedzenie umowy z poziomu panelu.
 - [x] **NIP przy rejestracji** (2026-08-24) — ze sprawdzeniem sumy kontrolnej po obu
-      stronach. **Adresu działalności nadal nie zbieramy** — dojdzie z fakturowaniem.
+      stronach. **Adres firmy zbieramy od 2026-08-26** — jest polem obowiązkowym przy
+      zakupie abonamentu, bo faktura VAT bez adresu nabywcy nie jest fakturą.
 
 ### 5d. Pozostałe treści z odnośników
 
