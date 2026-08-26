@@ -103,8 +103,7 @@ Modele są w schemacie od pierwszej migracji i nie mają ani jednego odwołania 
 ## 5. System 1 — strona produktowa i sprzedaż
 
 Pod `kelbroo.com` stoi `apps/web-marketing`. Rejestracja i dokumenty prawne działają;
-**6 z 33 odnośników wciąż nie ma celu** (2026-08-26, po dodaniu kontaktu i demo) —
-zostają baza wiedzy i pięć podstron segmentowych. Poniższe zadania to dokładnie ta lista braków.
+**1 z 33 odnośników wciąż nie ma celu** (2026-08-26) — została baza wiedzy (`#pomoc`). Poniższe zadania to dokładnie ta lista braków.
 
 ### 5a. Rejestracja i okres próbny
 
@@ -227,9 +226,16 @@ co człowiek** — automat, któremu powiemy „odrzucono", spróbuje inaczej.
       Wizyty starsze niż 30 minut kasuje zadanie cykliczne.
 - [ ] **Baza wiedzy** (`#pomoc`) — instrukcje dla restauratora: dodanie menu, wydruk QR,
       obsługa KDS.
-- [ ] **Pięć podstron segmentowych** ze stopki: restauracje, kawiarnie, bary i puby,
-      hotele, sieci i food courty. Do rozważenia, czy budować wszystkie — może wystarczy
-      jedna strona z sekcjami, a odnośniki poprowadzić do kotwic.
+- [x] **Pięć segmentów na jednej stronie** (2026-08-26) — `/dla-kogo` z kotwicami
+      `#restauracje`, `#kawiarnie`, `#bary`, `#hotele`, `#sieci`. Wybrane zamiast pięciu
+      podstron: treść jest w dużej części wspólna i pięć kopii rozjechałoby się przy
+      pierwszej zmianie w produkcie. **Ceną jest słabsze pozycjonowanie** pod pojedyncze
+      hasła — sekcje da się rozdzielić później bez przepisywania treści.
+
+      Każdy segment zaczyna się od **obiekcji**, nie od korzyści: restaurator czytający
+      taką stronę ma już w głowie powód, dla którego to u niego nie zadziała.
+      Przy okazji nagłówek i stopka trafiły do wspólnych komponentów, a ich kotwice
+      liczą się od korzenia — inaczej z podstrony nie prowadziłyby donikąd.
 
 ### 5e. Aplikacja marketingowa
 
