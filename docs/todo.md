@@ -44,7 +44,7 @@ Czego brakuje do pełnego zakresu etapu 1: dwóch modeli, które wciąż nie maj
 linii kodu — `Review` (ocena dania) i `OrderItemShare` (podział `per_item`, zakres
 etapu 2) — oraz czterech funkcji gościa z sekcji 4.
 
-**Dwie rzeczy, które dziś najbardziej ciążą, i żadna nie jest funkcją:**
+**Trzy rzeczy ciążą dziś najbardziej i żadna nie jest funkcją:**
 
 1. **Ścieżka gościa jest potwierdzona ręcznie, jednorazowo.** Zamawianie, koszyk
    i prośba o rachunek nie mają testu e2e (§7). To najkrótsza droga do tego, żeby
@@ -53,6 +53,9 @@ etapu 2) — oraz czterech funkcji gościa z sekcji 4.
    płatności mają od 2026-08-26 własne uzgadnianie z operatorem, więc wpłata
    bez powiadomienia sama się odnajduje i zgłasza. Reszta systemu takiego
    czujnika nie ma.
+3. **Osiem obietnic ze strony produktowej nie ma pokrycia w kodzie** (§5f,
+   policzone 2026-08-26). Najdroższa z nich to deklarowana praca panelu bez
+   internetu — restauracja, która na tym polega, odkryje brak w środku serwisu.
 
 ---
 
@@ -104,8 +107,11 @@ Modele są w schemacie od pierwszej migracji i nie mają ani jednego odwołania 
 
 Pod `kelbroo.com` stoi `apps/web-marketing`. Rejestracja, sprzedaż abonamentu
 i dokumenty prawne działają, a **wszystkie 33 odnośniki mają cel** (2026-08-26) —
-klikając cokolwiek na stronie produktowej, użytkownik gdzieś trafia. Poniższa
-lista jest już wyłącznie zapisem tego, co powstało.
+klikając cokolwiek na stronie produktowej, użytkownik gdzieś trafia.
+
+Zostaje jednak co innego: **osiem obietnic z cennika i FAQ nie ma pokrycia
+w kodzie** (§5f). Strona sprzedaje dziś za prawdziwe pieniądze, więc każda z nich
+jest albo zadaniem, albo zdaniem do skreślenia.
 
 ### 5a. Rejestracja i okres próbny
 
@@ -258,6 +264,54 @@ co człowiek** — automat, któremu powiemy „odrzucono", spróbuje inaczej.
       > w trybie zgodności wstecznej. Nowa strona ma doctype i tryb standardowy — stąd
       > jedyna różnica między nimi: wiersze gości na karcie „Rachunek stolika" są o 7 px
       > wyższe. Nowa wersja jest poprawna; starej nie naprawiamy, bo i tak ją zastąpi.
+
+### 5f. Obietnice ze strony bez pokrycia w kodzie
+
+Rejestr sporządzony 2026-08-26 przez porównanie cennika, siatki funkcji i FAQ ze
+stanem kodu. **Osiem pozycji.** Odpowiednik [§8 z docs/legal](legal/README.md), tyle
+że dla obietnic handlowych: strona sprzedaje za prawdziwe pieniądze, więc każda
+z tych pozycji jest albo zadaniem do zrobienia, albo zdaniem do skreślenia.
+
+Kolejność według tego, ile kosztuje odkrycie braku przez klienta, który już zapłacił.
+
+- [ ] **FAQ: „Panel obsługi działa offline i synchronizuje po powrocie sieci".**
+      Najdroższa z listy: restauracja, która na tym polega, odkryje brak w środku
+      serwisu przy padniętym wi-fi. Nie ma ani service workera, ani manifestu —
+      obie aplikacje wymagają połączenia. Zadanie stoi w §7 („Buforowanie offline
+      w panelu"), ale strona mówi o nim w czasie teraźniejszym.
+      *(Baza wiedzy została 2026-08-26 poprawiona i mówi prawdę.)*
+- [ ] **FAQ: „instalujesz je jako ikonę na ekranie głównym".**
+      W `apps/web-admin/public` i `apps/web-guest/public` nie ma manifestu PWA,
+      więc przeglądarka nie zaproponuje instalacji. CLAUDE.md nazywa panel PWA —
+      dziś jest zwykłą stroną. Sam manifest to praca na godziny, nie na dni.
+- [ ] **Starter: „Zamawianie + oba modele płatności".**
+      Płatność w aplikacji (`prepaid`) należy do etapu 2 i nie istnieje. Klient
+      kupujący Startera za 159 zł może oczekiwać BLIK-a dla gości.
+      Do rozstrzygnięcia: doprecyzować zdanie w cenniku czy przyspieszyć etap 2.
+- [ ] **Pro: „Oceny dań i feedback do managera".**
+      Model `Review` jest w schemacie od pierwszej migracji i **nie ma ani jednego
+      odwołania w kodzie** (§4). Obiecane też kafelkiem „Oceny dań i feedback"
+      w siatce funkcji na stronie głównej.
+- [ ] **Pro: „Analityka i eksport raportów".**
+      Zero kodu, także w panelu. Obiecane kafelkiem „Raporty i analityka".
+      To najbardziej rozbudowana pozycja z całej listy.
+- [ ] **Pro: podział rachunku „po pozycjach".**
+      `none`, `per_person`, `equal` i `groups` działają; **`per_item` nie** — wymaga
+      `OrderItemShare`, który należy do etapu 2. Cennik mówi „pełny podział
+      rachunku i grupy", co jest prawdą; product.md §5.1 mówi „po pozycjach",
+      co prawdą nie jest.
+- [ ] **Starter: „3 konta personelu".**
+      Limit nie jest egzekwowany — można założyć dowolnie wiele. Szkoda jest po
+      naszej stronie, nie klienta, więc pozycja jest nisko, ale cennik obiecuje
+      rozróżnienie, którego nie ma. Limity stolików i języków **są** egzekwowane.
+- [ ] **Menu (0 zł): „do 50 pozycji".**
+      Też nieegzekwowany. Najniżej z listy, bo planu Menu i tak nie da się dziś
+      kupić w panelu.
+
+> **Enterprise** obiecuje wiele lokali, integrację z kasą i POS oraz własną domenę
+> i branding. Żadnej z tych rzeczy nie ma, ale plan nie jest samoobsługowy —
+> każdy taki klient przechodzi przez rozmowę, w której zakres ustala się wprost.
+> Kolumny `logoUrl` i `theme` czekają w schemacie bez interfejsu i bez użycia.
 
 ## 6. System 4 — zaplecze kelbroo (`apps/web-backoffice`)
 

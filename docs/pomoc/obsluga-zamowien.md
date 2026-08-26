@@ -55,6 +55,10 @@ w kelbroo służy raportom i rozliczeniu zmiany, a nie ewidencji fiskalnej.
 
 ## Gdy padnie internet
 
-Panel obsługi działa dalej, a akcje personelu synchronizują się po powrocie sieci.
-Gość zobaczy menu, ale złożenie zamówienia wymaga połączenia — dostanie o tym
-czytelny komunikat, nie pusty ekran.
+Panel i aplikacja gościa **wymagają połączenia**. Przy jego braku zobaczysz
+komunikat, a nie pusty ekran, ale zamówienia nie da się wtedy złożyć ani
+potwierdzić.
+
+Buforowanie akcji personelu na czas przerwy w sieci jest w planach i nie jest
+jeszcze dostępne. Jeśli wi-fi w lokalu bywa zawodne, warto mieć na tablecie
+zapasowy internet z telefonu.
