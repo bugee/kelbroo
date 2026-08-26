@@ -228,6 +228,22 @@ popraw edytorem: `nano .env.prod` (zapis: `Ctrl+O`, `Enter`, wyjście: `Ctrl+X`)
 docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
 ```
 
+**`--env-file .env.prod` nie jest ozdobnikiem.** Docker Compose sam z siebie czyta
+plik `.env`, a nasze hasła leżą w `.env.prod` — bez tej flagi **wszystkie zmienne
+są puste**. Objawia się to tak:
+
+```
+WARN[0000] The "POSTGRES_PASSWORD" variable is not set. Defaulting to a blank string.
+...
+service "migrate" didn't complete successfully: exit 1
+```
+
+Migracja przewraca się na pustym haśle do bazy, a to jeszcze nie jest najgorsze:
+kontenery `api` i `web-admin` **zostają odtworzone z pustymi sekretami i pustymi
+domenami**, czyli produkcja przestaje działać. Naprawa jest jedna — powtórzyć
+polecenie z flagą. Jeśli widzisz ten ciąg ostrzeżeń, przerwij i sprawdź komendę,
+zanim zaczniesz szukać przyczyny gdzie indziej.
+
 **To potrwa 5–15 minut** — serwer buduje cztery obrazy (API, panel, aplikacja gościa,
 zadanie migracji). Zobaczysz dużo tekstu; to normalne.
 
@@ -693,7 +709,7 @@ curl -s -o /dev/null -w "%{http_code}\n" https://admin.kelbroo.com/login
 
 Oczekiwane `200`. Potem zaloguj się w przeglądarce: po haśle panel poprosi
 o sześciocyfrowy kod wysłany na adres administratora. Jeśli kod nie przychodzi,
-sprawdź `docker compose logs api | grep -i poczt` — brak konfiguracji SMTP
+sprawdź `docker compose -f docker-compose.prod.yml --env-file .env.prod logs api | grep -i poczt` — brak konfiguracji SMTP
 zatrzymuje logowanie na tym kroku.
 
 ### Czego ta procedura nie załatwia
@@ -792,7 +808,7 @@ Zanim przejdziesz dalej — przeczytaj `PAYU_ENV` jeszcze raz.
 ```bash
 cd /root/kelbroo
 git pull
-docker compose -f docker-compose.prod.yml up -d --build api web-admin
+docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build api web-admin
 ```
 
 Migracja dokłada tabelę zamówień abonamentu i dane do faktury na organizacji.
@@ -809,7 +825,7 @@ własne konto firmowe kosztuje tylko prowizję PayU, a jest jedynym sposobem, ż
 sprawdzić, że **produkcyjne** klucze działają. Po zapłacie:
 
 ```bash
-docker compose -f docker-compose.prod.yml logs api | grep -i "zaksięgowano"
+docker compose -f docker-compose.prod.yml --env-file .env.prod logs api | grep -i "zaksięgowano"
 ```
 
 Ma pokazać kwotę i datę, do której przedłużył się abonament. Na
