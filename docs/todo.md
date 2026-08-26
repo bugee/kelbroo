@@ -13,27 +13,38 @@ Listę aktualizuję na bieżąco przy każdej zmianie w projekcie.
 
 ## Stan na dziś
 
-Działa produkcyjnie: API, panel obsługi i PWA gościa na `kelbroo.com`, z HTTPS,
-migracjami i izolacją danych przez RLS. **Pełna ścieżka przeszła na produkcji** —
-skan QR, menu, koszyk, zamówienie, kolejka potwierdzeń, KDS, rozliczenie stolika.
-Kody QR drukują się, backupy bazy są ustawione.
+Działa produkcyjnie: API, panel obsługi i PWA gościa, strona produktowa
+`kelbroo.com`, zaplecze `admin.kelbroo.com` — z HTTPS, migracjami i izolacją
+danych przez RLS. **Pełna ścieżka gościa przeszła na produkcji** — skan QR, menu,
+koszyk, zamówienie, kolejka potwierdzeń, KDS, rozliczenie stolika. Kody QR
+drukują się, backupy bazy są ustawione.
 
-Ścieżka gościa jest potwierdzona **ręcznie, jednorazowo** — nie pilnuje jej żaden test.
-Pokrycie e2e tej drogi jest w sekcji 7 i to jest teraz najkrótsza droga do tego, żeby
-regresja nie wróciła niezauważona.
+**System 1 jest otwarty** (2026-08-24): rejestracja przyjmuje klientów, e-mail jest
+weryfikowany, regulamin i polityka prywatności są opublikowane, a wygaśnięcie
+abonamentu wyłącza zamawianie bez kasowania danych.
 
-Poza etapem 1 leży **System 4 — zaplecze kelbroo** (§6) — dziś każda czynność obsługi
-klienta to `psql` albo ręczna edycja `.env.prod`. Wystarcza przy jednym kliencie.
+**Sprzedaż jest zbudowana, ale jeszcze nie przyjmuje pieniędzy** (2026-08-26):
+zakup abonamentu przez PayU działa od ekranu do bramki i z powrotem, sprawdzony
+na sandboksie. Na produkcji PayU odrzuca autoryzację (401) — **rejestracja konta
+sprzedawcy nie jest dokończona**, co jest sprawą po stronie operatora, nie kodu.
+Do czasu aktywacji abonamenty przedłuża się z zaplecza.
 
-Czego brakuje do pełnego zakresu etapu 1: **otwarcia Systemu 1** — strona i rejestracja
-są zbudowane, ale rejestracja jest zamknięta do czasu dokumentów prawnych (§5a, §5c) —
-oraz dwóch modeli, które wciąż nie mają ani linii kodu: `Review` (ocena dania)
-i `OrderItemShare` (podział `per_item`, zakres etapu 2).
+**System 4 — zaplecze kelbroo** stoi i ma logowanie dwuskładnikowe, listę klientów,
+kartę klienta oraz operacje na abonamencie z dziennikiem. Obsługa klienta nie
+wymaga już `psql` ani ręcznej edycji `.env.prod`.
 
-**Najbliższa blokada: sekcja 4.** Ekran gościa działa już na żywo — status zamówienia,
-stan wezwania i wpuszczenie do stolika zmieniają się same. Zostają cztery rzeczy: ocena
-dania, zestawienie na e-mail, wybór nicku oraz zmiana hosta wizyty. Do tego powrót
-do wizyty bez ponownego skanowania.
+Czego brakuje do pełnego zakresu etapu 1: dwóch modeli, które wciąż nie mają ani
+linii kodu — `Review` (ocena dania) i `OrderItemShare` (podział `per_item`, zakres
+etapu 2) — oraz czterech funkcji gościa z sekcji 4.
+
+**Dwie rzeczy, które dziś najbardziej ciążą, i żadna nie jest funkcją:**
+
+1. **Ścieżka gościa jest potwierdzona ręcznie, jednorazowo.** Zamawianie, koszyk
+   i prośba o rachunek nie mają testu e2e (§7). To najkrótsza droga do tego, żeby
+   regresja nie wróciła niezauważona.
+2. **Awarię widać dopiero wtedy, gdy ktoś zadzwoni** (§7). Odkąd w grę wchodzą
+   pieniądze, ma to nową cenę: nieprzetworzone powiadomienie o wpłacie znaczy
+   klienta, który zapłacił i nie dostał okresu — a dziś nikt się o tym nie dowie.
 
 ---
 
