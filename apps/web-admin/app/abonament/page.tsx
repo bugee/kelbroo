@@ -288,6 +288,18 @@ function Wiersz({ nazwa, children }: { nazwa: string; children: React.ReactNode 
  * krótki. Adres staje się obowiązkowy dopiero przy sprzedaży, bo faktura VAT
  * bez adresu nabywcy nie jest fakturą.
  */
+/**
+ * Wygląd pola formularza.
+ *
+ * Ramka i tło **nie są ozdobnikiem**: pole bez nich zlewa się z kartą i nie widać,
+ * gdzie w ogóle można pisać. Tło `--surface` odcina się od `--ground` karty w obu
+ * motywach, a `--line-strong` jest jedyną obwódką czytelną i na jasnym, i na ciemnym.
+ */
+const POLE =
+  'min-h-11 w-full rounded-[var(--radius-control)] border border-[var(--line-strong)] ' +
+  'bg-[var(--surface)] px-3 text-[var(--ink)] ' +
+  'focus:border-[var(--teal)] focus:outline-2 focus:outline-offset-0 focus:outline-[var(--teal)]';
+
 function FakturaForm({
   dane,
   onChange,
@@ -299,6 +311,7 @@ function FakturaForm({
     value: dane[klucz],
     onChange: (zdarzenie: React.ChangeEvent<HTMLInputElement>) =>
       onChange({ ...dane, [klucz]: zdarzenie.target.value }),
+    className: POLE,
   });
 
   return (
@@ -306,19 +319,19 @@ function FakturaForm({
       <h2 className="mb-3 font-semibold">Dane do faktury</h2>
       <div className="grid gap-3 sm:grid-cols-2">
         <Pole label="NIP">
-          <input {...pole('nip')} required inputMode="numeric" className="mono w-full" />
+          <input {...pole('nip')} required inputMode="numeric" className={`mono ${POLE}`} />
         </Pole>
         <Pole label="E-mail do faktur">
-          <input {...pole('billingEmail')} type="email" required className="w-full" />
+          <input {...pole('billingEmail')} type="email" required />
         </Pole>
         <Pole label="Ulica i numer" szeroko>
-          <input {...pole('address')} required className="w-full" />
+          <input {...pole('address')} required />
         </Pole>
         <Pole label="Kod pocztowy">
-          <input {...pole('postalCode')} required placeholder="00-000" className="mono w-full" />
+          <input {...pole('postalCode')} required placeholder="00-000" className={`mono ${POLE}`} />
         </Pole>
         <Pole label="Miejscowość">
-          <input {...pole('city')} required className="w-full" />
+          <input {...pole('city')} required />
         </Pole>
       </div>
     </section>
