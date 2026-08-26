@@ -93,6 +93,8 @@ export interface TableEntry {
     color: string;
     isHost: boolean;
     approved: boolean;
+    /** Czy gość może jeszcze wpisać własną nazwę. Wolno to zrobić raz na wizytę. */
+    canChooseName: boolean;
   };
   /** Wszyscy wpuszczeni przy stoliku, razem z pytającym. Hostem od góry. */
   participants: {
@@ -245,6 +247,20 @@ export interface ActiveCall {
 }
 
 /** Wezwanie kelnera. Powtórzone przy otwartym zgłoszeniu nie tworzy drugiego. */
+/**
+ * Własna nazwa zamiast wylosowanej — **raz na wizytę**.
+ *
+ * Serwer odmawia, gdy ktoś przy stoliku już się tak nazywa: nick jest podpisem
+ * pod pozycjami wspólnego rachunku, więc dwie identyczne nazwy przy jednym
+ * stoliku znaczyłyby dwie osoby nie do odróżnienia.
+ */
+export async function setMyName(
+  qrToken: string,
+  displayName: string,
+): Promise<{ id: string; displayName: string }> {
+  return request<{ id: string; displayName: string }>(qrToken, '/guest/me/name', { displayName });
+}
+
 export async function callWaiter(qrToken: string, reason: CallReason): Promise<ActiveCall> {
   return request<ActiveCall>(qrToken, '/guest/calls', { reason });
 }

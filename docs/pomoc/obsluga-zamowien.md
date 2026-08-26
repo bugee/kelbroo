@@ -37,6 +37,10 @@ Stolik **zajęty** pokazuje, ile trwa wizyta, ilu jest gości, kwotę **Do zapł
 oraz znaki rozpoznawcze gości (nick i symbol). Gospodarz wizyty ma przy nicku
 oznaczenie `host`.
 
+Nick jest losowany przy wejściu („Wesoły Borsuk"), ale gość może raz wpisać
+własny. Symbolu i koloru nie wybiera — one służą do wypowiedzenia przy stoliku
+(„ten z żółtym samochodzikiem") i muszą pozostać niepowtarzalne.
+
 Dostępne działania:
 
 - **Zamów** — dokładka albo zamówienie za gościa.

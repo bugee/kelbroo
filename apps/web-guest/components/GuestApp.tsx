@@ -29,6 +29,7 @@ import {
 import { guestStatusLabel } from '@kelbroo/types';
 import { ThemeToggle } from '@kelbroo/ui/theme';
 import { GuestMark } from '@kelbroo/ui/guest-mark';
+import { NameChoice } from './NameChoice';
 import { DishSheet } from './DishSheet';
 
 type View = 'menu' | 'cart' | 'status';
@@ -239,6 +240,17 @@ export function GuestApp({ qrToken }: { qrToken: string }) {
           </div>
         </div>
       </header>
+
+      {/* Propozycja własnej nazwy: obok menu, nie przed nim. Gość siada do
+          stolika, żeby zamówić, a nie wypełnić formularz. */}
+      {entry.participant.canChooseName && entry.participant.approved && (
+        <NameChoice
+          participantId={entry.participant.id}
+          displayName={entry.participant.displayName}
+          qrToken={qrToken}
+          onSaved={() => load()}
+        />
+      )}
 
       {!canOrder && (
         <div className="m-4 rounded-[var(--radius-control)] bg-[var(--orange-wash)] p-4 text-sm">

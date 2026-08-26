@@ -351,9 +351,9 @@ export default function LandingPage() {
                 Każdy skanuje ten sam kod i płaci za siebie
               </h2>
               <p className="lede" style={{ marginBottom: '22px' }}>
-                Goście przy jednym stoliku dołączają do wspólnej wizyty — każdy wybiera lub losuje
-                nick i awatar, bez zakładania konta. Potem rozliczają się osobno, w grupach albo po
-                równo.
+                Goście przy jednym stoliku dołączają do wspólnej wizyty — każdy dostaje nick i znak
+                rozpoznawczy, a kto chce, wpisuje własną nazwę. Bez zakładania konta. Potem
+                rozliczają się osobno, w grupach albo po równo.
               </p>
               <p className="lede" style={{ marginBottom: '26px' }}>
                 Gdy płaci jedna osoba, każdy może wysłać sobie na e-mail zestawienie „kto co

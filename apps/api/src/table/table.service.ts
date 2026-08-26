@@ -56,6 +56,8 @@ export interface TableEntry {
     isHost: boolean;
     /// `false` znaczy: host jeszcze nie wpuścił. Gość widzi menu, ale nie zamawia.
     approved: boolean;
+    /// Czy gość może jeszcze wpisać własną nazwę. Wolno to zrobić raz na wizytę.
+    canChooseName: boolean;
   };
   /**
    * Wszyscy wpuszczeni przy stoliku, razem z samym pytającym.
@@ -311,6 +313,7 @@ export class TableService {
         color: participant.color,
         isHost: participant.isHost,
         approved: !awaitsApproval,
+        canChooseName: participant.nameChosenAt === null,
       },
       participants: await this.approvedParticipants(tx, openSession.id),
       guestToken: token,
@@ -388,6 +391,7 @@ export class TableService {
         color: participant.color,
         isHost: participant.isHost,
         approved: participant.approvedAt !== null,
+        canChooseName: participant.nameChosenAt === null,
       },
     };
   }
@@ -443,6 +447,7 @@ export class TableService {
         color: '',
         isHost: false,
         approved: false,
+        canChooseName: false,
       },
       participants: [],
       guestToken: null,

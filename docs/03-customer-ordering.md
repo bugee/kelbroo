@@ -245,7 +245,8 @@ kelbroo nie chce mieć. Skan kodu QR otwierający stronę zostaje jedyną ście�
 - [ ] Etap „Kelner potwierdza" jest opisany słownie, a nie tylko zaznaczony na pasku postępu.
 - [ ] Odrzucenie zamówienia przez kelnera pokazuje gościowi powód i pozwala poprawić zamówienie.
 - [ ] Ekran nicku/awatara nie pojawia się, gdy gość jest sam przy stoliku w lokalu bez podziału rachunku.
-- [ ] Wylosowanie nicku i awatara wymaga jednego kliknięcia i nie wymaga wpisywania czegokolwiek.
+- [x] Wylosowanie nicku i znaku wymaga **zera kliknięć** — dzieje się przy wejściu (2026-08-26).
+- [x] Gość może wpisać własny nick, **raz na wizytę** (2026-08-26). Znaku rozpoznawczego nie wybiera: musi zostać niepowtarzalny przy stoliku.
 - [ ] Dwa telefony przy jednym stoliku widzą siebie nawzajem jako uczestników wizyty.
 - [ ] W trybie `prepaid` każdy uczestnik płaci wyłącznie za własne pozycje, bez ekranu podziału.
 - [ ] Zmiana trybu podziału przez jednego gościa jest natychmiast widoczna na pozostałych telefonach.

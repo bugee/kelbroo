@@ -68,8 +68,16 @@ Modele są w schemacie od pierwszej migracji i nie mają ani jednego odwołania 
 - [ ] **Zestawienie rachunku na e-mail** — **warstwa poczty już jest** (`MailService`,
       §5a), zostaje treść wiadomości i miejsce, w którym gość podaje adres. Adres
       wykorzystujemy jednorazowo i nie zapisujemy — tak mówi polityka prywatności §9.
-- [ ] **Wybór nicku przez gościa** — dziś losowany; zakres etapu 1 mówi o wpisaniu
-      lub wylosowaniu.
+- [x] **Wpisanie własnego nicku przez gościa** (2026-08-26) — propozycja pokazuje się
+      **obok menu, nie przed nim**: gość siada do stolika, żeby zamówić, a nie wypełnić
+      formularz. Zmiana jest możliwa **raz na wizytę**, bo nick jest podpisem pod
+      pozycjami wspólnego rachunku i nazwa zmieniana w trakcie rozjechałaby to, co inni
+      zdążyli zobaczyć. Blokada siedzi na serwerze (`nameChosenAt`), nie w przeglądarce.
+      Nazwa musi być niepowtarzalna przy stoliku, bez względu na wielkość liter.
+
+      **Awatara gość nie wybiera** i na razie nie będzie: znak rozpoznawczy służy do
+      wypowiedzenia kelnerowi („żółty samochodzik") i musi zostać niepowtarzalny przy
+      stoliku — wybór gościa psułby tę gwarancję, nic nie dodając.
 - [ ] **Powrót do wizyty bez ponownego skanowania** — gość zamyka kartę albo przeglądarkę
       i wraca na `menu.kelbroo.com` z historii. Dziś widzi tam statyczne „Zeskanuj kod QR",
       więc musi fizycznie znaleźć kod na stoliku, mimo że jego wizyta trwa.

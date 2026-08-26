@@ -1,10 +1,22 @@
 import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
-import { IsBoolean, IsIn } from 'class-validator';
+import { IsBoolean, IsIn, IsString, MaxLength } from 'class-validator';
 import { TableAccessService } from './table-access.service';
 import type { SplitMode } from '@kelbroo/types';
 import { Guest, GuestAuthGuard } from './guest.guard';
 import type { ResolvedGuest } from './guest-session.service';
 import { GuestSignalsService, type CallReason } from './guest-signals.service';
+import { GuestNameService } from './guest-name.service';
+
+class NameDto {
+  /**
+   * Górna granica jest tu luźniejsza niż w serwisie: przycinanie białych znaków
+   * dzieje się dopiero tam, więc odrzucanie po długości surowego tekstu
+   * wywalałoby nazwę, która po oczyszczeniu mieści się bez problemu.
+   */
+  @IsString()
+  @MaxLength(120)
+  displayName!: string;
+}
 
 class CallDto {
   @IsIn(['help', 'water', 'other'])
@@ -53,7 +65,17 @@ export class GuestController {
   constructor(
     private readonly signals: GuestSignalsService,
     private readonly access: TableAccessService,
+    private readonly names: GuestNameService,
   ) {}
+
+  /**
+   * Własna nazwa zamiast wylosowanej. Działa **raz na wizytę** — nick jest
+   * podpisem pod pozycjami rachunku i nie ma się zmieniać w jej trakcie.
+   */
+  @Post('me/name')
+  setName(@Guest() guest: ResolvedGuest, @Body() dto: NameDto) {
+    return this.names.setName(guest.organizationId, guest.guestSessionId, dto.displayName);
+  }
 
   /** Kto czeka na wpuszczenie. Pusta lista dla każdego poza hostem. */
   @Get('pending-guests')
