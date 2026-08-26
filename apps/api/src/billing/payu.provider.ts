@@ -97,7 +97,27 @@ export class PayuProvider extends SubscriptionPaymentProvider {
     });
 
     if (!odpowiedz.ok) {
-      this.logger.error(`PayU odmówił autoryzacji: ${odpowiedz.status}`);
+      // Treść odpowiedzi jest tu jedyną informacją, która odróżnia zły klucz
+      // od awarii u operatora — bez niej zostaje zgadywanie.
+      const tresc = await odpowiedz.text().catch(() => '');
+      this.logger.error(
+        `PayU odmówił autoryzacji (${odpowiedz.status}) na ${this.baza}: ${tresc.slice(0, 300)}`,
+      );
+
+      if (odpowiedz.status >= 400 && odpowiedz.status < 500) {
+        // Dwa źródła pomyłki widziane najczęściej i oba dają dokładnie ten sam
+        // objaw: klucze produkcyjne wysłane na adres sandboksu (PAYU_ENV) oraz
+        // drugi klucz (MD5) wklejony jako PAYU_CLIENT_SECRET. Drugi klucz służy
+        // wyłącznie do podpisu powiadomień i OAuth go nie zna.
+        this.logger.error(
+          `Sprawdź PAYU_ENV (teraz: ${process.env.PAYU_ENV ?? 'sandbox'}) oraz to, ` +
+            'czy PAYU_CLIENT_SECRET jest kluczem OAuth, a nie drugim kluczem MD5.',
+        );
+        throw new ServiceUnavailableException(
+          'Płatności są źle skonfigurowane — napisz na kontakt@kelbroo.com.',
+        );
+      }
+
       throw new ServiceUnavailableException('Operator płatności jest chwilowo niedostępny.');
     }
 
@@ -142,7 +162,10 @@ export class PayuProvider extends SubscriptionPaymentProvider {
 
     const tresc = await odpowiedz.text();
     if (odpowiedz.status !== 302 && odpowiedz.status !== 200 && odpowiedz.status !== 201) {
-      this.logger.error(`PayU odrzucił zamówienie ${request.externalId}: ${odpowiedz.status}`);
+      // Tu również treść: PayU opisuje w niej powód (zły POS, kwota, waluta).
+      this.logger.error(
+        `PayU odrzucił zamówienie ${request.externalId} (${odpowiedz.status}): ${tresc.slice(0, 300)}`,
+      );
       throw new ServiceUnavailableException('Nie udało się rozpocząć płatności. Spróbuj ponownie.');
     }
 
