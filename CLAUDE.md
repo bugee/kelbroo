@@ -57,11 +57,10 @@ do danych (patrz [docs/todo.md §6a](docs/todo.md)). Nazwa katalogu celowo nie b
 `web-admin` — ta jest zajęta przez panel restauracji i pomylenie tych dwóch
 w rozmowie o uprawnieniach kosztowałoby za dużo.
 
-Subdomena to **`kantorek`**, nie `admin`: w gastronomii kantorek to biurowe
-zaplecze lokalu, a słowniki skanerów tego słowa nie mają. To jednak tylko warstwa
-o zerowym koszcie — certyfikat trafia do publicznych rejestrów Certificate
-Transparency, więc nazwa jest do znalezienia. Barierą jest **lista dozwolonych
-adresów IP** (`BACKOFFICE_ALLOWED_IPS`) i osobne logowanie.
+Zaplecze stoi pod `admin.kelbroo.com`. **Dostępu broni wyłącznie logowanie** —
+ograniczenie po adresie IP zostało świadomie odłożone (2026-08-26) i wróci wraz
+z 2FA. Nazwa subdomeny nie jest zabezpieczeniem: certyfikat trafia do publicznych
+rejestrów Certificate Transparency, więc każdą da się tam znaleźć.
 
 ## Domeny produkcyjne
 
@@ -73,7 +72,7 @@ Domena produktowa: **`kelbroo.com`**.
 | `www.kelbroo.com` | Przekierowanie 301 na apex | Caddy |
 | `panel.kelbroo.com` | Panel obsługi (System 2) | `apps/web-admin` |
 | `menu.kelbroo.com` | PWA gościa (System 3) | `apps/web-guest` |
-| `kantorek.kelbroo.com` | Zaplecze kelbroo (System 4) | `apps/web-backoffice` |
+| `admin.kelbroo.com` | Zaplecze kelbroo (System 4) | `apps/web-backoffice` |
 
 `/api` i `/socket.io` są serwowane **z tego samego originu co aplikacja**, nie z osobnej
 subdomeny — dzięki temu nie ma CORS-u i adres backendu nie jest wkompilowany w bundle.

@@ -67,32 +67,19 @@ www.{$LANDING_DOMAIN} {
 }
 
 # --- zaplecze kelbroo (System 4) -------------------------------------------
-# Obsługuje NAS, nie restauracje: widzi wszystkich klientów. Stąd dwie rzeczy,
-# których nie ma przy pozostałych adresach.
+# Obsługuje NAS, nie restauracje: widzi wszystkich klientów.
 #
-# **Ograniczenie po adresie IP.** Kto nie jest na liście, dostaje 404 — nie 403,
-# bo 403 potwierdza, że pod tym adresem coś stoi. Domyślnie lista przepuszcza
-# wszystkich, żeby pierwsze wdrożenie nie zamknęło drzwi także przed właścicielem;
-# zawężenie jej jest jedną zmienną w `.env.prod`.
-#
-# **Nazwa subdomeny nie jest zabezpieczeniem.** Certyfikat trafia do publicznych
-# rejestrów Certificate Transparency, więc nieoczywista nazwa broni tylko przed
-# skanerem ze słownikiem. Prawdziwą barierą jest lista adresów i logowanie.
+# Dostęp chroni **wyłącznie logowanie**. Ograniczenie po adresie IP zostało
+# świadomie odłożone (decyzja z 2026-08-26) — wróci wraz z 2FA, bo dziś hasło
+# jest jedynym czynnikiem. Nazwa subdomeny nie jest zabezpieczeniem: certyfikat
+# trafia do publicznych rejestrów Certificate Transparency.
 {$BACKOFFICE_DOMAIN} {
-	@dozwolone client_ip {$BACKOFFICE_ALLOWED_IPS}
-
-	handle @dozwolone {
-		handle /api/* {
-			reverse_proxy api:4000
-		}
-
-		handle {
-			reverse_proxy web-backoffice:3000
-		}
+	handle /api/* {
+		reverse_proxy api:4000
 	}
 
 	handle {
-		respond 404
+		reverse_proxy web-backoffice:3000
 	}
 
 	encode zstd gzip

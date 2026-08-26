@@ -32,9 +32,6 @@ services:
       # Zaplecze kelbroo. Domyślna wartość jest nierozwiązywalna celowo —
       # wdrożenie bez tej zmiennej po prostu go nie wystawia.
       BACKOFFICE_DOMAIN: ${BACKOFFICE_DOMAIN:-zaplecze.localhost}
-      # Lista adresów IP, z których wolno wejść na zaplecze. Domyślnie wszystkie,
-      # bo inaczej pierwsze wdrożenie zamykałoby drzwi także przed właścicielem.
-      BACKOFFICE_ALLOWED_IPS: ${BACKOFFICE_ALLOWED_IPS:-0.0.0.0/0 ::/0}
       ACME_EMAIL: ${ACME_EMAIL}
     volumes:
       # Caddyfile jest wpieczony w obraz, nie montowany — patrz deploy/Dockerfile.caddy.
