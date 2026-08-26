@@ -110,7 +110,7 @@ Zasady:
 
 - Czy goście muszą instalować aplikację? — **Nie.** Skan QR otwiera stronę w przeglądarce.
 - Czy potrzebuję nowego sprzętu? — Wystarczy dowolny tablet lub komputer z przeglądarką.
-- Co jeśli padnie internet? — Panel obsługi działa offline i synchronizuje po powrocie sieci.
+- Co jeśli padnie internet? — **kelbroo wymaga połączenia**; bez internetu nikt nie złoży zamówienia, ale komunikat jest czytelny, a nie pusty ekran. *(Poprawione 2026-08-26 — wcześniejsza odpowiedź obiecywała pracę offline, której nie budujemy.)*
 - Czy to zastąpi kelnerów? — Nie, odciąża ich od przyjmowania zamówień i rozliczeń.
 - **Czy muszę przyjmować płatności online?** — Nie. Możesz włączyć tryb, w którym goście tylko zamawiają, a płacą kelnerowi po posiłku — tak jak dotychczas.
 - **Czy mogę potwierdzać zamówienia przed wysłaniem ich na kuchnię?** — Tak, kelner może zatwierdzać każde zamówienie przy stoliku.

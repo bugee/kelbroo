@@ -59,6 +59,6 @@ Panel i aplikacja gościa **wymagają połączenia**. Przy jego braku zobaczysz
 komunikat, a nie pusty ekran, ale zamówienia nie da się wtedy złożyć ani
 potwierdzić.
 
-Buforowanie akcji personelu na czas przerwy w sieci jest w planach i nie jest
-jeszcze dostępne. Jeśli wi-fi w lokalu bywa zawodne, warto mieć na tablecie
-zapasowy internet z telefonu.
+Nie planujemy pracy bez sieci — to świadoma decyzja, a nie brak do nadrobienia.
+Jeśli wi-fi w lokalu bywa zawodne, warto mieć na tablecie zapasowy internet
+z telefonu.

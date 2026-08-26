@@ -671,16 +671,16 @@ export default function LandingPage() {
                 <summary>Potrzebuję nowego sprzętu?</summary>
                 <p>
                   Wystarczy dowolny tablet, laptop lub komputer z przeglądarką. Panel kuchni i panel
-                  kelnera działają na iPadzie i na tablecie z Androidem — instalujesz je jako ikonę
-                  na ekranie głównym.
+                  kelnera otwierasz pod adresem panel.kelbroo.com — działają tak samo na iPadzie, na
+                  tablecie z Androidem i na komputerze. Nie ma nic do instalowania.
                 </p>
               </details>
               <details>
                 <summary>Co się stanie, gdy padnie internet?</summary>
                 <p>
-                  Panel obsługi działa dalej: akcje personelu zapisują się na urządzeniu i
-                  synchronizują automatycznie po powrocie sieci. Gość zobaczy menu, ale złożenie
-                  zamówienia wymaga połączenia — z czytelnym komunikatem, a nie pustym ekranem.
+                  kelbroo wymaga połączenia — bez internetu ani gość, ani obsługa nie złożą
+                  zamówienia. Zobaczycie wtedy czytelny komunikat, a nie pusty ekran. Jeśli wi-fi w
+                  lokalu bywa zawodne, warto mieć na tablecie zapasowy internet z telefonu.
                 </p>
               </details>
               <details>

@@ -10,9 +10,9 @@ kelbroo to wielodostępowa (multi-tenant) platforma SaaS złożona z jednego bac
 ```
 ┌──────────────────┐   ┌───────────────────┐   ┌────────────────────┐
 │ 1. Landing/      │   │ 2. Admin Panel    │   │ 3. Guest App       │
-│    Marketing     │   │    (web + tablet) │   │    (PWA + natywne) │
-│  Next.js SSG/SSR │   │  Next.js (SPA)    │   │  Next.js PWA       │
-│                  │   │  PWA offline      │   │  React Native (F2) │
+│    Marketing     │   │    (web + tablet) │   │    (przeglądarka)  │
+│  Next.js SSG/SSR │   │  Next.js (SPA)    │   │  Next.js           │
+│                  │   │  wymaga sieci     │   │  bez instalacji    │
 └────────┬─────────┘   └─────────┬─────────┘   └─────────┬──────────┘
          │                       │                       │
          │  REST/tRPC + WebSocket (realtime)              │
@@ -53,7 +53,7 @@ kelbroo to wielodostępowa (multi-tenant) platforma SaaS złożona z jednego bac
 | Subskrypcje | **PayU (płatności jednorazowe za okres)** | Wybrane 2026-08-26 zamiast Stripe Billing. PayU nie ma odpowiednika Billing: cykl rozliczeniowy, przedłużanie okresu i przypomnienia są po naszej stronie (§11a). W zamian daje BLIK, który w Polsce jest metodą dominującą |
 | Auth (personel) | **JWT (access + refresh) / Auth.js** | Standardowe logowanie e-mail+hasło, później SSO dla Enterprise |
 | Auth (gość) | **Anonimowa sesja podpisana tokenem** | Zero rejestracji — token sesji powiązany ze stolikiem, ważny czasowo |
-| Aplikacje natywne (Faza 2) | **React Native (Expo)** | Współdzielenie logiki i typów z web; jeden zespół na iOS + Android |
+| ~~Aplikacje natywne~~ | — | **Skreślone 2026-08-26**: cała ich wartość wymagała konta gościa, a konto gościa jest tym, czego kelbroo nie chce mieć |
 | Hosting | **Vercel (frontendy) + Railway/Fly.io lub AWS ECS (backend)** | Szybkie wdrożenia, skalowanie horyzontalne backendu |
 | Monitoring | **Sentry + OpenTelemetry + Grafana** | Śledzenie błędów krytycznej ścieżki płatności i realtime |
 
@@ -64,8 +64,7 @@ kelbroo/
 ├── apps/
 │   ├── web-marketing/     # System 1 — landing, cennik, checkout abonamentu
 │   ├── web-admin/         # System 2 — panel restauracji + KDS + panel kelnera
-│   ├── web-guest/         # System 3 — PWA gościa (skan QR → zamówienie)
-│   ├── mobile-guest/      # System 3 — React Native (Faza 2)
+│   ├── web-guest/         # System 3 — aplikacja gościa (skan QR → zamówienie)
 │   └── api/               # Backend NestJS
 ├── packages/
 │   ├── ui/                # Współdzielone komponenty (design system)
@@ -306,7 +305,7 @@ Realizacja (`status`) i rozliczenie (`payment_status`) biegną równolegle. Bram
 ### 6.2 Tryb `prepaid` — płatność w aplikacji
 
 ```
-Gość (PWA)          API              Redis/WS         Panel kuchni     Panel kelnera
+Gość                API              Redis/WS         Panel kuchni     Panel kelnera
    │                 │                  │                  │                │
    ├─ GET /t/{qr} ──►│                  │                  │                │
    │◄─ menu + sesja ─┤ (tworzy/dołącza do TableSession)     │                │
@@ -335,7 +334,7 @@ Gość (PWA)          API              Redis/WS         Panel kuchni     Panel k
 ### 6.3 Tryb `pay_at_table` — płatność u kelnera po konsumpcji
 
 ```
-Gość (PWA)          API              Redis/WS      Panel kelnera    Panel kuchni
+Gość                API              Redis/WS      Panel kelnera    Panel kuchni
    │                 │                  │                │                │
    ├─ GET /t/{qr} ──►│                  │                │                │
    │                 ├─ TableSession: open                │                │
@@ -430,7 +429,7 @@ Brak płatności z góry oznacza realne ryzyko fałszywych zamówień i strat. W
 
 | Ryzyko | Wpływ | Mitygacja |
 |---|---|---|
-| Awaria wi-fi w restauracji | Personel traci dostęp do zamówień | Offline-first w panelu obsługi (kolejka akcji + IndexedDB), tryb awaryjny z drukarką |
+| Awaria wi-fi w restauracji | Personel traci dostęp do zamówień | **Świadomie nie łagodzimy tego kodem** (2026-08-26): kolejkowanie akcji rozjeżdżałoby stan kuchni ze stanem tabletu. Panel mówi wprost, że stracił połączenie; lokalowi zalecamy zapasowy internet z telefonu |
 | Awaria dostawcy płatności | Brak możliwości zamówienia | Fallback "zapłać u kelnera", drugi provider jako zapas |
 | Gość skanuje QR spoza lokalu | Fałszywe zamówienia | Niezgadywalne tokeny, rate limit, opcjonalne potwierdzenie kelnera |
 | Wymogi fiskalizacji w PL | Blokada wdrożenia produkcyjnego | Start w trybie `pay_at_table` (fiskalizacja poza systemem), decyzja o docelowej ścieżce wg §12 |

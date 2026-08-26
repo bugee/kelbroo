@@ -13,7 +13,7 @@ Listę aktualizuję na bieżąco przy każdej zmianie w projekcie.
 
 ## Stan na dziś
 
-Działa produkcyjnie: API, panel obsługi i PWA gościa, strona produktowa
+Działa produkcyjnie: API, panel obsługi i aplikacja gościa, strona produktowa
 `kelbroo.com`, zaplecze `admin.kelbroo.com` — z HTTPS, migracjami i izolacją
 danych przez RLS. **Pełna ścieżka gościa przeszła na produkcji** — skan QR, menu,
 koszyk, zamówienie, kolejka potwierdzeń, KDS, rozliczenie stolika. Kody QR
@@ -53,9 +53,11 @@ etapu 2) — oraz czterech funkcji gościa z sekcji 4.
    płatności mają od 2026-08-26 własne uzgadnianie z operatorem, więc wpłata
    bez powiadomienia sama się odnajduje i zgłasza. Reszta systemu takiego
    czujnika nie ma.
-3. **Osiem obietnic ze strony produktowej nie ma pokrycia w kodzie** (§5f,
-   policzone 2026-08-26). Najdroższa z nich to deklarowana praca panelu bez
-   internetu — restauracja, która na tym polega, odkryje brak w środku serwisu.
+3. **Sześć obietnic ze strony produktowej nie ma pokrycia w kodzie** (§5f,
+   policzone 2026-08-26; dwie z pierwotnych ośmiu zamknięto tego samego dnia,
+   skreślając obietnicę zamiast dobudowywać funkcję). Najdroższa z pozostałych:
+   plan Starter obiecuje „oba modele płatności", a płatność gościa w aplikacji
+   należy do etapu 2.
 
 ---
 
@@ -109,9 +111,10 @@ Pod `kelbroo.com` stoi `apps/web-marketing`. Rejestracja, sprzedaż abonamentu
 i dokumenty prawne działają, a **wszystkie 33 odnośniki mają cel** (2026-08-26) —
 klikając cokolwiek na stronie produktowej, użytkownik gdzieś trafia.
 
-Zostaje jednak co innego: **osiem obietnic z cennika i FAQ nie ma pokrycia
-w kodzie** (§5f). Strona sprzedaje dziś za prawdziwe pieniądze, więc każda z nich
-jest albo zadaniem, albo zdaniem do skreślenia.
+Zostaje jednak co innego: **sześć obietnic z cennika nie ma pokrycia w kodzie**
+(§5f). Strona sprzedaje dziś za prawdziwe pieniądze, więc każda z nich jest albo
+zadaniem, albo zdaniem do skreślenia — dwie pierwotne pozycje zamknięto już tym
+drugim sposobem.
 
 ### 5a. Rejestracja i okres próbny
 
@@ -268,22 +271,22 @@ co człowiek** — automat, któremu powiemy „odrzucono", spróbuje inaczej.
 ### 5f. Obietnice ze strony bez pokrycia w kodzie
 
 Rejestr sporządzony 2026-08-26 przez porównanie cennika, siatki funkcji i FAQ ze
-stanem kodu. **Osiem pozycji.** Odpowiednik [§8 z docs/legal](legal/README.md), tyle
+stanem kodu. **Osiem pozycji, z czego dwie zamknięte tego samego dnia — nie kodem,
+tylko skreśleniem obietnicy.** Odpowiednik [§8 z docs/legal](legal/README.md), tyle
 że dla obietnic handlowych: strona sprzedaje za prawdziwe pieniądze, więc każda
 z tych pozycji jest albo zadaniem do zrobienia, albo zdaniem do skreślenia.
 
 Kolejność według tego, ile kosztuje odkrycie braku przez klienta, który już zapłacił.
 
-- [ ] **FAQ: „Panel obsługi działa offline i synchronizuje po powrocie sieci".**
-      Najdroższa z listy: restauracja, która na tym polega, odkryje brak w środku
-      serwisu przy padniętym wi-fi. Nie ma ani service workera, ani manifestu —
-      obie aplikacje wymagają połączenia. Zadanie stoi w §7 („Buforowanie offline
-      w panelu"), ale strona mówi o nim w czasie teraźniejszym.
-      *(Baza wiedzy została 2026-08-26 poprawiona i mówi prawdę.)*
-- [ ] **FAQ: „instalujesz je jako ikonę na ekranie głównym".**
-      W `apps/web-admin/public` i `apps/web-guest/public` nie ma manifestu PWA,
-      więc przeglądarka nie zaproponuje instalacji. CLAUDE.md nazywa panel PWA —
-      dziś jest zwykłą stroną. Sam manifest to praca na godziny, nie na dni.
+- [x] **FAQ: praca offline — obietnica skreślona** (2026-08-26). Nie budujemy pracy
+      bez sieci: kolejkowanie akcji kelnera brzmi atrakcyjnie przy zawodnym wi-fi, ale
+      rozjazd między tym, co widzi kuchnia, a tym, co czeka na tablecie, kosztuje więcej
+      niż daje. FAQ, baza wiedzy, `docs/02`, `docs/03`, `product.md` i CLAUDE.md mówią
+      teraz zgodnie, że kelbroo wymaga połączenia.
+- [x] **FAQ: instalacja na ekranie głównym — obietnica skreślona** (2026-08-26).
+      Panel i aplikacja gościa otwierają się pod adresem w przeglądarce. Przy okazji
+      z planu wypadły **aplikacje natywne** (`apps/mobile-guest`): cała ich wartość
+      wymagała konta gościa, a konto gościa jest dokładnie tym, czego kelbroo nie chce.
 - [ ] **Starter: „Zamawianie + oba modele płatności".**
       Płatność w aplikacji (`prepaid`) należy do etapu 2 i nie istnieje. Klient
       kupujący Startera za 159 zł może oczekiwać BLIK-a dla gości.
@@ -484,8 +487,8 @@ Z [product.md §7](product.md#7-wymagania-niefunkcjonalne-dotyczą-wszystkich-tr
       znaku rozpoznawczego i wezwania kelnera. Brakuje pełnej drogi: koszyk, złożenie
       zamówienia, prośba o rachunek.
 - [ ] **Dostępność WCAG 2.1 AA** w aplikacji gościa — używa jej przypadkowa publiczność.
-- [ ] **Buforowanie offline w panelu** — wi-fi w lokalach bywa zawodne, a tablet nie może
-      gubić akcji kelnera.
+- [x] ~~**Buforowanie offline w panelu.**~~ **Skreślone 2026-08-26** (§5f). kelbroo
+      wymaga połączenia i mówi o tym wprost na stronie i w bazie wiedzy.
 - [ ] **Menu gościa < 2 s na 4G** — zmierzyć na produkcji, nie zakładać.
 - [ ] **Monitoring i alerty** — dziś awarię widać dopiero wtedy, gdy ktoś zadzwoni.
 

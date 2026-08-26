@@ -34,7 +34,7 @@ Szczegółowe specyfikacje: [01-landing-marketing.md](01-landing-marketing.md) �
 1. Właściciel restauracji trafia na stronę produktową, wybiera plan i kupuje abonament (rejestracja + płatność cykliczna).
 2. W panelu admina przechodzi onboarding: dane restauracji, dodanie lokalu, stolików, generowanie kodów QR do wydruku, utworzenie menu (kategorie, dania, tłumaczenia), zaproszenie personelu.
 3. Restauracja drukuje/umieszcza kody QR na stolikach.
-4. Gość siada przy stoliku, skanuje QR → otwiera się PWA z menu w wykrytym/wybranym języku.
+4. Gość siada przy stoliku, skanuje QR → otwiera się w przeglądarce menu w wykrytym/wybranym języku.
 5. Gość przegląda menu, dodaje dania do koszyka i składa zamówienie. W zależności od trybu ustawionego przez restaurację (§5.6): **płaci od razu** (BLIK/karta/Apple Pay/Google Pay, opcjonalnie z napiwkiem) albo zamówienie idzie **na rachunek stolika** do rozliczenia u kelnera po konsumpcji.
 6. Jeśli restauracja wymaga potwierdzenia, zamówienie czeka w kolejce kelnera; w przeciwnym razie trafia natychmiast do panelu kuchni (KDS).
 7. Kuchnia oznacza postęp przygotowania; kelner widzi gotowe zamówienie i dostarcza je do stolika, oznaczając je jako wydane.
@@ -162,7 +162,7 @@ Kelner musi móc złożyć zamówienie w imieniu gościa (gość woli zamówić 
 
 - System 1: strona z cennikiem, rejestracja, zakup abonamentu (Starter + Pro wystarczą na start).
 - System 2: 1 lokal, stoliki + generowanie QR, menu w min. 2 językach, role Manager/Kelner/Kuchnia, panel realizacji zamówień + ekran „Powiadomienia", **składanie i edycja zamówień przez kelnera z pełną historią zmian**, rachunek stolika z podziałem (każdy za siebie / po równo / grupami) i jego zamykanie przez kelnera.
-- System 3: PWA — menu, koszyk, **uczestnicy wizyty (nick + awatar)**, zamówienie na rachunek stolika, status zamówienia live, prośba o rachunek z wyborem podziału, zestawienie na e-mail, ocena dania po posiłku.
+- System 3: aplikacja gościa w przeglądarce — menu, koszyk, **uczestnicy wizyty (nick + awatar)**, zamówienie na rachunek stolika, status zamówienia live, prośba o rachunek z wyborem podziału, zestawienie na e-mail, ocena dania po posiłku.
 
 **MVP — etap 2 (płatności online):**
 - Tryby `prepaid` i `guest_choice`, integracja BLIK/karta/Apple Pay/Google Pay, napiwki.
@@ -171,7 +171,7 @@ Kelner musi móc złożyć zamówienie w imieniu gościa (gość woli zamówić 
 
 **Faza 2:**
 - Wiele lokali pod jedną organizacją (sieci restauracji).
-- Natywne aplikacje mobilne (iOS/Android) dla gości — historia zamówień, ulubione, powiadomienia push, program lojalnościowy.
+- ~~Natywne aplikacje mobilne (iOS/Android) dla gości.~~ **Skreślone 2026-08-26** — cała ich wartość wymagała konta gościa, a konto gościa jest dokładnie tym, czego kelbroo nie chce mieć.
 - Zaawansowana analityka i eksport raportów, integracje z kasami fiskalnymi/POS.
 - Automatyczne tłumaczenie menu wspomagane AI z edycją manualną.
 - Wielowalutowość i wielorynkowość (ekspansja poza Polskę).
@@ -184,7 +184,7 @@ Kelner musi móc złożyć zamówienie w imieniu gościa (gość woli zamówić 
 - **Wielowalutowość:** waluta i stawki VAT konfigurowalne per restauracja/kraj (przygotowanie pod ekspansję).
 - **Zgodność prawna (Polska):** RODO (minimalizacja danych gościa — brak wymaganej rejestracji), fiskalizacja sprzedaży (integracja z kasą/drukarką fiskalną lub certyfikowanym API fiskalizacji), przechowywanie danych płatniczych zgodnie z PCI DSS (poprzez tokenizację u dostawcy płatności — platforma nigdy nie przechowuje danych karty).
 - **Dostępność cyfrowa (accessibility):** aplikacja gościa zgodna z WCAG 2.1 AA — używana przez szeroką, przypadkową publiczność.
-- **Odporność sieciowa:** panel obsługi na tablecie musi buforować akcje offline i synchronizować po powrocie sieci (typowe dla wi-fi w lokalach gastronomicznych).
+- ~~**Odporność sieciowa:** panel buforuje akcje offline i synchronizuje po powrocie sieci.~~ **Skreślone 2026-08-26.** kelbroo wymaga połączenia; brak sieci daje czytelny komunikat, nie kolejkę akcji, która może rozjechać się z kuchnią.
 - **Bezpieczeństwo wielodostępowości (multi-tenancy):** pełna izolacja danych między restauracjami (różni klienci SaaS nie widzą nawzajem swoich danych).
 
 ## 8. Metryki sukcesu (KPI)
@@ -198,6 +198,5 @@ Kelner musi móc złożyć zamówienie w imieniu gościa (gość woli zamówić 
 - **Walidacja cennika** — ceny z §5.1 to propozycja wyjściowa oparta na pozycjonowaniu wobec konkurencji na rynku PL. Wymaga potwierdzenia rozmowami z 5–10 restauratorami przed publikacją.
 - **Czy plan Menu (0 zł) faktycznie wchodzi do oferty** — silny kanał pozyskania, ale obciąża wsparcie i rozmywa przekaz. Alternatywa: 49 zł/mies zamiast darmowego.
 - **Wybór ścieżki fiskalizacji** dla etapu 2 — trzy opcje opisane w [architecture.md §12](architecture.md#12-fiskalizacja-i-paragony-polska); decyzja wymaga konsultacji z doradcą podatkowym.
-- Zakres programu lojalnościowego w natywnej aplikacji gościa (faza 2).
 - Czy restauracje mogą podłączyć własną bramkę płatności, czy kelbroo narzuca jednego dostawcę.
 - Czy w trybie `pay_at_table` udostępniać gościowi podgląd bieżącego rachunku stolika (ryzyko: goście przy jednym stoliku widzą nawzajem swoje zamówienia).

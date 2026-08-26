@@ -1,6 +1,6 @@
 # System 3 — Aplikacja gościa: zamawianie, płatności i oceny
 
-> Aplikacje: `apps/web-guest` (PWA, MVP) + `apps/mobile-guest` (React Native, Faza 2)
+> Aplikacja: `apps/web-guest` — strona w przeglądarce, bez rejestracji i bez instalacji
 > Odbiorca: gość restauracji · **bez rejestracji, bez instalacji aplikacji**
 > Kontekst: [product.md](product.md) · [architecture.md](architecture.md)
 
@@ -208,31 +208,27 @@ Wywoływana automatycznie po statusie `wydane` (z opóźnieniem ~15 min, by goś
 - Brak cookies śledzących bez zgody; analityka wyłącznie anonimowa/agregowana.
 - Historia zamówień gościa dostępna tylko w ramach bieżącej sesji na tym urządzeniu.
 
-## 5. Wymagania techniczne (PWA)
+## 5. Wymagania techniczne
 
 - **Wydajność:** LCP < 2.0s na 4G. Menu prerenderowane/cache'owane na CDN, zdjęcia w AVIF/WebP z lazy loadingiem, aktualizacje przez inwalidację cache przy zmianie menu.
 - **Rozmiar bundla:** możliwie mały — gość ładuje aplikację na często słabym wi-fi restauracyjnym.
-- **Offline:** Service Worker cache'uje menu; gość może przeglądać kartę bez sieci, ale złożenie zamówienia wymaga połączenia (z czytelnym komunikatem).
-- **Instalowalność (opcjonalna):** manifest PWA pozwala dodać do ekranu głównego, ale nigdy nie wymuszamy tego przed zamówieniem.
+- **Wymaga połączenia.** Praca bez sieci i instalacja na ekranie głównym zostały
+  **skreślone 2026-08-26**. Brak internetu ma dawać czytelny komunikat, nie pusty ekran —
+  i na tym koniec. Cachowanie karty kusi, ale menu zmienia się w trakcie serwisu, a karta
+  pokazana z pamięci telefonu potrafi zawierać danie, którego już nie ma.
 - **Dostępność:** WCAG 2.1 AA — kontrast, obsługa czytników ekranu, skalowanie tekstu, nawigacja klawiaturą. Aplikacji używa przypadkowa publiczność, w tym osoby starsze i z niepełnosprawnościami.
 - **Kompatybilność:** iOS Safari 15+, Chrome Android 100+, tryby oszczędzania danych.
 - **Wielojęzyczność:** UI z `next-intl`, treść menu z bazy; RTL przygotowane pod przyszłe języki (arabski).
 
-## 6. Aplikacje natywne (Faza 2)
+## 6. Aplikacje natywne — skreślone
 
-Natywna aplikacja **nie jest wymagana do zamówienia przy stoliku** — jest wartością dodaną dla stałych klientów.
+**Decyzja 2026-08-26: nie budujemy aplikacji natywnych.** Wcześniejsze wersje tego
+dokumentu opisywały `apps/mobile-guest` w React Native jako Fazę 2, z historią zamówień
+między wizytami, ulubionymi, powiadomieniami push i programem lojalnościowym.
 
-- Technologia: **React Native (Expo)** — współdzielenie logiki i typów z PWA.
-- Funkcje wykraczające poza PWA:
-  - Historia zamówień między wizytami i lokalami.
-  - Ulubione dania i restauracje.
-  - Powiadomienia push o gotowym zamówieniu (bardziej niezawodne niż web push na iOS).
-  - Program lojalnościowy / punkty / kupony.
-  - Zapisane metody płatności (tokenizowane).
-  - Wbudowany skaner QR (bez przechodzenia przez aparat systemowy).
-  - Wyszukiwanie restauracji korzystających z kelbroo w okolicy.
-- Wymaga konta użytkownika — ale **wyłącznie opcjonalnie**, PWA zawsze pozostaje ścieżką bez rejestracji.
-- Deep linki: skan QR na urządzeniu z zainstalowaną aplikacją otwiera aplikację, w przeciwnym razie PWA.
+Powód skreślenia jest ten sam, dla którego gość nigdy się nie rejestruje: cała wartość
+tamtej listy wymagała konta użytkownika, a konto gościa jest dokładnie tym, czego
+kelbroo nie chce mieć. Skan kodu QR otwierający stronę zostaje jedyną ścieżką.
 
 ## 7. Kryteria akceptacji
 
@@ -261,4 +257,3 @@ Natywna aplikacja **nie jest wymagana do zamówienia przy stoliku** — jest war
 - [ ] Zestawienie e-mail zawiera adnotację, że nie jest paragonem fiskalnym.
 - [ ] Ocena z niską notą (1–2) generuje natychmiastowe powiadomienie dla managera.
 - [ ] Aplikacja przechodzi audyt dostępności WCAG 2.1 AA.
-- [ ] Menu jest przeglądalne offline po pierwszym załadowaniu.

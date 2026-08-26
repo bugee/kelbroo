@@ -1,7 +1,7 @@
 # System 2 — Panel zarządzania restauracją i realizacji zamówień
 
-> Aplikacja: `apps/web-admin` · Next.js (SPA + PWA) · Odbiorcy: właściciel, manager, kelner, kuchnia
-> Urządzenia: przeglądarka desktop, iPad (Safari), tablet Android (Chrome) — jedna aplikacja PWA instalowana na ekranie głównym
+> Aplikacja: `apps/web-admin` · Next.js · Odbiorcy: właściciel, manager, kelner, kuchnia
+> Urządzenia: przeglądarka desktop, iPad (Safari), tablet Android (Chrome) — jedna aplikacja webowa, bez instalacji
 > Kontekst: [product.md](product.md) · [architecture.md](architecture.md)
 
 ## 1. Cel
@@ -124,7 +124,11 @@ Ekran zaprojektowany pod tablet w orientacji poziomej, obsługę w rękawiczkach
 - Akcje: `Przyjmij`, `Rozpocznij przygotowanie`, `Oznacz jako gotowe`, `Oznacz pozycję jako gotową` (dania mogą być gotowe pojedynczo), `Zgłoś problem` (brak składnika → automatyczne oznaczenie dania jako niedostępne + powiadomienie kelnera).
 - Duże pola dotykowe (min. 48×48px), wysoki kontrast, tryb ciemny do pracy przy słabym oświetleniu.
 - Ekran nie wygasza się podczas pracy (Wake Lock API).
-- **Praca offline:** akcje kolejkowane lokalnie (IndexedDB) i synchronizowane po powrocie sieci; widoczny wskaźnik stanu połączenia.
+- ~~**Praca offline:** akcje kolejkowane lokalnie i synchronizowane po powrocie sieci.~~
+  **Skreślone 2026-08-26.** Panel wymaga połączenia. Kolejkowanie akcji kelnera brzmi
+  atrakcyjnie przy zawodnym wi-fi, ale rozjazd między tym, co widzi kuchnia, a tym, co
+  czeka w kolejce na tablecie, kosztuje więcej niż daje. Zamiast tego panel mówi wprost,
+  że stracił połączenie.
 
 ### 3.7 Panel realizacji zamówień — widok Kelner
 
@@ -234,7 +238,9 @@ Model i arytmetyka: [architecture.md §14](architecture.md#14-podział-rachunku)
 
 ## 4. Wymagania specyficzne dla tabletów
 
-- PWA instalowana na ekranie głównym iPada i tabletu Android (manifest, ikony, tryb standalone).
+- ~~PWA instalowana na ekranie głównym (manifest, ikony, tryb standalone).~~
+  **Skreślone 2026-08-26** razem z pracą bez sieci — panel otwiera się pod adresem
+  w przeglądarce i nie ma nic do instalowania.
 - Layout responsywny od 768px wzwyż; KDS zoptymalizowany pod 1024–1366px w poziomie.
 - Gesty dotykowe, brak zależności od hovera, cele dotykowe ≥ 48px.
 - Wake Lock — ekran nie gaśnie w trakcie zmiany.

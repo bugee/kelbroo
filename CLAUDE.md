@@ -34,7 +34,7 @@ Przed implementacją czegokolwiek przeczytaj odpowiedni dokument:
 | [docs/architecture.md](docs/architecture.md) | Stack, monorepo, model danych, multi-tenancy, realtime, bezpieczeństwo |
 | [docs/01-landing-marketing.md](docs/01-landing-marketing.md) | System 1 — strona produktowa, cennik, zakup abonamentu |
 | [docs/02-admin-panel.md](docs/02-admin-panel.md) | System 2 — panel restauracji, stoliki/QR, menu, realizacja zamówień, KDS |
-| [docs/03-customer-ordering.md](docs/03-customer-ordering.md) | System 3 — PWA gościa, zamawianie, płatności, oceny |
+| [docs/03-customer-ordering.md](docs/03-customer-ordering.md) | System 3 — aplikacja gościa, zamawianie, płatności, oceny |
 
 **Projekt strony głównej** (referencja wizualna dla Systemu 1): [design/landing-page.html](design/landing-page.html) — samodzielny plik HTML, otwierany bezpośrednio w przeglądarce. **Nie jest już serwowany** — treść i style żyją w `apps/web-marketing`, a ten plik zostaje jako punkt odniesienia. Wersja opublikowana: https://claude.ai/code/artifact/e5cfa001-f874-412d-bc9d-847c606328c4
 
@@ -43,8 +43,8 @@ Ten plik jest **źródłem prawdy dla palety, typografii i tonu** przy budowie `
 ## Cztery systemy
 
 1. **`apps/web-marketing`** — landing + checkout abonamentu (Next.js SSG/ISR)
-2. **`apps/web-admin`** — panel zarządzania + KDS/panel kelnera (Next.js PWA, desktop + iPad + tablet Android)
-3. **`apps/web-guest`** — PWA gościa bez rejestracji i bez instalacji (+ `apps/mobile-guest` w React Native, Faza 2)
+2. **`apps/web-admin`** — panel zarządzania + KDS/panel kelnera (Next.js, przeglądarka: desktop + iPad + tablet Android)
+3. **`apps/web-guest`** — aplikacja gościa w przeglądarce, bez rejestracji i bez instalacji
 4. **`apps/web-backoffice`** — zaplecze kelbroo: klienci, abonamenty, blokady, wsparcie
 
 Backend: **`apps/api`** (NestJS + Prisma + PostgreSQL + Redis).
@@ -71,7 +71,7 @@ Domena produktowa: **`kelbroo.com`**.
 | `kelbroo.com` | Strona produktowa (System 1) | `apps/web-marketing` |
 | `www.kelbroo.com` | Przekierowanie 301 na apex | Caddy |
 | `panel.kelbroo.com` | Panel obsługi (System 2) | `apps/web-admin` |
-| `menu.kelbroo.com` | PWA gościa (System 3) | `apps/web-guest` |
+| `menu.kelbroo.com` | Aplikacja gościa (System 3) | `apps/web-guest` |
 | `admin.kelbroo.com` | Zaplecze kelbroo (System 4) | `apps/web-backoffice` |
 
 `/api` i `/socket.io` są serwowane **z tego samego originu co aplikacja**, nie z osobnej
@@ -85,8 +85,9 @@ Wszystkie trzy adresy wskazują na jeden VPS; rozdziela je Caddy po nazwie hosta
 
 - **Rynek:** Polska, z architekturą pod ekspansję (wielojęzyczność, wielowalutowość, wymienny provider płatności).
 - **Model:** stały abonament miesięczny od restauracji (Menu 0 zł / Starter 159 zł / Pro 349 zł / Enterprise od 899 zł netto), **bez prowizji od zamówień gości**.
-- **Gość nigdy się nie rejestruje ani nie instaluje aplikacji.** Natywne appki (Faza 2) są dodatkiem dla stałych klientów, nie warunkiem zamówienia.
-- **Panel obsługi to jedna PWA** — nie osobne aplikacje natywne na iPada i Androida.
+- **Gość nigdy się nie rejestruje ani nie instaluje aplikacji.** Skan kodu QR otwiera stronę w przeglądarce i to jest cała ścieżka.
+- **Panel obsługi to jedna aplikacja w przeglądarce** — nie osobne aplikacje natywne na iPada i Androida.
+- **Nie budujemy pracy bez sieci ani instalacji na ekranie głównym** (decyzja 2026-08-26). kelbroo wymaga połączenia i mówi o tym wprost. Buforowanie offline kusi przy zawodnym wi-fi, ale kolejkowanie zamówień, które mogą się rozjechać z kuchnią, kosztuje więcej niż daje. Aplikacje natywne wypadły z planu razem z tym.
 - **Trzy tryby zamawiania, wybierane przez restaurację:** `prepaid` (płatność w aplikacji), `pay_at_table` (płatność wyłącznie u kelnera — aplikacja nie zawiera żadnej ścieżki płatności), `guest_choice`. Niezależny przełącznik `require_staff_confirmation` wstrzymuje zamówienie do potwierdzenia przez kelnera przy stoliku.
 - **`TableSession` (wizyta przy stoliku) jest jednostką rachunku, nie `Order`.** Wiele zamówień i wiele urządzeń gości = jeden rachunek.
 - **`TableParticipant` to tożsamość na czas wizyty, nie konto** — nick (wpisany lub wylosowany) + awatar z zamkniętego zestawu, bez uploadu i bez danych osobowych. Podstawa podziału rachunku.
@@ -106,7 +107,7 @@ Wszystkie trzy adresy wskazują na jeden VPS; rozdziela je Caddy po nazwie hosta
 
 1. **MVP etap 1** — tryb `pay_at_table`, bez płatności online i bez fiskalizacji. Najkrótsza droga do pierwszego wdrożenia produkcyjnego; omija dwie najdłuższe zależności zewnętrzne.
 2. **MVP etap 2** — płatności online (`prepaid`, `guest_choice`) + wybrana ścieżka fiskalizacji.
-3. **Faza 2** — wiele lokali, natywne appki gościa, integracje POS, tłumaczenia AI.
+3. **Faza 2** — wiele lokali, integracje POS, tłumaczenia AI. *(Natywne aplikacje gościa wypadły z planu 2026-08-26.)*
 
 ## Konwencje
 
