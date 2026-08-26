@@ -12,7 +12,7 @@ import { marked } from 'marked';
  * Czytamy przy budowaniu, nie na żądanie — strona jest statyczna, a plik zmienia
  * się kilka razy w roku.
  */
-const KATALOG = path.join(process.cwd(), '..', '..', 'docs', 'legal');
+const KORZEN = path.join(process.cwd(), '..', '..', 'docs');
 
 /**
  * Identyfikator sekcji z jej numeru: `## §8. Prawa…` → `#par-8`.
@@ -38,6 +38,22 @@ renderer.heading = (token) => {
 export type Dokument = 'regulamin' | 'polityka-prywatnosci';
 
 export async function dokumentHtml(nazwa: Dokument): Promise<string> {
-  const zrodlo = await readFile(path.join(KATALOG, `${nazwa}.md`), 'utf-8');
+  return markdownHtml(path.join(KORZEN, 'legal', `${nazwa}.md`));
+}
+
+/**
+ * Artykuł bazy wiedzy z `docs/pomoc/`.
+ *
+ * Ten sam potok co dokumenty prawne: treść żyje w repozytorium, przechodzi przez
+ * przegląd jak kod i renderuje się przy budowaniu. Instrukcja rozjechana
+ * z produktem jest gorsza niż jej brak, więc ma leżeć tam, gdzie widać ją przy
+ * zmianie w panelu.
+ */
+export async function pomocHtml(slug: string): Promise<string> {
+  return markdownHtml(path.join(KORZEN, 'pomoc', `${slug}.md`));
+}
+
+async function markdownHtml(sciezka: string): Promise<string> {
+  const zrodlo = await readFile(sciezka, 'utf-8');
   return marked.parse(zrodlo, { async: false, renderer });
 }

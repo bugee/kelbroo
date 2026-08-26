@@ -102,8 +102,10 @@ Modele są w schemacie od pierwszej migracji i nie mają ani jednego odwołania 
 
 ## 5. System 1 — strona produktowa i sprzedaż
 
-Pod `kelbroo.com` stoi `apps/web-marketing`. Rejestracja i dokumenty prawne działają;
-**1 z 33 odnośników wciąż nie ma celu** (2026-08-26) — została baza wiedzy (`#pomoc`). Poniższe zadania to dokładnie ta lista braków.
+Pod `kelbroo.com` stoi `apps/web-marketing`. Rejestracja, sprzedaż abonamentu
+i dokumenty prawne działają, a **wszystkie 33 odnośniki mają cel** (2026-08-26) —
+klikając cokolwiek na stronie produktowej, użytkownik gdzieś trafia. Poniższa
+lista jest już wyłącznie zapisem tego, co powstało.
 
 ### 5a. Rejestracja i okres próbny
 
@@ -224,8 +226,15 @@ co człowiek** — automat, któremu powiemy „odrzucono", spróbuje inaczej.
       wyłączone, bo żadnego kelnera tam nie ma — z włączonym zwiedzający zobaczyłby
       zamówienie wiszące w nieskończoność. Gość widzi u góry pasek, że to demonstracja.
       Wizyty starsze niż 30 minut kasuje zadanie cykliczne.
-- [ ] **Baza wiedzy** (`#pomoc`) — instrukcje dla restauratora: dodanie menu, wydruk QR,
-      obsługa KDS.
+- [x] **Baza wiedzy** (2026-08-26) — `/pomoc` ze spisem i sześcioma artykułami:
+      pierwsze kroki, karta menu, stoliki i kody QR, obsługa zamówień na zmianie,
+      konta pracowników, abonament i faktury.
+
+      Treść leży w `docs/pomoc/*.md` i przechodzi tym samym potokiem co dokumenty
+      prawne — w repozytorium, pod przeglądem, renderowana przy budowaniu. Powód
+      jest jeden: **instrukcja rozjechana z produktem jest gorsza niż jej brak**,
+      a trzymana obok kodu ma szansę zmienić się razem ze zmianą w panelu.
+      Etykiety w artykułach przepisane ze zrzutów prawdziwych ekranów, nie z pamięci.
 - [x] **Pięć segmentów na jednej stronie** (2026-08-26) — `/dla-kogo` z kotwicami
       `#restauracje`, `#kawiarnie`, `#bary`, `#hotele`, `#sieci`. Wybrane zamiast pięciu
       podstron: treść jest w dużej części wspólna i pięć kopii rozjechałoby się przy

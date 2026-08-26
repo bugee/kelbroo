@@ -117,7 +117,7 @@ export function SiteFooter() {
             <h4>Pomoc</h4>
             <ul>
               <li>
-                <a href="/#pomoc">Baza wiedzy</a>
+                <a href="/pomoc">Baza wiedzy</a>
               </li>
               <li>
                 <a href="/#kontakt">Kontakt</a>

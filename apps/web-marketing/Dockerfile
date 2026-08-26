@@ -21,6 +21,9 @@ COPY apps/web-marketing apps/web-marketing
 # Regulamin i polityka prywatności są renderowane przy budowaniu — to treść
 # strony, nie dokumentacja. Reszta `docs` zostaje poza obrazem (.dockerignore).
 COPY docs/legal docs/legal
+# Baza wiedzy: te same reguły co dokumenty prawne — treść strony renderowana
+# przy budowaniu. Bez tej linii `/pomoc/...` wywraca się na brakującym pliku.
+COPY docs/pomoc docs/pomoc
 # Adres aplikacji gościa wchodzi do statycznych stron w chwili budowania —
 # odnośnik „Otwórz demo menu" musi prowadzić na właściwą domenę.
 ARG NEXT_PUBLIC_GUEST_URL
