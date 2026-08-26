@@ -12,7 +12,8 @@ wygaśnięcia i trzy dni po.
 
 ## Zakup
 
-Wybierasz plan i okres — **miesiąc albo rok**. Rok jest tańszy o 17%, czyli
+Wybierasz plan i okres — **miesiąc albo rok**. Plan wyznacza limity: liczbę
+stolików, języków menu i kont personelu. Rok jest tańszy o 17%, czyli
 dwa miesiące gratis.
 
 Ceny w cenniku są **netto**; do zapłaty idzie kwota z VAT, a ekran pokazuje

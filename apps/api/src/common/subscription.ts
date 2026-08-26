@@ -22,6 +22,7 @@ export interface StanAbonamentu {
   /// Limity planu — zaplecze pokazuje je przy zmianie planu, panel przy stolikach.
   tableLimit: number | null;
   languageLimit: number | null;
+  staffLimit: number | null;
   /** `null`, gdy abonament nie ma daty końca. */
   currentPeriodEnd: Date | null;
   /** Ile dni zostało; ujemne, gdy termin minął. `null` przy braku daty. */
@@ -43,6 +44,7 @@ export async function readSubscription(
     plan: subscription?.plan ?? null,
     tableLimit: subscription?.tableLimit ?? null,
     languageLimit: subscription?.languageLimit ?? null,
+    staffLimit: subscription?.staffLimit ?? null,
     currentPeriodEnd: subscription?.currentPeriodEnd ?? null,
     daysLeft: subscription?.currentPeriodEnd
       ? Math.ceil((subscription.currentPeriodEnd.getTime() - Date.now()) / DZIEN)

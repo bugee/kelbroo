@@ -40,7 +40,9 @@ const PLANY: Plan[] = [
     podpis: { m: 'rozliczenie miesięczne', y: '1 590 zł rocznie' },
     cechy: [
       'Do 12 stolików, 2 języki',
-      'Zamawianie + oba modele płatności',
+      // Płatność gościa w aplikacji należy do etapu 2 i nie istnieje — cennik
+      // obiecywał ją do 2026-08-26, mimo że plan Starter da się kupić dziś.
+      'Zamawianie do stolika, płatność u kelnera',
       'Ekran kuchni i panel kelnera',
       'Podział „każdy za siebie”',
       '3 konta personelu',

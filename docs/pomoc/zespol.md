@@ -20,13 +20,18 @@ ma dostęp wiele osób, więc nie powinien otwierać cennika ani listy pracownik
 Podajesz imię, nazwisko, adres e-mail i rolę. Pracownik dostaje hasło startowe,
 które **musi zmienić przy pierwszym logowaniu**.
 
+Liczbę kont ogranicza plan: **Menu — 1, Starter — 3, Pro i Enterprise — bez
+limitu**. Liczą się wyłącznie konta czynne, więc wyłączenie konta osoby, która
+odeszła, od razu zwalnia miejsce.
+
 ## Odejście pracownika
 
 Konto się **wyłącza**, nie kasuje. Zamówienia i rozliczenia zostają podpisane
 nazwiskiem osoby, która je wykonała — skasowanie konta zabrałoby tę informację
 z historii, a bywa ona potrzebna miesiącami później.
 
-Wyłączone konto przestaje wpuszczać do panelu natychmiast.
+Wyłączone konto przestaje wpuszczać do panelu natychmiast i **nie liczy się
+do limitu planu**.
 
 ## Zapomniane hasło
 

@@ -321,6 +321,9 @@ model Subscription {
   /// kasuje danych restauracji.
   tableLimit           Int                @map("table_limit")
   languageLimit        Int                @map("language_limit")
+  /// Ile kont personelu obejmuje plan. `9999` znaczy „bez limitu" — patrz
+  /// `BEZ_LIMITU` w `packages/types/src/plans.ts`.
+  staffLimit           Int                @default(9999) @map("staff_limit")
   createdAt            DateTime           @default(now()) @map("created_at")
   updatedAt            DateTime           @updatedAt @map("updated_at")
 

@@ -20,7 +20,18 @@ export type BillingPeriod = 'month' | 'year';
 export interface PlanLimits {
   tableLimit: number;
   languageLimit: number;
+  staffLimit: number;
 }
+
+/**
+ * Wartość oznaczająca „bez limitu".
+ *
+ * Liczba, nie `null`: limit jest kolumną w bazie i porównaniem w kodzie, a jeden
+ * typ zamiast dwóch oszczędza rozgałęzienia w każdym miejscu, które go sprawdza.
+ * Dziewięć tysięcy kont personelu w jednej restauracji nie zdarzy się nigdy,
+ * a interfejs pokazuje w tym miejscu „bez limitu", nie liczbę.
+ */
+export const BEZ_LIMITU = 9_999;
 
 export interface Plan {
   id: PlanId;
@@ -47,27 +58,27 @@ export const PLANS: Record<PlanId, Plan> = {
   menu: {
     id: 'menu',
     name: 'Menu',
-    limits: { tableLimit: 999, languageLimit: 1 },
+    limits: { tableLimit: BEZ_LIMITU, languageLimit: 1, staffLimit: 1 },
     netCents: { month: 0, year: 0 },
   },
   starter: {
     id: 'starter',
     name: 'Starter',
-    limits: { tableLimit: 12, languageLimit: 2 },
+    limits: { tableLimit: 12, languageLimit: 2, staffLimit: 3 },
     // 159 zł/mies albo 1 590 zł/rok (132 zł/mies w przeliczeniu).
     netCents: { month: 15_900, year: 159_000 },
   },
   pro: {
     id: 'pro',
     name: 'Pro',
-    limits: { tableLimit: 40, languageLimit: 6 },
+    limits: { tableLimit: 40, languageLimit: 6, staffLimit: BEZ_LIMITU },
     // 349 zł/mies albo 3 490 zł/rok (291 zł/mies w przeliczeniu).
     netCents: { month: 34_900, year: 349_000 },
   },
   enterprise: {
     id: 'enterprise',
     name: 'Enterprise',
-    limits: { tableLimit: 9_999, languageLimit: 99 },
+    limits: { tableLimit: BEZ_LIMITU, languageLimit: 99, staffLimit: BEZ_LIMITU },
     netCents: { month: null, year: null },
   },
 };

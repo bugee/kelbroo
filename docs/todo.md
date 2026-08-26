@@ -53,11 +53,10 @@ etapu 2) — oraz czterech funkcji gościa z sekcji 4.
    płatności mają od 2026-08-26 własne uzgadnianie z operatorem, więc wpłata
    bez powiadomienia sama się odnajduje i zgłasza. Reszta systemu takiego
    czujnika nie ma.
-3. **Sześć obietnic ze strony produktowej nie ma pokrycia w kodzie** (§5f,
-   policzone 2026-08-26; dwie z pierwotnych ośmiu zamknięto tego samego dnia,
-   skreślając obietnicę zamiast dobudowywać funkcję). Najdroższa z pozostałych:
-   plan Starter obiecuje „oba modele płatności", a płatność gościa w aplikacji
-   należy do etapu 2.
+3. **Cztery obietnice ze strony produktowej nie mają pokrycia w kodzie** (§5f,
+   policzone 2026-08-26; z pierwotnych ośmiu trzy zamknięto skreśleniem obietnicy,
+   jedną dopisaniem kodu). Zostają: oceny dań, analityka, podział po pozycjach
+   i limit pozycji w planie Menu.
 
 ---
 
@@ -111,7 +110,7 @@ Pod `kelbroo.com` stoi `apps/web-marketing`. Rejestracja, sprzedaż abonamentu
 i dokumenty prawne działają, a **wszystkie 33 odnośniki mają cel** (2026-08-26) —
 klikając cokolwiek na stronie produktowej, użytkownik gdzieś trafia.
 
-Zostaje jednak co innego: **sześć obietnic z cennika nie ma pokrycia w kodzie**
+Zostaje jednak co innego: **cztery obietnice z cennika nie mają pokrycia w kodzie**
 (§5f). Strona sprzedaje dziś za prawdziwe pieniądze, więc każda z nich jest albo
 zadaniem, albo zdaniem do skreślenia — dwie pierwotne pozycje zamknięto już tym
 drugim sposobem.
@@ -271,8 +270,10 @@ co człowiek** — automat, któremu powiemy „odrzucono", spróbuje inaczej.
 ### 5f. Obietnice ze strony bez pokrycia w kodzie
 
 Rejestr sporządzony 2026-08-26 przez porównanie cennika, siatki funkcji i FAQ ze
-stanem kodu. **Osiem pozycji, z czego dwie zamknięte tego samego dnia — nie kodem,
-tylko skreśleniem obietnicy.** Odpowiednik [§8 z docs/legal](legal/README.md), tyle
+stanem kodu. **Osiem pozycji, z czego cztery zamknięte tego samego dnia:** trzy
+skreśleniem obietnicy (praca offline, instalacja, płatność gościa w aplikacji —
+ta ostatnia wraca razem z kodem), jedna dopisaniem brakującego kodu (limit kont
+personelu). Odpowiednik [§8 z docs/legal](legal/README.md), tyle
 że dla obietnic handlowych: strona sprzedaje za prawdziwe pieniądze, więc każda
 z tych pozycji jest albo zadaniem do zrobienia, albo zdaniem do skreślenia.
 
@@ -287,10 +288,12 @@ Kolejność według tego, ile kosztuje odkrycie braku przez klienta, który już
       Panel i aplikacja gościa otwierają się pod adresem w przeglądarce. Przy okazji
       z planu wypadły **aplikacje natywne** (`apps/mobile-guest`): cała ich wartość
       wymagała konta gościa, a konto gościa jest dokładnie tym, czego kelbroo nie chce.
-- [ ] **Starter: „Zamawianie + oba modele płatności".**
-      Płatność w aplikacji (`prepaid`) należy do etapu 2 i nie istnieje. Klient
-      kupujący Startera za 159 zł może oczekiwać BLIK-a dla gości.
-      Do rozstrzygnięcia: doprecyzować zdanie w cenniku czy przyspieszyć etap 2.
+- [x] **Starter: „oba modele płatności" — obietnica zdjęta ze strony** (2026-08-26).
+      Płatność gościa w aplikacji (`prepaid`) należy do etapu 2 i **wróci na stronę
+      razem z kodem**. Zdjęta została karta „Płatność w aplikacji" z sekcji `#modele`,
+      poprawiony nagłówek sekcji, cecha planu Starter w cenniku i odpowiedź w FAQ.
+      W miejscu karty stoi zdanie, że przygotowujemy tę płatność — bo pytają o nią
+      klienci i milczenie byłoby gorsze niż „jeszcze nie".
 - [ ] **Pro: „Oceny dań i feedback do managera".**
       Model `Review` jest w schemacie od pierwszej migracji i **nie ma ani jednego
       odwołania w kodzie** (§4). Obiecane też kafelkiem „Oceny dań i feedback"
@@ -303,10 +306,14 @@ Kolejność według tego, ile kosztuje odkrycie braku przez klienta, który już
       `OrderItemShare`, który należy do etapu 2. Cennik mówi „pełny podział
       rachunku i grupy", co jest prawdą; product.md §5.1 mówi „po pozycjach",
       co prawdą nie jest.
-- [ ] **Starter: „3 konta personelu".**
-      Limit nie jest egzekwowany — można założyć dowolnie wiele. Szkoda jest po
-      naszej stronie, nie klienta, więc pozycja jest nisko, ale cennik obiecuje
-      rozróżnienie, którego nie ma. Limity stolików i języków **są** egzekwowane.
+- [x] **Limit kont personelu — egzekwowany** (2026-08-26). Menu 1, Starter 3,
+      Pro i Enterprise bez limitu; wartość siedzi na abonamencie, więc zaplecze może
+      ją podnieść pojedynczemu klientowi. Liczą się **konta czynne** — wyłączone
+      zostają w bazie, bo zamówienia są nimi podpisane, a doliczanie ich karałoby
+      lokal za rotację pracowników. Sprawdzenie jest w transakcji, żeby dwa
+      równoczesne zakładania nie przecisnęły się obok jednego wolnego miejsca.
+      Istniejące konta ponad limit **zostają** — blokujemy zakładanie nowych,
+      nie odbieramy dostępu.
 - [ ] **Menu (0 zł): „do 50 pozycji".**
       Też nieegzekwowany. Najniżej z listy, bo planu Menu i tak nie da się dziś
       kupić w panelu.

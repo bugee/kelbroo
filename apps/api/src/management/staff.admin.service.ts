@@ -81,6 +81,7 @@ export class StaffAdminService {
     const passwordHash = await bcrypt.hash(dto.password, PASSWORD_ROUNDS);
 
     return this.prisma.withTenant(staff.organizationId, async (tx) => {
+      await this.assertLimitPlanu(tx, staff.organizationId);
       try {
         const member = await tx.staffMember.create({
           data: {
@@ -243,5 +244,29 @@ export class StaffAdminService {
       canManage:
         member.id !== staff.staffId && ROLE_RANK[member.role as StaffRole] <= ROLE_RANK[staff.role],
     };
+  }
+
+  /**
+   * Limit kont personelu z planu.
+   *
+   * Liczymy **konta czynne**: wyłączone zostają w bazie na potrzeby historii
+   * (zamówienia są nimi podpisane), więc doliczanie ich do limitu karałoby lokal
+   * za rotację pracowników.
+   *
+   * Sprawdzenie jest wewnątrz transakcji, żeby dwa równoczesne zakładania nie
+   * przecisnęły się obok tego samego wolnego miejsca.
+   */
+  private async assertLimitPlanu(tx: Prisma.TransactionClient, organizationId: string) {
+    const subscription = await tx.subscription.findUnique({ where: { organizationId } });
+    if (!subscription) return;
+
+    const czynne = await tx.staffMember.count({ where: { organizationId, isActive: true } });
+    if (czynne < subscription.staffLimit) return;
+
+    throw new ConflictException(
+      `Plan ${subscription.plan} obejmuje ${subscription.staffLimit} ` +
+        `${subscription.staffLimit === 1 ? 'konto' : 'konta'} personelu. ` +
+        'Wyłącz nieużywane konto albo zmień plan.',
+    );
   }
 }

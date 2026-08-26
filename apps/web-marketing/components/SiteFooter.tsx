@@ -80,7 +80,7 @@ export function SiteFooter() {
                 <a href="/#jak">Jak to działa</a>
               </li>
               <li>
-                <a href="/#modele">Modele płatności</a>
+                <a href="/#modele">Płatność u kelnera</a>
               </li>
               <li>
                 <a href="/#funkcje">Funkcje</a>

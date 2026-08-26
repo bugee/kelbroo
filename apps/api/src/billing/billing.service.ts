@@ -456,6 +456,7 @@ export class BillingService {
           currentPeriodEnd: doKiedy,
           tableLimit: limity.tableLimit,
           languageLimit: limity.languageLimit,
+          staffLimit: limity.staffLimit,
         },
         update: {
           plan: zamowienie.plan,
@@ -463,6 +464,7 @@ export class BillingService {
           currentPeriodEnd: doKiedy,
           tableLimit: limity.tableLimit,
           languageLimit: limity.languageLimit,
+          staffLimit: limity.staffLimit,
         },
       });
 

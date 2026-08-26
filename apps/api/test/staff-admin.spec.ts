@@ -272,3 +272,78 @@ describe('lista pracowników', () => {
     expect(wlasciciele.every((member) => member.canManage)).toBe(false);
   });
 });
+
+/**
+ * Limit kont personelu z planu.
+ *
+ * Cennik obiecywał go od początku (1 / 3 / bez limitu), a nic go nie pilnowało.
+ * Ta grupa testów jest jedynym miejscem, w którym widać, że obietnica z cennika
+ * ma pokrycie.
+ */
+describe('limit kont z planu', () => {
+  /** Ustawia abonament z zadanym limitem. Brak abonamentu = brak limitu. */
+  async function planZLimitem(staffLimit: number) {
+    await direct.subscription.upsert({
+      where: { organizationId },
+      update: { staffLimit, plan: 'starter', status: 'active' },
+      create: {
+        organizationId,
+        plan: 'starter',
+        status: 'active',
+        tableLimit: 12,
+        languageLimit: 2,
+        staffLimit,
+      },
+    });
+  }
+
+  const nowyKelner = () => ({
+    email: email('limit'),
+    name: 'Kelner Testowy',
+    role: 'waiter' as const,
+    password: 'poczatkowe123',
+  });
+
+  it('odmawia założenia konta ponad limit i mówi, co zrobić', async () => {
+    const czynne = await direct.staffMember.count({ where: { organizationId, isActive: true } });
+    await planZLimitem(czynne);
+
+    await expect(staffAdmin.create(owner, nowyKelner())).rejects.toThrow(/obejmuje .* personelu/);
+  });
+
+  it('wpuszcza, gdy w planie jest jeszcze miejsce', async () => {
+    const czynne = await direct.staffMember.count({ where: { organizationId, isActive: true } });
+    await planZLimitem(czynne + 1);
+
+    const utworzony = await staffAdmin.create(owner, nowyKelner());
+    expect(utworzony.id).toBeTruthy();
+
+    await direct.staffMember.delete({ where: { id: utworzony.id } });
+  });
+
+  it('nie liczy kont wyłączonych', async () => {
+    // Wyłączone konto zostaje w bazie, bo zamówienia są nim podpisane. Doliczanie
+    // go do limitu karałoby lokal za rotację pracowników.
+    const wylaczony = await seedMember('waiter', 'Były pracownik');
+    await direct.staffMember.update({ where: { id: wylaczony.id }, data: { isActive: false } });
+
+    const czynne = await direct.staffMember.count({ where: { organizationId, isActive: true } });
+    await planZLimitem(czynne + 1);
+
+    const utworzony = await staffAdmin.create(owner, nowyKelner());
+    expect(utworzony.id).toBeTruthy();
+
+    await direct.staffMember.deleteMany({ where: { id: { in: [utworzony.id, wylaczony.id] } } });
+  });
+
+  it('bez abonamentu nie ogranicza niczego', async () => {
+    // Konta zakładane przez nas przed wprowadzeniem abonamentu nie mogą przestać
+    // działać dlatego, że nikt nie przypisał im planu.
+    await direct.subscription.deleteMany({ where: { organizationId } });
+
+    const utworzony = await staffAdmin.create(owner, nowyKelner());
+    expect(utworzony.id).toBeTruthy();
+
+    await direct.staffMember.delete({ where: { id: utworzony.id } });
+  });
+});

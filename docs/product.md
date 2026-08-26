@@ -64,9 +64,9 @@ Szczegółowy diagram sekwencji: patrz [architecture.md §6](architecture.md#6-p
 | Cyfrowe menu + QR | ✅ | ✅ | ✅ | ✅ |
 | Zamawianie do stolika | ❌ | ✅ | ✅ | ✅ |
 | Płatność u kelnera (tryb bez płatności online) | — | ✅ | ✅ | ✅ |
-| Płatność w aplikacji (BLIK/karta/Apple/Google Pay) | ❌ | ✅ | ✅ | ✅ |
+| Płatność w aplikacji (BLIK/karta/Apple/Google Pay) — **etap 2, zdjęte ze strony 2026-08-26** | ❌ | 🕐 | 🕐 | 🕐 |
 | Panel kuchni (KDS) + panel kelnera | ❌ | ✅ | ✅ | ✅ |
-| Konta personelu | 1 | 3 | bez limitu | bez limitu |
+| Konta personelu *(egzekwowane od 2026-08-26)* | 1 | 3 | bez limitu | bez limitu |
 | Oceny dań i feedback do managera | ❌ | podstawowe | ✅ pełne | ✅ pełne |
 | Analityka i raporty | ❌ | podstawowy pulpit | ✅ pełna + eksport | ✅ + API raportowe |
 | Podział rachunku | ❌ | „każdy za siebie” | ✅ pełny (po pozycjach, grupami, po równo) | ✅ pełny |

@@ -261,15 +261,17 @@ export default function LandingPage() {
         >
           <div className="wrap">
             <div className="section-head rv">
-              <p className="eyebrow">Ty decydujesz</p>
-              <h2>Płatność w aplikacji albo u kelnera — jak dotąd</h2>
+              <p className="eyebrow">Bez zmian u Ciebie</p>
+              <h2>Goście zamawiają z telefonu, płacą kelnerowi — jak dotąd</h2>
               <p className="lede">
                 Najczęstsza obawa restauratorów brzmi: „nie chcę zmieniać sposobu płacenia ani kasy
-                fiskalnej". Nie musisz. kelbroo działa w obu modelach, a przełączasz je jednym
-                ustawieniem.
+                fiskalnej". Nie musisz. kelbroo zmienia sposób <em>zamawiania</em>, a rozliczenie
+                zostawia dokładnie tam, gdzie jest dzisiaj.
               </p>
             </div>
-            <div className="modes rv">
+            {/* `.modes` to siatka dwukolumnowa — z jedną kartą (płatność
+                w aplikacji czeka na etap 2) zostawiałaby pustą połowę ekranu. */}
+            <div className="modes rv" style={{ gridTemplateColumns: 'minmax(0, 680px)' }}>
               <div className="mode feature">
                 <span className="mode-tag">Bez opłat transakcyjnych</span>
                 <h3>Płatność u kelnera</h3>
@@ -331,70 +333,10 @@ export default function LandingPage() {
                     Raport rozliczenia zmiany dla każdego kelnera
                   </li>
                 </ul>
-                <p className="mode-foot">Dla restauracji z pełną obsługą kelnerską</p>
-              </div>
-              <div className="mode">
-                <span className="mode-tag">Szybsza rotacja stolików</span>
-                <h3>Płatność w aplikacji</h3>
-                <p>
-                  Gość płaci od razu przy zamawianiu — BLIK, karta, Apple Pay lub Google Pay.
-                  Zamówienie trafia do kuchni dopiero po potwierdzeniu płatności.
+                <p className="mode-foot">
+                  Płatność gościa w aplikacji (BLIK, karta, Apple&nbsp;Pay) przygotowujemy — napisz,
+                  jeśli to dla Ciebie ważne.
                 </p>
-                <ul>
-                  <li>
-                    <svg
-                      viewBox="0 0 20 20"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M4 10.5l4 4 8-9" />
-                    </svg>
-                    Koniec z czekaniem na terminal i wydawaniem reszty
-                  </li>
-                  <li>
-                    <svg
-                      viewBox="0 0 20 20"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M4 10.5l4 4 8-9" />
-                    </svg>
-                    Napiwek proponowany przy płatności
-                  </li>
-                  <li>
-                    <svg
-                      viewBox="0 0 20 20"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M4 10.5l4 4 8-9" />
-                    </svg>
-                    Każdy przy stoliku płaci za siebie, bez dzielenia po fakcie
-                  </li>
-                  <li>
-                    <svg
-                      viewBox="0 0 20 20"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M4 10.5l4 4 8-9" />
-                    </svg>
-                    Brak nieopłaconych rachunków
-                  </li>
-                </ul>
-                <p className="mode-foot">Dla barów, food courtów i ogródków</p>
               </div>
             </div>
           </div>
@@ -637,9 +579,10 @@ export default function LandingPage() {
               <details>
                 <summary>Czy muszę przyjmować płatności online?</summary>
                 <p>
-                  Nie. Możesz włączyć tryb, w którym goście wyłącznie zamawiają, a płacą kelnerowi
-                  po posiłku — dokładnie jak dotychczas. Wtedy nie ponosisz żadnych opłat
-                  transakcyjnych i nic nie zmienia się w Twoim obiegu płatności.
+                  Nie — i dziś nawet nie możesz. Goście wyłącznie zamawiają z telefonu, a płacą
+                  kelnerowi po posiłku, dokładnie jak dotychczas. Nie ponosisz żadnych opłat
+                  transakcyjnych i nic nie zmienia się w Twoim obiegu płatności ani w kasie
+                  fiskalnej. Płatność gościa w aplikacji przygotowujemy.
                 </p>
               </details>
               <details>

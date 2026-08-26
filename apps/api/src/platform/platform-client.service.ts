@@ -10,7 +10,10 @@ import type { PlatformAdminContext } from './platform-auth.service';
  * liczy się cennik i checkout. Trzy kopie tej tabeli rozjechałyby się przy
  * pierwszej zmianie oferty, a rozjazd byłby widoczny dopiero u klienta.
  */
-const LIMITY: Record<SubscriptionPlan, { tableLimit: number; languageLimit: number }> = {
+const LIMITY: Record<
+  SubscriptionPlan,
+  { tableLimit: number; languageLimit: number; staffLimit: number }
+> = {
   menu: PLANS.menu.limits,
   starter: PLANS.starter.limits,
   pro: PLANS.pro.limits,
