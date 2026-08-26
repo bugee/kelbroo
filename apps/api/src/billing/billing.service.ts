@@ -6,7 +6,7 @@ import {
   NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
-import { PrismaClient, type Prisma } from '@prisma/client';
+import { Prisma, PrismaClient, type SubscriptionReminderKind } from '@prisma/client';
 import {
   PLANS,
   addPeriod,
@@ -123,6 +123,54 @@ export class BillingService {
         createdAt: true,
       },
     });
+  }
+
+  /**
+   * Abonamenty z terminem w zasięgu przypomnień, w poprzek najemców.
+   *
+   * Odsiewamy w zapytaniu dwie grupy, którym przypomnienie tylko zaszkodzi:
+   * konta zablokowane przez nas (blokadę zdejmuje człowiek, nie wpłata) oraz
+   * abonamenty odwołane.
+   */
+  async abonamentyDoPrzypomnienia(najwczesniej: Date, najpozniej: Date) {
+    return this.directory.subscription.findMany({
+      where: {
+        currentPeriodEnd: { gte: najwczesniej, lte: najpozniej },
+        status: { in: ['trialing', 'active', 'past_due'] },
+        organization: { blockedAt: null },
+      },
+      select: {
+        organizationId: true,
+        plan: true,
+        status: true,
+        currentPeriodEnd: true,
+        organization: { select: { name: true, billingEmail: true } },
+      },
+    });
+  }
+
+  /**
+   * Zapisuje wysyłkę. Zwraca `false`, gdy takie przypomnienie już poszło —
+   * rozstrzyga o tym unikalność w bazie, nie sprawdzenie w kodzie.
+   */
+  async oznaczPrzypomnienie(
+    organizationId: string,
+    kind: SubscriptionReminderKind,
+    periodEnd: Date,
+  ): Promise<boolean> {
+    try {
+      await this.prisma.withTenant(organizationId, (tx) =>
+        tx.subscriptionReminder.create({ data: { organizationId, kind, periodEnd } }),
+      );
+      return true;
+    } catch (przyczyna) {
+      // P2002 = naruszenie unikalności, czyli „już wysłane". Każdy inny błąd
+      // jest prawdziwy i ma polecieć wyżej.
+      if (przyczyna instanceof Prisma.PrismaClientKnownRequestError && przyczyna.code === 'P2002') {
+        return false;
+      }
+      throw przyczyna;
+    }
   }
 
   /** Zamyka zamówienie, którego klient nie dokończył. */

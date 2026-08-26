@@ -838,8 +838,9 @@ danych nabywcy.
   księgowym. Faktura VAT przy sprzedaży B2B jest obowiązkowa, nie opcjonalna —
   a termin liczy się od sprzedaży, nie od tego, kiedy zajrzysz do skrzynki.
 - **Abonament nie odnawia się sam.** Klient płaci za okres i po jego końcu panel
-  przestaje przyjmować zamówienia. Przypomnień jeszcze nie ma, więc do czasu ich
-  wdrożenia terminy trzeba pilnować z zaplecza (lista klientów pokazuje „aktywny do").
+  przestaje przyjmować zamówienia. Klient dostaje o tym trzy wiadomości — trzy dni
+  przed, w dniu wygaśnięcia i trzy dni po — ale **kliknięcia w nie musi dokonać sam**.
+  Wysyłka wymaga działającego SMTP; bez niego przypomnienia lądują wyłącznie w logu.
 - **Zwroty robisz w panelu PayU.** kelbroo ich nie zna i nie cofnie po nich
   abonamentu — trzeba go skrócić ręcznie z zaplecza.
 

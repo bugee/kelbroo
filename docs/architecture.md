@@ -502,8 +502,21 @@ naraz; bez tej bramki test kończy się dwoma zaksięgowaniami.
 uruchamiałaby przegląd osobno — podwójnego księgowania to nie spowoduje, ale wymaga
 blokady w Redisie.
 
-**Czego jeszcze nie ma:** automatycznego odnawiania (token karty), przypomnień przed
-końcem okresu i ponawiania nieudanych płatności. Zakup jednorazowy jest warunkiem
+**Przypomnienia o końcu okresu.** Trzy wiadomości na okres: trzy dni przed, w dniu
+wygaśnięcia i trzy dni po. Idempotencję daje **unikalność w bazie** — `(organizacja,
+rodzaj, koniec_okresu)` — a nie warunek w kodzie, więc ta sama wiadomość nie wyjdzie
+dwa razy nawet przy dwóch instancjach. Klucz obejmuje datę końca okresu, więc po
+opłaceniu trójka ma prawo pójść od nowa dla nowego okresu.
+
+Zadanie wysyła **jedno przypomnienie dziennie, to najdalej posunięte z należnych**:
+po kilku dniach przestoju nie nadrabia zaległości serią wiadomości, bo „zostały trzy
+dni" wysłane tydzień po terminie mówiłoby klientowi nieprawdę o stanie konta. Konta
+zablokowane administracyjnie są pomijane (blokadę zdejmuje człowiek, nie wpłata),
+podobnie jak wygasłe dawniej niż 30 dni — inaczej pierwsze uruchomienie rozesłałoby
+win-back do całego archiwum.
+
+**Czego jeszcze nie ma:** automatycznego odnawiania (token karty) i ponawiania
+nieudanych płatności. Zakup jednorazowy jest warunkiem
 koniecznym dla każdej z tych rzeczy, więc nic z tej pracy nie przepadnie.
 
 ## 12. Fiskalizacja i paragony (Polska)

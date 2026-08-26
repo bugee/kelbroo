@@ -141,12 +141,12 @@ do `#rejestracja`, którego nie ma.
       `kontakt@kelbroo.com` tylko wtedy, gdy wpłata została odzyskana — czyli gdy
       powiadomienia naprawdę nie działają. Podwójnemu księgowaniu zapobiega bramka
       w bazie, pokryta testem dwóch równoczesnych prób.
-- [ ] **Przypomnienia o kończącym się okresie — priorytet wysoki, następne w kolejce.**
-      3 dni przed, w dniu końca, 3 dni po. Bez nich zakup jednorazowy zamienia się
-      w **cichą rezygnację**: klient nie dostaje żadnego sygnału, dopóki panel nie
-      przestanie przyjmować zamówień — a wtedy dowiaduje się o tym od kelnera
-      w środku serwisu. To jedyna rzecz, która dziś dzieli działającą sprzedaż
-      od utrzymania klienta.
+- [x] **Przypomnienia o kończącym się okresie** (2026-08-26) — trzy wiadomości na okres:
+      3 dni przed, w dniu wygaśnięcia i 3 dni po. Dotyczy tak samo okresu próbnego,
+      który dotąd kończył się bez jednego sygnału poza paskiem w panelu. Jedno
+      przypomnienie dziennie, to najdalej posunięte z należnych — po przestoju zadanie
+      nie nadrabia zaległości serią. Powtórce zapobiega unikalność w bazie, nie warunek
+      w kodzie. Pomijamy konta zablokowane i wygasłe dawniej niż 30 dni.
 - [ ] **Automatyczne odnawianie z karty — priorytet średni.** Token PayU, obciążanie
       bez udziału klienta. Wymaga włączenia „płatności automatycznych" na POS-ie
       i wyklucza BLIK, więc wchodzi jako **wybór klienta obok** płatności

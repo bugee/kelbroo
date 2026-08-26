@@ -294,6 +294,7 @@ model Organization {
 
   subscription       Subscription?
   subscriptionOrders SubscriptionOrder[]
+  reminders          SubscriptionReminder[]
   restaurants        Restaurant[]
   staff              StaffMember[]
   auditLogs          AuditLog[]
@@ -318,6 +319,38 @@ model Subscription {
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@map("subscription")
+}
+
+/// Które przypomnienie o końcu okresu zostało już wysłane.
+enum SubscriptionReminderKind {
+  /// Na trzy dni przed końcem — jeszcze wszystko działa.
+  before
+  /// Po upływie terminu — zamawianie jest wstrzymane.
+  expired
+  /// Trzy dni po terminie — ostatnia próba odzyskania klienta.
+  winback
+}
+
+/// Ślad po wysłanym przypomnieniu.
+///
+/// Osobna tabela, nie kolumna na abonamencie, bo klucz musi obejmować **datę
+/// końca okresu**: po opłaceniu termin się przesuwa i cała trójka przypomnień
+/// ma prawo wysłać się od nowa dla nowego okresu.
+///
+/// Unikalność załatwia idempotencję lepiej niż jakikolwiek warunek w kodzie —
+/// druga próba wysyłki tego samego przypomnienia odbija się o bazę, także gdy
+/// zadanie uruchomi się na dwóch instancjach naraz.
+model SubscriptionReminder {
+  id             String                   @id @default(uuid()) @db.Uuid
+  organizationId String                   @map("organization_id") @db.Uuid
+  kind           SubscriptionReminderKind
+  periodEnd      DateTime                 @map("period_end")
+  sentAt         DateTime                 @default(now()) @map("sent_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, kind, periodEnd])
+  @@map("subscription_reminder")
 }
 
 /// Status zamówienia abonamentu. Odwzorowuje stany PayU, bo tłumaczenie ich
