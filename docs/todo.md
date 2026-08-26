@@ -485,7 +485,10 @@ Blokują zadania powyżej — wymagają twojej decyzji, nie kodu.
       Do rozważenia w Fazie 2, jeśli restauracje zgłoszą potrzebę: przełącznik zawężający
       widok do własnych pozycji.
 - [ ] **Kto pisze dokumenty prawne** — regulamin i polityka prywatności wymagają prawnika,
-      nie szablonu z internetu.
+      nie szablonu z internetu. Materiał dla niego jest gotowy i samodzielny:
+      [docs/legal/pytania-do-prawnika.md](legal/pytania-do-prawnika.md) — pięć zapisów
+      rozjeżdżających się ze stanem faktycznym, siedem decyzji do podjęcia i komplet
+      faktów o systemie. Najpilniejsza pozycja dotyczy PayU w polityce prywatności.
 - [x] **Czy zaplecze to czwarty system** — tak, osobna aplikacja `apps/web-backoffice`
       pod `admin.kelbroo.com` (2026-08-24). Powód: inna publiczność, inny model
       tożsamości i inny zakres dostępu do danych niż w panelu restauracji.

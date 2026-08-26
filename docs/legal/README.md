@@ -141,6 +141,12 @@ przez gości zostaje wyłączone, ale **dane restauracji nie są kasowane**.
 
 ## 7. Pozostałe pytania otwarte
 
+> **Do prawnika idzie osobny dokument:** [pytania-do-prawnika.md](pytania-do-prawnika.md).
+> Zawiera wyciąg z tej sekcji i z §8, bez części technicznej — samodzielny, więc
+> nie trzeba do niego czytać niczego innego. Ten plik zostaje rejestrem
+> inżynierskim: co dokument obiecuje i co kod robi naprawdę.
+
+
 1. Czy plan Menu (0 zł) w ogóle wchodzi do oferty — wpływa na zakres regulaminu.
 2. Czy restauracja może wypowiedzieć umowę w dowolnym momencie ze skutkiem na koniec
    okresu rozliczeniowego, czy obowiązuje okres wypowiedzenia.
