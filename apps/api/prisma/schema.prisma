@@ -140,6 +140,7 @@ enum OrderEventType {
   modifier_changed
   note_changed
   item_reassigned
+  table_moved
   confirmed
   rejected
   status_changed

@@ -150,6 +150,11 @@ class BlockDto {
   reason?: string;
 }
 
+class MoveTableDto {
+  @IsUUID()
+  tableId!: string;
+}
+
 class AccessDecisionDto {
   @IsIn(['approve', 'reject'])
   decision!: 'approve' | 'reject';
@@ -377,6 +382,21 @@ export class StaffController {
   @Roles('owner', 'manager', 'waiter')
   openTable(@Staff() staff: StaffContext, @Param('id', ParseUUIDPipe) id: string) {
     return this.lifecycle.openTable(staff, id);
+  }
+
+  /**
+   * Goście się przesiadają — wizyta idzie za nimi, stary stolik się zwalnia.
+   *
+   * Kuchni to nie dotyczy: nie stoi przy stolikach i nie wie, kto gdzie usiadł.
+   */
+  @Post('sessions/:id/move')
+  @Roles('owner', 'manager', 'waiter')
+  moveSession(
+    @Staff() staff: StaffContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: MoveTableDto,
+  ) {
+    return this.lifecycle.moveSession(staff, id, dto.tableId);
   }
 
   /** Ktoś kliknął kod przez przypadek i wyszedł. Pozycje na rachunku zostają. */

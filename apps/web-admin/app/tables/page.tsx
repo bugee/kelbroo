@@ -12,6 +12,7 @@ import {
   money,
   PAYMENT_LABEL,
   decidePendingGuest,
+  moveSession,
   openTable,
   removeParticipant,
   resetTable,
@@ -28,6 +29,8 @@ function Room() {
   const { data: tables, error, refresh } = useLiveData(load);
   const [busy, setBusy] = useState<string | null>(null);
   const [failure, setFailure] = useState<string | null>(null);
+  // Stolik, przy którym kelner wybiera właśnie nowe miejsce dla gości.
+  const [przesadzany, setPrzesadzany] = useState<string | null>(null);
 
   if (error) return <p className="text-[var(--orange)]">{error}</p>;
   if (!tables) return <p className="mono text-sm text-[var(--muted)]">Wczytuję…</p>;
@@ -56,8 +59,13 @@ function Room() {
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {tables.map((table) => {
+          // Blokada nie liczy się jako zajętość: trwa dwie minuty po rozliczeniu
+          // i znaczy „sprzątamy". Przesadzenie gości zdejmuje ją świadomie.
           const session = table.session;
           const zajety = busy === table.tableId;
+          const wolne = tables.filter(
+            (cel) => cel.session === null && cel.tableId !== table.tableId,
+          );
 
           return (
             <article
@@ -206,6 +214,51 @@ function Room() {
                       </Link>
                     )}
                   </div>
+
+                  {/*
+                    Przesiadka. Goście proszą o nią przy każdym serwisie — zrobiło
+                    się głośno, świeci słońce, dosiadła się piątka znajomych.
+                    Wybór jest listą **wolnych** stolików, bo tylko takie wchodzą
+                    w grę, a kelner nie ma ich pamiętać.
+                  */}
+                  {przesadzany === table.tableId ? (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <select
+                        defaultValue=""
+                        onChange={(zdarzenie) => {
+                          const docelowy = zdarzenie.target.value;
+                          if (!docelowy) return;
+                          setPrzesadzany(null);
+                          void act(table.tableId, () => moveSession(session.id, docelowy));
+                        }}
+                        className="mono min-h-11 flex-1 rounded-[var(--radius-control)] border border-[var(--line-strong)] bg-[var(--surface)] px-2 text-sm"
+                      >
+                        <option value="">dokąd przesadzić…</option>
+                        {wolne.map((cel) => (
+                          <option key={cel.tableId} value={cel.tableId}>
+                            {cel.tableLabel}
+                            {cel.zone ? ` · ${cel.zone}` : ''}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        type="button"
+                        onClick={() => setPrzesadzany(null)}
+                        className="min-h-11 px-3 text-sm text-[var(--muted)] underline"
+                      >
+                        Anuluj
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={zajety || wolne.length === 0}
+                      onClick={() => setPrzesadzany(table.tableId)}
+                      className="mt-2 min-h-11 text-sm text-[var(--teal)] underline disabled:opacity-50"
+                    >
+                      {wolne.length === 0 ? 'Brak wolnych stolików' : 'Przesadź gości'}
+                    </button>
+                  )}
 
                   <div className="mt-2 flex gap-2">
                     <button

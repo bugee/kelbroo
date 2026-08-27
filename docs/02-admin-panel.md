@@ -139,6 +139,7 @@ Ekran zaprojektowany pod tablet w orientacji poziomej, obsługę w rękawiczkach
   - Akcje: `Potwierdź` (→ zamówienie idzie na kuchnię), `Edytuj i potwierdź` (korekta ilości/pozycji po rozmowie z gościem), `Odrzuć` z obowiązkowym powodem.
   - Licznik czasu oczekiwania — gość widzi w aplikacji „czeka na potwierdzenie" i każda minuta zwłoki to zła obsługa. Alert po przekroczeniu progu (domyślnie 2 min).
 - **Otwieranie wizyty przy stoliku** (gdy `table_activation_required`) — akcja `Otwórz stolik`, opcjonalnie z liczbą gości.
+- **Przesadzenie gości** — akcja `Przesadź gości` przenosi całą wizytę pod inny wolny stolik: rachunek, uczestnicy, podział i złożone zamówienia. Przenosi się **wizyta**, bo to ona jest jednostką rachunku; numer stolika przepisuje się przy okazji na zamówieniach, bo dla kuchni jest adresem, pod który idzie talerz, a nie faktem historycznym. Stary stolik zwalnia się natychmiast, razem ze zdjęciem ewentualnej blokady. Odmawiamy, gdy przy docelowym stoliku trwa inna wizyta — łączenie rachunków to osobna decyzja. Ślad zostaje w `OrderEvent` (`table_moved`) i w dzienniku (`table.moved`).
 - Sekcja "Do wydania" — zamówienia gotowe w kuchni, z numerem stolika; akcja `Wydane`.
 - **Przywołania gości** — powiadomienie z podanym powodem (pomoc / rachunek / woda) z akcją `Przyjęte` i `Obsłużone`. Przywołanie z powodem „rachunek" podbija stolik na górę listy.
 - Podgląd szczegółów wizyty z listą uczestników i przypisaniem pozycji (§3.7a).

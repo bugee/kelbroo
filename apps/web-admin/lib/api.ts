@@ -251,6 +251,25 @@ export const openTable = (tableId: string) =>
     { method: 'POST' },
   );
 
+/**
+ * Przesadzenie gości przy inny stolik.
+ *
+ * Idzie **wizyta**, nie zamówienia: numer rachunku, uczestnicy i podział zostają
+ * nietknięte, a stary stolik zwalnia się od razu. Numer stolika przepisuje się
+ * przy okazji na bonach — dla kuchni to adres, pod który niesie talerz.
+ */
+export const moveSession = (sessionId: string, tableId: string) =>
+  authorized<{
+    sessionId: string;
+    sessionNumber: number;
+    from: { id: string; label: string } | null;
+    to: { id: string; label: string };
+    movedOrders: number;
+  }>(`/staff/sessions/${sessionId}/move`, {
+    method: 'POST',
+    body: JSON.stringify({ tableId }),
+  });
+
 export const removeParticipant = (sessionId: string, participantId: string) =>
   authorized<{ sessionId: string }>(`/staff/sessions/${sessionId}/participants/${participantId}`, {
     method: 'DELETE',
@@ -626,6 +645,9 @@ export function connectRealtime(onChange: () => void): { close: () => void } | n
   socket.on('order.changed', onChange);
   // Wezwania kelnera lecą tym samym pokojem lokalu.
   socket.on('waiter.called', onChange);
+  // Przesiadka zmienia salę u wszystkich naraz: stolik znika z jednego kafla
+  // i pojawia się na drugim. Kelner obok nie ma powodu tego odświeżać ręcznie.
+  socket.on('table.moved', onChange);
   // Gość czekający na wpuszczenie do stolika — nie prosi obsługi o nic, ale
   // stoi w miejscu, więc panel ma go zobaczyć bez odświeżania strony.
   socket.on('guest.waiting', onChange);

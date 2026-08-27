@@ -8,8 +8,13 @@ import { GuestSessionService } from '../guest/guest-session.service';
 export const sessionRoom = (tableSessionId: string) => `session:${tableSessionId}`;
 
 export interface GuestVisitEvent {
-  /** Co się zmieniło: zamówienia, wezwanie kelnera albo wstęp do wizyty. */
-  kind: 'orders' | 'call' | 'access';
+  /**
+   * Co się zmieniło: zamówienia, wezwanie kelnera, wstęp do wizyty albo stolik.
+   *
+   * `table` przychodzi po przesadzeniu gości. Pokój wizyty się przy tym nie
+   * zmienia — telefon zostaje podłączony i tylko dociąga nowy numer stolika.
+   */
+  kind: 'orders' | 'call' | 'access' | 'table';
 }
 
 /**

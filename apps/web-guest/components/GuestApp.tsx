@@ -13,6 +13,7 @@ import {
   fetchOrders,
   formatMoney,
   lineTotal,
+  moveToken,
   requestBill,
   requestTableOpen,
   submitOrder,
@@ -136,7 +137,11 @@ export function GuestApp({ qrToken }: { qrToken: string }) {
         // listę, ale przy stoliku na kilka telefonów to kilka żądań na każde
         // zdarzenie — bez powodu i akurat w chwili, gdy dzieje się najwięcej.
         if (entry?.participant.isHost) void refreshPending();
-      } else setCallTick((tick) => tick + 1);
+      }
+      // Przesadzenie zmienia numer stolika w nagłówku i na rachunku. Pokój
+      // wizyty zostaje ten sam, więc wystarczy wczytać ją od nowa.
+      else if (kind === 'table') void load();
+      else setCallTick((tick) => tick + 1);
     });
     return () => channel?.close();
   }, [
@@ -173,6 +178,13 @@ export function GuestApp({ qrToken }: { qrToken: string }) {
 
   if (entry.session.blockedReason === 'visit_finished') {
     return <FinishedVisit qrToken={qrToken} />;
+  }
+
+  // Gościa przesadzono, a on wrócił pod stary adres. Przechodzimy pod nowy
+  // zamiast zakładać drugą wizytę — inaczej zostałby z pustym rachunkiem,
+  // a jego prawdziwy leżałby dwa stoliki dalej.
+  if (entry.movedTo) {
+    return <MovedVisit target={entry.movedTo} />;
   }
 
   const currency = entry.restaurant.currency;
@@ -1122,6 +1134,35 @@ function FinishedVisit({ qrToken }: { qrToken: string }) {
       >
         Zaczynamy od nowa przy tym stoliku
       </button>
+    </Centered>
+  );
+}
+
+/**
+ * Gość wrócił pod stary adres po przesadzeniu.
+ *
+ * Ekran jest przystankiem, nie decyzją: przenosimy token pod nowy adres i sami
+ * tam przechodzimy. Gość ma wiedzieć, co się stało — inaczej numer stolika
+ * zmieniłby mu się na ekranie bez wyjaśnienia — ale nie ma tu nic do klikania,
+ * bo nie ma innego sensownego wyjścia.
+ */
+function MovedVisit({ target }: { target: { qrToken: string; label: string } }) {
+  const [qrToken] = useState(() => window.location.pathname.split('/').pop() ?? '');
+
+  useEffect(() => {
+    moveToken(qrToken, target.qrToken);
+    // `replace`, nie `push`: stary adres nie ma prawa zostać w historii cofania,
+    // bo powrót do niego wylądowałby dokładnie w tym samym miejscu.
+    window.location.replace(`/t/${target.qrToken}`);
+  }, [qrToken, target.qrToken]);
+
+  return (
+    <Centered>
+      <h1 className="text-xl">Przesiadka</h1>
+      <p className="mt-2 text-[var(--muted)]">
+        Obsługa przeniosła Wasz rachunek do stolika <strong>{target.label}</strong>. Za chwilę
+        pokażemy go tutaj.
+      </p>
     </Centered>
   );
 }

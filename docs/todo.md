@@ -102,6 +102,33 @@ Modele są w schemacie od pierwszej migracji i nie mają ani jednego odwołania 
       **Awatara gość nie wybiera** i na razie nie będzie: znak rozpoznawczy służy do
       wypowiedzenia kelnerowi („żółty samochodzik") i musi zostać niepowtarzalny przy
       stoliku — wybór gościa psułby tę gwarancję, nic nie dodając.
+- [x] **Przesadzenie gości przy inny stolik** (2026-08-27) — `Przesadź gości` na ekranie
+      Sala przenosi całą wizytę pod wybrany **wolny** stolik. Dotąd jedyną drogą było
+      rozliczenie rachunku i otwarcie nowego, czyli rozbicie jednej wizyty na dwie,
+      z dwoma bonami w kuchni i dwoma paragonami.
+
+      **Przenosi się wizyta, nie zamówienia** — wizyta jest jednostką rachunku, więc
+      numer rachunku, uczestnicy, podział i historia zostają nietknięte. Numer stolika
+      przepisujemy jednak **także na zamówieniach**, wbrew regule o nietykalnych
+      snapshotach: cena w pozycji to fakt historyczny, a numer stolika to **adres, pod
+      który kucharz niesie talerz**. Bon ze starym numerem oznaczałby jedzenie zaniesione
+      pod stolik, przy którym siedzą już inni ludzie. Ślad zostaje w `OrderEvent`
+      (nowa wartość `table_moved`), którego nigdy nie nadpisujemy.
+
+      **Najtrudniejsza część jest po stronie gościa.** Token gościa leży w pamięci
+      przeglądarki **pod kluczem kodu QR**, a wizyta ma teraz inny kod. Gość, który
+      odświeży kartę sprzed przesiadki, trafiłby na wolny już stolik i dostałby tam nową
+      wizytę z pustym rachunkiem — podczas gdy jego prawdziwy leżałby dwa stoliki dalej.
+      Wejście rozpoznaje więc token przeniesionej wizyty i odsyła pod nowy adres, a
+      aplikacja przenosi token pod nowy klucz. Warunek jest **wąski celowo**: sprawdzamy
+      to wyłącznie wtedy, gdy przy skanowanym stoliku nie ma żadnej wizyty — przy zajętym
+      skan wciąż znaczy „dosiadam się tutaj" i przysiadka do znajomych działa jak wcześniej.
+
+      Odmawiamy przeniesienia na stolik zajęty (łączenie rachunków to osobna decyzja)
+      i na wyłączony z użycia. Blokada **nie** blokuje: trwa dwie minuty po rozliczeniu
+      i znaczy „sprzątamy", a kelner sadzający gości przy właśnie zwolnionym stole wie
+      lepiej niż licznik. Stary stolik zwalnia się natychmiast, razem ze zdjęciem blokady —
+      to jest sens tej operacji.
 - [x] **Powrót do wizyty bez ponownego skanowania** (2026-08-27) — strona startowa
       aplikacji gościa sprawdza zapamiętane wizyty i przerzuca do menu, jeśli rachunek
       jest wciąż otwarty. Gość odzyskuje swój nick, znak i historię zamówień.
@@ -596,6 +623,20 @@ Do rozstrzygnięcia **przed** napisaniem pierwszego ekranu:
 
 Z [product.md §7](product.md#7-wymagania-niefunkcjonalne-dotyczą-wszystkich-trzech-systemów).
 
+- [x] **Test e2e przesiadki** (2026-08-27) — `table-move.spec.ts`. Funkcja rozciąga się
+      na trzy aplikacje naraz, a jej najtrudniejsza część dzieje się w `localStorage`
+      przeglądarki, gdzie test jednostkowy nie sięga.
+
+      **Pierwsza wersja nie miała zębów.** Sprawdzała, że gość po powrocie widzi swoje
+      zamówienie — a to widać także wtedy, gdy zostanie dopisany jako **nowa osoba** do
+      tego samego rachunku, bo rachunek jest wspólny. Test przechodził z wyłączonym
+      przenoszeniem tokenu. Rozstrzyga dopiero liczba gości przy stoliku, widoczna
+      w panelu: bez przeniesienia tokenu jest ich dwóch zamiast jednego.
+
+      Druga pułapka była w samym teście: kafel stolika wskazywany po dowolnym tekście
+      trafiał **w dwa kafle naraz**, bo rozwinięta lista przesiadki niesie nazwy wolnych
+      stolików jako opcje. Wychodziło to wyłącznie przy pełnym przebiegu, pod obciążeniem —
+      w pojedynczym test przechodził. Kafel wskazujemy teraz po nagłówku.
 - [x] **Testy e2e ścieżki gościa: zamawianie** (2026-08-27) — `guest-ordering.spec.ts`:
       koszyk z ilością i notatką, złożenie zamówienia, kolejka potwierdzeń, ekran kuchni
       po obu stronach bramki, tryb bez potwierdzania i rozliczenie stolika przez kelnera.

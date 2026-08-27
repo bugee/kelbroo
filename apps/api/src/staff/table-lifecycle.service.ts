@@ -11,6 +11,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { DailyCounterService } from '../common/daily-counter.service';
 import { businessDateFor, toDateColumn } from '../common/business-date';
 import { GuestGateway } from '../realtime/guest.gateway';
+import { OrdersGateway } from '../realtime/orders.gateway';
 import type { StaffContext } from '../auth/auth.types';
 
 /**
@@ -33,6 +34,7 @@ export class TableLifecycleService {
     private readonly prisma: PrismaService,
     private readonly guests: GuestGateway,
     private readonly counters: DailyCounterService,
+    private readonly orders: OrdersGateway,
   ) {}
 
   private restaurantOf(staff: StaffContext): string {
@@ -263,6 +265,158 @@ export class TableLifecycleService {
         blockedUntil: null,
         sessionId: session.id,
         sessionNumber: session.sessionNumber,
+      };
+    });
+  }
+
+  /**
+   * Przesadzenie gości przy innym stoliku.
+   *
+   * Goście proszą o to przy każdym serwisie: zrobiło się za głośno, świeci słońce,
+   * dosiadła się piątka znajomych. Dotąd jedyną drogą było rozliczenie rachunku
+   * i otwarcie nowego — czyli rozbicie jednej wizyty na dwie, z dwoma bonami
+   * w kuchni i dwoma paragonami.
+   *
+   * **Przenosi się wizyta, nie zamówienia.** Wizyta jest jednostką rachunku
+   * (CLAUDE.md), więc wystarczy przepiąć ją pod nowy stolik — numer rachunku,
+   * uczestnicy, podział i historia zostają nietknięte.
+   *
+   * Numer stolika **przepisujemy też na zamówieniach**, choć zwykle snapshotów
+   * nie ruszamy. Różnica jest w tym, czym ten numer jest: cena w pozycji to fakt
+   * historyczny, a numer stolika to **adres, pod który kucharz niesie talerz**.
+   * Zamówienie ze starym numerem oznaczałoby jedzenie zaniesione pod stolik,
+   * przy którym siedzą już inni ludzie. Ślad po zmianie zostaje w `OrderEvent`,
+   * którego nigdy nie nadpisujemy.
+   */
+  async moveSession(staff: StaffContext, sessionId: string, targetTableId: string) {
+    return this.prisma.withTenant(staff.organizationId, async (tx) => {
+      const restaurantId = this.restaurantOf(staff);
+
+      const session = await tx.tableSession.findFirst({
+        where: {
+          id: sessionId,
+          restaurantId,
+          status: { in: ['open', 'awaiting_settlement'] },
+        },
+      });
+      if (!session) {
+        throw new NotFoundException('Nie ma otwartej wizyty do przeniesienia.');
+      }
+
+      if (session.tableId === targetTableId) {
+        throw new ConflictException('Goście już siedzą przy tym stoliku.');
+      }
+
+      const [skad, dokad] = await Promise.all([
+        tx.table.findFirst({ where: { id: session.tableId, restaurantId } }),
+        tx.table.findFirst({ where: { id: targetTableId, restaurantId } }),
+      ]);
+      if (!dokad) {
+        throw new NotFoundException('Nie ma takiego stolika.');
+      }
+      if (!dokad.isActive) {
+        throw new ConflictException(`Stolik ${dokad.label} jest wyłączony z użycia.`);
+      }
+
+      // Zajętość liczymy z wizyt, nie z blokady: blokada trwa dwie minuty po
+      // rozliczeniu i znaczy „sprzątamy", a nie „siedzą tu ludzie". Przesadzenie
+      // gości na świeżo zwolniony stolik jest w porządku i blokadę zdejmujemy.
+      const zajety = await tx.tableSession.findFirst({
+        where: { tableId: dokad.id, status: { in: ['open', 'awaiting_settlement'] } },
+        select: { sessionNumber: true },
+      });
+      if (zajety) {
+        throw new ConflictException(
+          `Stolik ${dokad.label} jest zajęty — trwa tam wizyta #${zajety.sessionNumber}.`,
+        );
+      }
+
+      const teraz = new Date();
+
+      await tx.tableSession.update({
+        where: { id: session.id },
+        data: { tableId: dokad.id, lastSeenAt: teraz },
+      });
+
+      // Trzy tabele niosą numer stolika osobno, dla szybkości list. Pominięcie
+      // którejkolwiek zostawia gościa albo bon pod starym adresem.
+      await tx.guestSession.updateMany({
+        where: { tableSessionId: session.id },
+        data: { tableId: dokad.id },
+      });
+      await tx.waiterCall.updateMany({
+        where: { tableSessionId: session.id, status: { in: ['open', 'acknowledged'] } },
+        data: { tableId: dokad.id },
+      });
+
+      const orders = await tx.order.findMany({
+        where: { tableSessionId: session.id },
+        select: { id: true, status: true },
+      });
+      await tx.order.updateMany({
+        where: { tableSessionId: session.id },
+        data: { tableId: dokad.id },
+      });
+
+      // Historię dopisujemy wyłącznie zamówieniom żywym. Bon anulowany sprzed
+      // godziny nikogo już nie prowadzi do stolika, a wpis przy nim zaśmieciłby
+      // historię, w której szuka się przyczyn.
+      for (const order of orders) {
+        if (isTerminal(order.status)) continue;
+        await tx.orderEvent.create({
+          data: {
+            organizationId: staff.organizationId,
+            orderId: order.id,
+            type: 'table_moved',
+            actorType: 'staff',
+            actorStaffId: staff.staffId,
+            before: {
+              tableId: session.tableId,
+              label: skad?.label ?? null,
+            } as Prisma.InputJsonValue,
+            after: { tableId: dokad.id, label: dokad.label } as Prisma.InputJsonValue,
+          },
+        });
+      }
+
+      // Stolik, z którego wstali, jest wolny od razu — także wtedy, gdy wisiała
+      // na nim blokada. To jest sens przesadzenia: zwolnić miejsce.
+      if (skad) {
+        await tx.table.update({ where: { id: skad.id }, data: { blockedUntil: null } });
+      }
+      await tx.table.update({ where: { id: dokad.id }, data: { blockedUntil: null } });
+
+      await tx.auditLog.create({
+        data: {
+          organizationId: staff.organizationId,
+          actorStaffId: staff.staffId,
+          action: 'table.moved',
+          entity: 'TableSession',
+          entityId: session.id,
+          payload: {
+            from: { id: session.tableId, label: skad?.label ?? null },
+            to: { id: dokad.id, label: dokad.label },
+            orders: orders.length,
+          } as Prisma.InputJsonValue,
+        },
+      });
+
+      // Telefony gości wiszą na pokoju wizyty, a ten się nie zmienia — dostaną
+      // sygnał i przeczytają nowy numer stolika same.
+      this.guests.publish(session.id, { kind: 'table' });
+      this.orders.publishTableMoved(restaurantId, {
+        tableSessionId: session.id,
+        sessionNumber: session.sessionNumber,
+        fromLabel: skad?.label ?? null,
+        toLabel: dokad.label,
+      });
+
+      return {
+        sessionId: session.id,
+        sessionNumber: session.sessionNumber,
+        from: skad ? { id: skad.id, label: skad.label } : null,
+        to: { id: dokad.id, label: dokad.label },
+        movedOrders: orders.length,
       };
     });
   }

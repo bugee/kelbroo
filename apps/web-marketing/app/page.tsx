@@ -563,6 +563,28 @@ export default async function LandingPage() {
                   co dodał gość, a co kelner.
                 </p>
               </div>
+              <div className="feat">
+                <div className="feat-ico">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <rect x="2" y="5" width="7" height="7" rx="1" />
+                    <rect x="15" y="12" width="7" height="7" rx="1" />
+                    <path d="M9 8.5h7a2 2 0 0 1 2 2V12" />
+                    <path d="m16 10.5 2 2 2-2" />
+                  </svg>
+                </div>
+                <h3>Przesiadka bez rozliczania</h3>
+                <p>
+                  Goście przenoszą się przy inny stolik jednym kliknięciem — rachunek, zamówienia i
+                  bony w kuchni idą za nimi. Stary stolik zwalnia się od razu.
+                </p>
+              </div>
             </div>
           </div>
         </section>

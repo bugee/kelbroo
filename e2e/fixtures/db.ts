@@ -253,6 +253,58 @@ export async function seedMenuAndTable(): Promise<{
 }
 
 /**
+ * Sam stolik, bez menu — cel przesiadki.
+ *
+ * Osobno od `seedMenuAndTable`, bo drugi stolik nie potrzebuje własnej karty:
+ * menu jest wspólne dla restauracji, a duplikat kategorii tylko zaśmiecałby
+ * listę widoczną w innych testach.
+ */
+export async function seedTable(): Promise<{
+  tableId: string;
+  tableLabel: string;
+  qrToken: string;
+  cleanup: () => Promise<void>;
+}> {
+  const tableLabel = `Stolik ${randomUUID().slice(0, 4)}`;
+  const qrToken = randomUUID().replace(/-/g, '');
+  const tableId = randomUUID();
+
+  return withClient(async (client) => {
+    const { rows } = await client.query<{ id: string; organization_id: string }>(
+      'SELECT id, organization_id FROM restaurant WHERE slug = $1',
+      [E2E_SLUG],
+    );
+    const restaurant = rows[0];
+    if (!restaurant) {
+      throw new Error(`Brak restauracji testowej (${E2E_SLUG}).`);
+    }
+
+    await client.query(
+      `INSERT INTO restaurant_table (id, organization_id, restaurant_id, label, qr_token, updated_at)
+       VALUES ($1, $2, $3, $4, $5, now())`,
+      [tableId, restaurant.organization_id, restaurant.id, tableLabel, qrToken],
+    );
+
+    return {
+      tableId,
+      tableLabel,
+      qrToken,
+      cleanup: async () => {
+        await withClient(async (inner) => {
+          await inner.query(
+            `DELETE FROM payment
+              WHERE table_session_id IN (SELECT id FROM table_session WHERE table_id = $1)`,
+            [tableId],
+          );
+          await inner.query('DELETE FROM table_session WHERE table_id = $1', [tableId]);
+          await inner.query('DELETE FROM restaurant_table WHERE id = $1', [tableId]);
+        });
+      },
+    };
+  });
+}
+
+/**
  * Wizyta z dwoma gośćmi i rachunkiem — punkt wyjścia do testów podziału.
  *
  * Zakładana wprost w bazie, bo przejście całej ścieżki gościa (skan QR, wybór

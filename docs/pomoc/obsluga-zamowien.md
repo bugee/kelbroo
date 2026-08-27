@@ -52,8 +52,34 @@ Dostępne działania:
   i dania.
 - **Gotówka** / **Terminal** — rozliczenie wizyty. Wybór zapisuje sposób zapłaty
   w historii.
+- **Przesadź gości** — goście przenoszą się przy inny stolik (patrz niżej).
 - **Zablokuj na 2 min** — chwilowo wstrzymuje nowe zamówienia z tego stolika.
 - **Sprzątnij stolik** — zamyka wizytę i przygotowuje stolik na kolejnych gości.
+
+## Przesiadka gości
+
+Zrobiło się głośno, świeci słońce, dosiadła się piątka znajomych — **Przesadź
+gości** przenosi całą wizytę przy inny stolik. Wybierasz go z listy wolnych.
+
+Idzie za nimi wszystko: rachunek z dotychczasowym numerem, wszyscy goście,
+złożone zamówienia i podział rachunku, jeśli był już ustawiony. **Nie trzeba nic
+rozliczać ani otwierać od nowa.**
+
+Zamówienia będące w kuchni dostają nowy numer stolika, więc kelner wydający
+z ekranu kuchni zaniesie je pod właściwy stół. W historii zamówienia zostaje wpis,
+kto i kiedy przesadził gości.
+
+**Stary stolik zwalnia się od razu** — także wtedy, gdy była na nim blokada. Można
+przy nim od razu posadzić następnych gości.
+
+Goście nie muszą nic robić. Telefony, które mają otwartą kartę, same pokażą nowy
+numer stolika. Gość, który wróci pod stary kod QR — bo odświeży kartę sprzed
+przesiadki — zobaczy komunikat o przesiadce i zostanie przeniesiony do swojego
+rachunku.
+
+Czego przesiadka **nie** zrobi: nie połączy dwóch rachunków. Jeśli przy docelowym
+stoliku trwa inna wizyta, kelbroo odmówi — dwa rachunki przy jednym stole to
+osobna decyzja, a nie skutek uboczny przesiadki.
 
 ## Paragon i kasa fiskalna
 

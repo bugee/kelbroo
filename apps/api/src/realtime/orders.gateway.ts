@@ -6,6 +6,21 @@ import { AuthService } from '../auth/auth.service';
 /** Kanał lokalu — panel kelnera i KDS słuchają tego samego pokoju. */
 export const restaurantRoom = (restaurantId: string) => `restaurant:${restaurantId}:orders`;
 
+/**
+ * Przesiadka gości — osobne zdarzenie, nie odmiana zmiany zamówienia.
+ *
+ * Wciśnięcie tego w `OrderChangedEvent` wymagałoby podania identyfikatora
+ * zamówienia, którego tu nie ma: przesuwa się **wizyta**, a zamówień pod nią
+ * może być pięć albo zero. Pole opisane jako `orderId`, niosące identyfikator
+ * wizyty, byłoby pułapką dla następnego czytelnika.
+ */
+export interface TableMovedEvent {
+  tableSessionId: string;
+  sessionNumber: number;
+  fromLabel: string | null;
+  toLabel: string;
+}
+
 export interface OrderChangedEvent {
   orderId: string;
   orderNumber: number;
@@ -49,6 +64,14 @@ export class OrdersGateway implements OnGatewayConnection {
       client.emit('ready', { restaurantId: staff.restaurantId, role: staff.role });
     } catch {
       client.disconnect(true);
+    }
+  }
+
+  publishTableMoved(restaurantId: string, event: TableMovedEvent): void {
+    try {
+      this.server?.to(restaurantRoom(restaurantId)).emit('table.moved', event);
+    } catch (error) {
+      this.logger.warn(`Nie udało się rozesłać przesiadki: ${String(error)}`);
     }
   }
 

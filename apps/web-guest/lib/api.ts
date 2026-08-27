@@ -88,6 +88,7 @@ export interface TableEntry {
       | 'awaiting_staff_activation'
       | 'table_blocked'
       | 'visit_finished'
+      | 'visit_moved'
       | 'awaiting_host_approval'
       | null;
   };
@@ -111,6 +112,13 @@ export interface TableEntry {
   }[];
   guestToken: string | null;
   menu: Category[];
+  /**
+   * Obsługa przesadziła tę wizytę przy inny stolik.
+   *
+   * Przychodzi, gdy gość wraca pod stary adres — odświeża kartę sprzed
+   * przesadzenia albo skanuje kod, który został na starym stoliku.
+   */
+  movedTo: { qrToken: string; label: string } | null;
 }
 
 export interface SessionOrders {
@@ -198,6 +206,24 @@ export async function canResume(qrToken: string, guestToken: string): Promise<bo
     // Brak sieci: nie zgadujemy. Ekran skanowania jest zawsze poprawną odpowiedzią.
     return false;
   }
+}
+
+/**
+ * Przenosi token gościa pod adres nowego stolika.
+ *
+ * Token leży w pamięci **pod kluczem kodu QR**, więc samo przejście pod nowy
+ * adres zrobiłoby z przesadzonego gościa kogoś zupełnie nowego: nowy uczestnik,
+ * pusty rachunek, a prawdziwy rachunek dwa stoliki dalej. Skopiowanie wpisu jest
+ * całą różnicą między „przesiedli się" a „zgubiliśmy im rachunek".
+ *
+ * Starego wpisu **nie kasujemy**: to on pozwala rozpoznać gościa, gdyby wrócił
+ * pod stary adres jeszcze raz — na przykład z drugiej otwartej karty.
+ */
+export function moveToken(fromQrToken: string, toQrToken: string): boolean {
+  const token = readToken(fromQrToken);
+  if (!token) return false;
+  writeToken(toQrToken, token);
+  return true;
 }
 
 function writeToken(qrToken: string, token: string): void {
@@ -418,13 +444,13 @@ async function request<T = void>(qrToken: string, path: string, body: unknown): 
  */
 export function connectVisit(
   qrToken: string,
-  onChange: (kind: 'orders' | 'call' | 'access') => void,
+  onChange: (kind: 'orders' | 'call' | 'access' | 'table') => void,
 ): { close: () => void } | null {
   const token = readToken(qrToken);
   if (!token) return null;
 
   const socket = io(`${WS}/guest`, { auth: { token }, transports: ['websocket', 'polling'] });
-  socket.on('visit.changed', (event: { kind: 'orders' | 'call' | 'access' }) =>
+  socket.on('visit.changed', (event: { kind: 'orders' | 'call' | 'access' | 'table' }) =>
     onChange(event.kind),
   );
   return { close: () => socket.close() };

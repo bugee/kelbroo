@@ -45,6 +45,7 @@ export interface TableEntry {
       | 'awaiting_staff_activation'
       | 'table_blocked'
       | 'visit_finished'
+      | 'visit_moved'
       | 'awaiting_host_approval'
       | null;
   };
@@ -75,6 +76,16 @@ export interface TableEntry {
   }[];
   guestToken: string | null;
   menu: MenuCategoryView[];
+  /**
+   * Wizyta tego gościa siedzi teraz przy innym stoliku — obsługa go przesadziła.
+   *
+   * Wypełnione tylko wtedy, gdy gość wraca **pod stary adres**: odświeża kartę
+   * sprzed przesadzenia albo skanuje kod, który został na starym stoliku.
+   * Aplikacja ma wtedy przejść pod nowy adres, a nie zakładać drugą wizytę —
+   * inaczej gość zostałby z pustym rachunkiem, a jego prawdziwy leżałby dwa
+   * stoliki dalej.
+   */
+  movedTo: { qrToken: string; label: string } | null;
 }
 
 @Injectable()
@@ -201,6 +212,24 @@ export class TableService {
       return this.blockedEntry(restaurantView, table, locale, menu, 'awaiting_staff_activation');
     }
 
+    /**
+     * Gość wraca pod stary stolik po przesadzeniu.
+     *
+     * Warunek jest celowo wąski: sprawdzamy to **wyłącznie wtedy, gdy przy
+     * skanowanym stoliku nie ma żadnej wizyty**. Gdy jest, skan znaczy „dosiadam
+     * się tutaj" i tak go traktujemy — inaczej nie dałoby się przysiąść do
+     * znajomych przy innym stole.
+     */
+    if (!openSession) {
+      const przeniesiona = await this.movedVisit(tx, options.existingGuestToken, restaurant.id);
+      if (przeniesiona) {
+        return {
+          ...this.blockedEntry(restaurantView, table, locale, menu, 'visit_moved'),
+          movedTo: przeniesiona,
+        };
+      }
+    }
+
     if (!openSession) {
       const businessDate = businessDateFor(
         new Date(),
@@ -244,6 +273,7 @@ export class TableService {
         participant: reused.participant,
         participants: await this.approvedParticipants(tx, openSession.id),
         guestToken: null, // token gościa pozostaje ten, którym przyszedł
+        movedTo: null,
       };
     }
 
@@ -317,6 +347,7 @@ export class TableService {
       },
       participants: await this.approvedParticipants(tx, openSession.id),
       guestToken: token,
+      movedTo: null,
     };
   }
 
@@ -327,6 +358,44 @@ export class TableService {
    * zapłaceniu ma zobaczyć „rachunek rozliczony", a nie zostać po cichu wpisany
    * do rachunku następnych gości.
    */
+  /**
+   * Otwarta wizyta tego gościa przy **innym** stoliku.
+   *
+   * Po przesadzeniu `guestSession.tableId` wskazuje już nowy stolik, więc samo
+   * odnalezienie tokenu wystarcza — nie trzeba pamiętać, skąd goście przyszli,
+   * i działa to także po drugim przesadzeniu tej samej wizyty.
+   */
+  private async movedVisit(
+    tx: Prisma.TransactionClient,
+    token: string | undefined,
+    restaurantId: string,
+  ): Promise<{ qrToken: string; label: string } | null> {
+    if (!token) return null;
+
+    const guestSession = await tx.guestSession.findFirst({
+      where: {
+        tokenHash: GuestSessionService.hash(token),
+        restaurantId,
+        expiresAt: { gt: new Date() },
+      },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        tableSession: { select: { status: true, tableId: true } },
+      },
+    });
+
+    const wizyta = guestSession?.tableSession;
+    if (!wizyta || (wizyta.status !== 'open' && wizyta.status !== 'awaiting_settlement')) {
+      return null;
+    }
+
+    const stolik = await tx.table.findUnique({
+      where: { id: wizyta.tableId },
+      select: { qrToken: true, label: true },
+    });
+    return stolik ? { qrToken: stolik.qrToken, label: stolik.label } : null;
+  }
+
   private async belongsToFinishedVisit(
     tx: Prisma.TransactionClient,
     token: string | undefined,
@@ -435,7 +504,7 @@ export class TableService {
     table: Parameters<TableService['baseEntry']>[1],
     locale: string,
     menu: MenuCategoryView[],
-    reason: 'awaiting_staff_activation' | 'table_blocked' | 'visit_finished',
+    reason: 'awaiting_staff_activation' | 'table_blocked' | 'visit_finished' | 'visit_moved',
   ): TableEntry {
     return {
       ...this.baseEntry(restaurant, table, locale, menu),
@@ -451,6 +520,7 @@ export class TableService {
       },
       participants: [],
       guestToken: null,
+      movedTo: null,
     };
   }
 }

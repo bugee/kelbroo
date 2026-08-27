@@ -16,6 +16,7 @@ import { DailyCounterService } from '../src/common/daily-counter.service';
 import { GuestSessionService } from '../src/guest/guest-session.service';
 import type { GuestGateway } from '../src/realtime/guest.gateway';
 import type { StaffSignalsGateway } from '../src/realtime/staff-signals.gateway';
+import type { OrdersGateway } from '../src/realtime/orders.gateway';
 import type { StaffContext } from '../src/auth/auth.types';
 
 const direct = new PrismaClient({ datasourceUrl: process.env.DIRECT_DATABASE_URL });
@@ -26,7 +27,11 @@ const staffSignals = {
 } as unknown as StaffSignalsGateway;
 const menu = new MenuService();
 const counters = new DailyCounterService();
-const lifecycle = new TableLifecycleService(prisma, guestGateway, counters);
+const ordersGateway = {
+  publish: () => undefined,
+  publishTableMoved: () => undefined,
+} as unknown as OrdersGateway;
+const lifecycle = new TableLifecycleService(prisma, guestGateway, counters, ordersGateway);
 const guests = new GuestSessionService(prisma);
 const tables = new TableService(prisma, menu, counters, guests, guestGateway, staffSignals);
 
@@ -396,5 +401,198 @@ describe('odświeżenie po zapłaceniu', () => {
 
     expect(nowy.session.blockedReason).toBeNull();
     expect(nowy.participant.id).not.toBe(pierwszy.participant.id);
+  });
+});
+
+/**
+ * Przesadzenie gości przy inny stolik.
+ *
+ * Cała wartość tej funkcji leży w tym, **co idzie za gośćmi**: rachunek, bony
+ * w kuchni i telefony przy stole. Przeniesienie samej wizyty, z zamówieniami
+ * zostawionymi pod starym numerem, byłoby gorsze od braku funkcji — kucharz
+ * zaniósłby talerz pod stolik, przy którym siedzą już inni ludzie.
+ */
+describe('przesadzenie gości', () => {
+  /** Wizyta z jednym zamówieniem w kuchni i jednym gościem przy telefonie. */
+  async function wizytaZZamowieniem() {
+    const { table, qrToken } = await newTable();
+    const wejscie = await scan(qrToken);
+    const sesja = await direct.tableSession.findFirstOrThrow({ where: { tableId: table.id } });
+
+    const zamowienie = await direct.order.create({
+      data: {
+        organizationId,
+        restaurantId,
+        tableId: table.id,
+        tableSessionId: sesja.id,
+        orderNumber: 9000 + counter,
+        source: 'guest',
+        status: 'confirmed',
+        paymentStatus: 'awaiting_settlement',
+        currency: 'PLN',
+        businessDate: new Date(),
+        subtotalCents: 2000,
+        totalCents: 2000,
+      },
+    });
+
+    return { table, qrToken, sesja, zamowienie, guestToken: wejscie.guestToken };
+  }
+
+  it('przenosi wizytę, zamówienia i telefony gości', async () => {
+    const { sesja, zamowienie } = await wizytaZZamowieniem();
+    const { table: docelowy } = await newTable();
+
+    const wynik = await lifecycle.moveSession(staff, sesja.id, docelowy.id);
+
+    const wizyta = await direct.tableSession.findUniqueOrThrow({ where: { id: sesja.id } });
+    expect(wizyta.tableId).toBe(docelowy.id);
+    // Numer rachunku zostaje: to ta sama wizyta, nie nowa.
+    expect(wizyta.sessionNumber).toBe(sesja.sessionNumber);
+
+    // Bon w kuchni musi wskazywać nowy stolik — inaczej jedzenie idzie pod zły adres.
+    const po = await direct.order.findUniqueOrThrow({ where: { id: zamowienie.id } });
+    expect(po.tableId).toBe(docelowy.id);
+
+    const sesjeGosci = await direct.guestSession.findMany({ where: { tableSessionId: sesja.id } });
+    expect(sesjeGosci.every((s) => s.tableId === docelowy.id)).toBe(true);
+
+    expect(wynik.to.id).toBe(docelowy.id);
+    expect(wynik.movedOrders).toBe(1);
+  });
+
+  it('zostawia ślad w historii zamówienia', async () => {
+    const { sesja, zamowienie, table } = await wizytaZZamowieniem();
+    const { table: docelowy } = await newTable();
+
+    await lifecycle.moveSession(staff, sesja.id, docelowy.id);
+
+    // `OrderEvent` jest append-only i jest źródłem prawdy o historii zamówienia.
+    // Bez wpisu numer stolika zmieniałby się na bonie bez śladu, kto go zmienił.
+    const wpis = await direct.orderEvent.findFirstOrThrow({
+      where: { orderId: zamowienie.id, type: 'table_moved' },
+    });
+    expect(wpis.actorStaffId).toBe(staff.staffId);
+    expect(wpis.before).toMatchObject({ tableId: table.id });
+    expect(wpis.after).toMatchObject({ tableId: docelowy.id });
+  });
+
+  it('zwalnia stolik, z którego goście wstali', async () => {
+    const { sesja, table } = await wizytaZZamowieniem();
+    const { table: docelowy } = await newTable();
+    await direct.table.update({
+      where: { id: table.id },
+      data: { blockedUntil: new Date(Date.now() + 600_000) },
+    });
+
+    await lifecycle.moveSession(staff, sesja.id, docelowy.id);
+
+    const stary = await direct.table.findUniqueOrThrow({ where: { id: table.id } });
+    // Po to się przesadza: zwolnić miejsce. Blokada zostawiona na starym stoliku
+    // trzymałaby go pustym mimo że nikt przy nim nie siedzi.
+    expect(stary.blockedUntil).toBeNull();
+
+    const wolny = await direct.tableSession.findFirst({
+      where: { tableId: table.id, status: { in: ['open', 'awaiting_settlement'] } },
+    });
+    expect(wolny).toBeNull();
+  });
+
+  it('odmawia przeniesienia na stolik, przy którym trwa inna wizyta', async () => {
+    const { sesja } = await wizytaZZamowieniem();
+    const zajety = await wizytaZZamowieniem();
+
+    // Dwa rachunki przy jednym stole to nie przesiadka, tylko połączenie wizyt —
+    // osobna decyzja, której nie podejmujemy przy okazji.
+    await expect(lifecycle.moveSession(staff, sesja.id, zajety.table.id)).rejects.toThrow(/zajęty/);
+
+    const wizyta = await direct.tableSession.findUniqueOrThrow({ where: { id: sesja.id } });
+    expect(wizyta.tableId).not.toBe(zajety.table.id);
+  });
+
+  it('odmawia przeniesienia w to samo miejsce', async () => {
+    const { sesja, table } = await wizytaZZamowieniem();
+
+    await expect(lifecycle.moveSession(staff, sesja.id, table.id)).rejects.toThrow(/już siedzą/);
+  });
+
+  it('odmawia przeniesienia na stolik wyłączony z użycia', async () => {
+    const { sesja } = await wizytaZZamowieniem();
+    const { table: docelowy } = await newTable();
+    await direct.table.update({ where: { id: docelowy.id }, data: { isActive: false } });
+
+    await expect(lifecycle.moveSession(staff, sesja.id, docelowy.id)).rejects.toThrow(/wyłączony/);
+  });
+
+  it('przesadza na świeżo zwolniony, jeszcze zablokowany stolik', async () => {
+    const { sesja } = await wizytaZZamowieniem();
+    const { table: docelowy } = await newTable();
+    await direct.table.update({
+      where: { id: docelowy.id },
+      data: { blockedUntil: new Date(Date.now() + 60_000) },
+    });
+
+    // Blokada znaczy „sprzątamy", nie „siedzą tu ludzie". Kelner, który sadza
+    // gości przy właśnie zwolnionym stole, wie lepiej niż dwuminutowy licznik.
+    await expect(lifecycle.moveSession(staff, sesja.id, docelowy.id)).resolves.toMatchObject({
+      to: { id: docelowy.id },
+    });
+
+    const stolik = await direct.table.findUniqueOrThrow({ where: { id: docelowy.id } });
+    expect(stolik.blockedUntil).toBeNull();
+  });
+});
+
+describe('gość po przesadzeniu', () => {
+  it('wracając pod stary kod, dostaje adres nowego stolika', async () => {
+    const { table, qrToken } = await newTable();
+    const wejscie = await scan(qrToken);
+    const sesja = await direct.tableSession.findFirstOrThrow({ where: { tableId: table.id } });
+    const { table: docelowy } = await newTable();
+
+    await lifecycle.moveSession(staff, sesja.id, docelowy.id);
+
+    // **Najważniejszy test w tym pliku.** Gość odświeża kartę sprzed przesiadki.
+    // Bez tej ścieżki serwer założyłby mu nową wizytę przy starym, wolnym już
+    // stoliku — z pustym rachunkiem, podczas gdy prawdziwy leży dwa stoliki dalej.
+    const powrot = await scan(qrToken, wejscie.guestToken ?? undefined);
+
+    expect(powrot.movedTo).toMatchObject({ label: docelowy.label });
+    expect(powrot.session.blockedReason).toBe('visit_moved');
+
+    // Przy starym stoliku nie powstała żadna wizyta: ta jedna, którą miał,
+    // odeszła razem z gośćmi, a nowej nikt nie założył.
+    const wizyty = await direct.tableSession.count({ where: { tableId: table.id } });
+    expect(wizyty).toBe(0);
+  });
+
+  it('wchodząc pod nowym kodem, zostaje tym samym uczestnikiem', async () => {
+    const { table, qrToken } = await newTable();
+    const wejscie = await scan(qrToken);
+    const sesja = await direct.tableSession.findFirstOrThrow({ where: { tableId: table.id } });
+    const { table: docelowy, qrToken: nowyKod } = await newTable();
+
+    await lifecycle.moveSession(staff, sesja.id, docelowy.id);
+    const po = await scan(nowyKod, wejscie.guestToken ?? undefined);
+
+    // Tożsamość jest przypisana do wizyty, nie do stolika — inaczej przesiadka
+    // robiłaby z gościa kogoś nowego i rozbijała mu rachunek.
+    expect(po.participant.id).toBe(wejscie.participant.id);
+    expect(po.session.id).toBe(sesja.id);
+    expect(po.table.id).toBe(docelowy.id);
+  });
+
+  it('może przysiąść się do zajętego stolika zamiast wracać do swojego', async () => {
+    const { qrToken } = await newTable();
+    const wejscie = await scan(qrToken);
+    const { qrToken: kodZnajomych } = await newTable();
+    await scan(kodZnajomych);
+
+    // Skan stolika, przy którym ktoś już siedzi, znaczy „dosiadam się tutaj".
+    // Ścieżka przesadzenia nie ma prawa tego przechwycić.
+    const przysiadka = await scan(kodZnajomych, wejscie.guestToken ?? undefined);
+
+    expect(przysiadka.movedTo).toBeNull();
+    expect(przysiadka.participant.id).not.toBe(wejscie.participant.id);
   });
 });
