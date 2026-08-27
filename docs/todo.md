@@ -258,7 +258,12 @@ co człowiek** — automat, któremu powiemy „odrzucono", spróbuje inaczej.
 ### 5d. Pozostałe treści z odnośników
 
 - [x] **Demo menu** (`#demo`) (2026-08-26) — publiczna restauracja pokazowa pod
-      `/t/demo`, zakładana skryptem `scripts/seed-public-demo.ts`. Oddzielona od
+      `/t/demo`, otwierana **kodem QR na stronie**, nie przyciskiem (2026-08-27):
+      tak wygląda ta usługa naprawdę — gość siada, wyjmuje telefon i skanuje.
+      Przycisk otwierałby menu na monitorze, czyli na urządzeniu, na którym nikt
+      z tego nie korzysta. Kod jest zarazem odnośnikiem, bo czytający stronę
+      na telefonie nie zeskanuje własnego ekranu. Rysowany przy budowaniu strony,
+      więc statyczna strona nie wozi biblioteki dla stałego adresu. zakładana skryptem `scripts/seed-public-demo.ts`. Oddzielona od
       klientów flagą `Organization.isDemo`: nie liczy się w statystykach zaplecza
       i nie dostaje przypomnień o abonamencie. Potwierdzanie przez kelnera jest w niej
       wyłączone, bo żadnego kelnera tam nie ma — z włączonym zwiedzający zobaczyłby

@@ -18,7 +18,7 @@ Publiczna strona, która wyjaśnia wartość kelbroo właścicielowi restauracji
 | `/funkcje` | Funkcje produktu (szczegółowo) | SSG |
 | `/dla-kogo/[segment]` | Landing per segment (restauracja, kawiarnia, bar, hotel, food court) | SSG |
 | `/cennik` | Cennik i porównanie planów | SSG |
-| `/demo` | Interaktywne demo menu (przykładowa restauracja) | SSG + klient |
+| ~~`/demo`~~ | Sekcja `#demo` na stronie głównej: **kod QR** do restauracji pokazowej pod `menu.kelbroo.com/t/demo` | SSG |
 | `/kontakt` | Formularz kontaktowy / umów prezentację | SSG |
 | `/blog`, `/blog/[slug]` | Treści SEO (poradniki dla gastronomii) | ISR |
 | `/pomoc`, `/pomoc/[slug]` | Baza wiedzy / dokumentacja dla klientów | ISR |

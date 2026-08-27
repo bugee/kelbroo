@@ -15,6 +15,7 @@ import { Pricing } from '@/components/Pricing';
 import { ContactForm } from '@/components/ContactForm';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
+import QRCode from 'qrcode';
 
 /**
  * Adres aplikacji gościa. Wkompilowywany przy budowaniu, tak samo jak w panelu,
@@ -22,7 +23,20 @@ import { SiteFooter } from '@/components/SiteFooter';
  */
 const GUEST_URL = process.env.NEXT_PUBLIC_GUEST_URL || 'https://menu.kelbroo.com';
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  /**
+   * Kod QR do restauracji pokazowej, rysowany **przy budowaniu strony**.
+   *
+   * Nie w przeglądarce: adres jest stały, więc generowanie go u każdego
+   * odwiedzającego oznaczałoby dokładanie biblioteki do paczki statycznej
+   * strony po to, żeby za każdym razem narysować to samo.
+   */
+  const kodDemo = await QRCode.toString(`${GUEST_URL}/t/demo`, {
+    type: 'svg',
+    margin: 0,
+    errorCorrectionLevel: 'M',
+  });
+
   return (
     <>
       <SiteHeader />
@@ -688,10 +702,28 @@ export default function LandingPage() {
                 Przejrzysz kartę w dwóch językach, dodasz danie do koszyka i złożysz zamówienie.
                 Zobaczysz też, jak wygląda wspólny rachunek, gdy przy stoliku siedzi więcej osób.
               </p>
+              {/*
+                Kod QR zamiast przycisku, bo tak wygląda ta usługa naprawdę:
+                gość siada, wyjmuje telefon i skanuje. Przycisk otwierałby menu
+                na monitorze — czyli na urządzeniu, na którym nikt tego nie używa.
+
+                Kod jest zarazem odnośnikiem: kto czyta stronę na telefonie, nie
+                zeskanuje własnego ekranu i po prostu w niego stuknie.
+              */}
+              <a
+                href={`${GUEST_URL}/t/demo`}
+                className="demo-qr"
+                aria-label="Menu restauracji pokazowej — zeskanuj telefonem albo stuknij"
+              >
+                <span className="demo-qr-code" dangerouslySetInnerHTML={{ __html: kodDemo }} />
+                <span className="demo-qr-label mono">
+                  Zeskanuj telefonem
+                  <br />
+                  <span className="demo-qr-tap">albo stuknij, jeśli czytasz na telefonie</span>
+                </span>
+              </a>
+
               <div className="cta-actions">
-                <a className="btn btn-primary" href={`${GUEST_URL}/t/demo`}>
-                  Otwórz demo menu
-                </a>
                 <a className="btn btn-ghost" href="#prezentacja">
                   Pokaż mi panel kuchni
                 </a>
