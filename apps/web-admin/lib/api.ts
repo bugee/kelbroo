@@ -660,6 +660,8 @@ export interface SubscriptionState {
   menuPhotosEnabled: boolean;
   /** Czy lokal zbiera oceny gości. Panel chowa po tym ekran opinii. */
   reviewsEnabled: boolean;
+  /** Ile pozycji mieści karta w tym planie. */
+  menuItemLimit: number | null;
 }
 
 export const fetchSubscription = () => authorized<SubscriptionState>('/staff/subscription');

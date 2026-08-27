@@ -53,10 +53,9 @@ etapu 2) — oraz czterech funkcji gościa z sekcji 4.
    płatności mają od 2026-08-26 własne uzgadnianie z operatorem, więc wpłata
    bez powiadomienia sama się odnajduje i zgłasza. Reszta systemu takiego
    czujnika nie ma.
-3. **Cztery obietnice ze strony produktowej nie mają pokrycia w kodzie** (§5f,
-   policzone 2026-08-26; z pierwotnych ośmiu trzy zamknięto skreśleniem obietnicy,
-   jedną dopisaniem kodu). Zostają: oceny dań, analityka, podział po pozycjach
-   i limit pozycji w planie Menu.
+3. **Dwie obietnice ze strony produktowej nie mają pokrycia w kodzie** (§5f,
+   przeliczone 2026-08-27; z pierwotnych ośmiu trzy zamknięto skreśleniem obietnicy,
+   trzy dopisaniem kodu). Zostają: analityka i podział po pozycjach.
 
 ---
 
@@ -332,10 +331,10 @@ co człowiek** — automat, któremu powiemy „odrzucono", spróbuje inaczej.
 ### 5f. Obietnice ze strony bez pokrycia w kodzie
 
 Rejestr sporządzony 2026-08-26 przez porównanie cennika, siatki funkcji i FAQ ze
-stanem kodu. **Osiem pozycji, z czego cztery zamknięte tego samego dnia:** trzy
+stanem kodu. **Osiem pozycji, z czego sześć zamkniętych:** trzy
 skreśleniem obietnicy (praca offline, instalacja, płatność gościa w aplikacji —
-ta ostatnia wraca razem z kodem), jedna dopisaniem brakującego kodu (limit kont
-personelu). Odpowiednik [§8 z docs/legal](legal/README.md), tyle
+ta ostatnia wraca razem z kodem), trzy dopisaniem brakującego kodu (limit kont
+personelu, oceny dań, limit pozycji w karcie). Odpowiednik [§8 z docs/legal](legal/README.md), tyle
 że dla obietnic handlowych: strona sprzedaje za prawdziwe pieniądze, więc każda
 z tych pozycji jest albo zadaniem do zrobienia, albo zdaniem do skreślenia.
 
@@ -377,9 +376,16 @@ Kolejność według tego, ile kosztuje odkrycie braku przez klienta, który już
       równoczesne zakładania nie przecisnęły się obok jednego wolnego miejsca.
       Istniejące konta ponad limit **zostają** — blokujemy zakładanie nowych,
       nie odbieramy dostępu.
-- [ ] **Menu (0 zł): „do 50 pozycji".**
-      Też nieegzekwowany. Najniżej z listy, bo planu Menu i tak nie da się dziś
-      kupić w panelu.
+- [x] **Limit pozycji w karcie — egzekwowany** (2026-08-27). Menu 10, Starter 50,
+      Pro i Enterprise bez limitu. **Cennik przy okazji został zacieśniony**: obiecywał
+      50 pozycji w planie Menu i brak limitu w Starterze — sprawdzone przed zmianą,
+      żaden istniejący lokal nie przekraczał nowych progów. Liczą się wyłącznie
+      pozycje **w karcie**: wycofane zostają w bazie, bo wiszą na nich historyczne
+      rachunki, ale miejsca w planie nie zajmują — inaczej lokal po roku pracy
+      uderzałby w limit, nie mając w menu ani jednej pozycji więcej. Wartość siedzi
+      na abonamencie (`subscription.menu_item_limit`), więc zaplecze podnosi ją
+      pojedynczemu klientowi bez zmiany cennika i bez wdrożenia; **zmiana planu
+      kasuje taki wyjątek**. Sprawdzenie jest w transakcji dodawania pozycji.
 
 > **Enterprise** obiecuje wiele lokali, integrację z kasą i POS oraz własną domenę
 > i branding. Żadnej z tych rzeczy nie ma, ale plan nie jest samoobsługowy —

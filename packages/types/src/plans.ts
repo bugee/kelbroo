@@ -21,6 +21,8 @@ export interface PlanLimits {
   tableLimit: number;
   languageLimit: number;
   staffLimit: number;
+  /** Pozycji w karcie. Liczą się wyłącznie te nie wycofane. */
+  menuItemLimit: number;
 }
 
 /**
@@ -73,14 +75,14 @@ export const PLANS: Record<PlanId, Plan> = {
   menu: {
     id: 'menu',
     name: 'Menu',
-    limits: { tableLimit: BEZ_LIMITU, languageLimit: 1, staffLimit: 1 },
+    limits: { tableLimit: BEZ_LIMITU, languageLimit: 1, staffLimit: 1, menuItemLimit: 10 },
     features: { menuPhotos: false, reviews: false },
     netCents: { month: 0, year: 0 },
   },
   starter: {
     id: 'starter',
     name: 'Starter',
-    limits: { tableLimit: 12, languageLimit: 2, staffLimit: 3 },
+    limits: { tableLimit: 12, languageLimit: 2, staffLimit: 3, menuItemLimit: 50 },
     features: { menuPhotos: false, reviews: false },
     // 159 zł/mies albo 1 590 zł/rok (132 zł/mies w przeliczeniu).
     netCents: { month: 15_900, year: 159_000 },
@@ -88,7 +90,12 @@ export const PLANS: Record<PlanId, Plan> = {
   pro: {
     id: 'pro',
     name: 'Pro',
-    limits: { tableLimit: 40, languageLimit: 6, staffLimit: BEZ_LIMITU },
+    limits: {
+      tableLimit: 40,
+      languageLimit: 6,
+      staffLimit: BEZ_LIMITU,
+      menuItemLimit: BEZ_LIMITU,
+    },
     features: { menuPhotos: true, reviews: true },
     // 349 zł/mies albo 3 490 zł/rok (291 zł/mies w przeliczeniu).
     netCents: { month: 34_900, year: 349_000 },
@@ -96,7 +103,12 @@ export const PLANS: Record<PlanId, Plan> = {
   enterprise: {
     id: 'enterprise',
     name: 'Enterprise',
-    limits: { tableLimit: BEZ_LIMITU, languageLimit: 99, staffLimit: BEZ_LIMITU },
+    limits: {
+      tableLimit: BEZ_LIMITU,
+      languageLimit: 99,
+      staffLimit: BEZ_LIMITU,
+      menuItemLimit: BEZ_LIMITU,
+    },
     features: { menuPhotos: true, reviews: true },
     netCents: { month: null, year: null },
   },

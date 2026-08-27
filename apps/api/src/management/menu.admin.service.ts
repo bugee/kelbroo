@@ -179,6 +179,8 @@ export class MenuAdminService {
       });
       if (!category) throw new BadRequestException('Kategoria nie należy do tego lokalu.');
 
+      await this.assertLimitKarty(tx, staff.organizationId, restaurantId);
+
       const item = await tx.menuItem.create({
         data: {
           organizationId: staff.organizationId,
@@ -389,6 +391,33 @@ export class MenuAdminService {
         `Brakuje tłumaczenia w języku domyślnym lokalu („${restaurant.defaultLocale}") — bez niego gość zobaczy pustą pozycję.`,
       );
     }
+  }
+
+  /**
+   * Limit pozycji w karcie z planu.
+   *
+   * Liczymy pozycje **nie wycofane**: wycofana zostaje w bazie, bo odwołują się
+   * do niej historyczne rachunki, ale nie ma jej w karcie i nie ma powodu, żeby
+   * zajmowała miejsce w planie.
+   *
+   * Sprawdzenie jest wewnątrz transakcji, żeby dwa równoczesne dodania nie
+   * przecisnęły się obok tego samego wolnego miejsca.
+   */
+  private async assertLimitKarty(
+    tx: Prisma.TransactionClient,
+    organizationId: string,
+    restaurantId: string,
+  ): Promise<void> {
+    const subscription = await tx.subscription.findUnique({ where: { organizationId } });
+    if (!subscription) return;
+
+    const wKarcie = await tx.menuItem.count({ where: { restaurantId, isArchived: false } });
+    if (wKarcie < subscription.menuItemLimit) return;
+
+    throw new ConflictException(
+      `Plan ${subscription.plan} obejmuje ${subscription.menuItemLimit} pozycji w karcie. ` +
+        'Wycofaj nieużywaną pozycję albo zmień plan.',
+    );
   }
 }
 

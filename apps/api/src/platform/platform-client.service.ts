@@ -199,8 +199,58 @@ export class PlatformClientService {
       plan: wynik.plan,
       tableLimit: wynik.tableLimit,
       languageLimit: wynik.languageLimit,
+      staffLimit: wynik.staffLimit,
+      menuItemLimit: wynik.menuItemLimit,
       menuPhotosEnabled: wynik.menuPhotosEnabled,
       reviewsEnabled: wynik.reviewsEnabled,
+    };
+  }
+
+  /**
+   * Podniesienie limitu pojedynczemu klientowi, bez zmiany planu.
+   *
+   * Ten sam powód co przy funkcjach: lokal z kartą na 55 pozycji na Starterze
+   * nie musi przechodzić na Pro tylko dlatego, że przekroczył próg o pięć dań.
+   * **Zmiana planu kasuje taki wyjątek** — plan jest wtedy świeżą decyzją.
+   */
+  async setLimits(
+    admin: PlatformAdminContext,
+    organizationId: string,
+    limity: Partial<
+      Record<'tableLimit' | 'languageLimit' | 'staffLimit' | 'menuItemLimit', number>
+    >,
+    powod: string,
+  ) {
+    if (!powod.trim()) {
+      throw new BadRequestException('Zmiana limitu wymaga podania powodu.');
+    }
+    const zmiany = Object.entries(limity).filter(([, wartosc]) => wartosc !== undefined);
+    if (zmiany.length === 0) {
+      throw new BadRequestException('Nie podano żadnego limitu do zmiany.');
+    }
+    for (const [nazwa, wartosc] of zmiany) {
+      if (!Number.isInteger(wartosc) || wartosc! < 0 || wartosc! > 9_999) {
+        throw new BadRequestException(`Limit ${nazwa} musi być liczbą z zakresu 0–9999.`);
+      }
+    }
+
+    const wynik = await this.prisma.withTenant(organizationId, async (tx) => {
+      const abonament = await tx.subscription.findUnique({ where: { organizationId } });
+      if (!abonament) {
+        throw new NotFoundException('Ten klient nie ma abonamentu.');
+      }
+      return tx.subscription.update({
+        where: { organizationId },
+        data: Object.fromEntries(zmiany),
+      });
+    });
+
+    await this.zapisz(admin, organizationId, 'subscription.limits_changed', powod, zmiany);
+    return {
+      tableLimit: wynik.tableLimit,
+      languageLimit: wynik.languageLimit,
+      staffLimit: wynik.staffLimit,
+      menuItemLimit: wynik.menuItemLimit,
     };
   }
 

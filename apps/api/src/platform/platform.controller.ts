@@ -14,6 +14,7 @@ import {
   IsEmail,
   IsIn,
   IsInt,
+  IsOptional,
   IsString,
   IsUUID,
   Length,
@@ -45,6 +46,33 @@ class ExtendDto extends PowodDto {
 class PlanDto extends PowodDto {
   @IsIn(['menu', 'starter', 'pro', 'enterprise'])
   plan!: SubscriptionPlan;
+}
+
+/** Podniesienie limitu ponad plan. Pola opcjonalne — zmienia się to, co podane. */
+class LimitsDto extends PowodDto {
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(9999)
+  tableLimit?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(9999)
+  languageLimit?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(9999)
+  staffLimit?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(9999)
+  menuItemLimit?: number;
 }
 
 /** Włączenie funkcji poza planem — dziś jedna, ale lista z założenia urośnie. */
@@ -146,6 +174,18 @@ export class PlatformController {
     @Body() dto: PlanDto,
   ) {
     return this.client.changePlan(admin, id, dto.plan, dto.reason);
+  }
+
+  @Post('clients/:id/limits')
+  @UseGuards(PlatformAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  setLimits(
+    @Admin() admin: PlatformAdminContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: LimitsDto,
+  ) {
+    const { reason, ...limity } = dto;
+    return this.client.setLimits(admin, id, limity, reason);
   }
 
   @Post('clients/:id/feature')

@@ -158,6 +158,8 @@ export interface KartaKlienta {
     tableLimit: number | null;
     languageLimit: number | null;
     staffLimit: number | null;
+    /** Pozycji w karcie. Zaplecze może podnieść ponad plan. */
+    menuItemLimit: number | null;
     /** Zdjęcia dań. Domyślnie z planu, ale da się włączyć pojedynczemu klientowi. */
     menuPhotosEnabled: boolean;
     /** Oceny gości. Tak samo: wartość z planu, z możliwością nadpisania. */
@@ -210,6 +212,20 @@ export const changePlan = (id: string, plan: Plan, reason: string) =>
  * funkcje na wartości z cennika. Trzeba go wtedy nadać na nowo.
  */
 export type Funkcja = 'menuPhotos' | 'reviews';
+
+export type Limit = 'tableLimit' | 'languageLimit' | 'staffLimit' | 'menuItemLimit';
+
+/**
+ * Podniesienie limitu ponad plan.
+ *
+ * **Zmiana planu kasuje taki wyjątek** — plan ustawia wtedy limity z cennika
+ * i trzeba go nadać na nowo, świadomie.
+ */
+export const setLimit = (id: string, limit: Limit, value: number, reason: string) =>
+  operacja<Record<Limit, number>>(`/platform/clients/${id}/limits`, {
+    [limit]: value,
+    reason,
+  });
 
 export const setFeature = (id: string, feature: Funkcja, enabled: boolean, reason: string) =>
   operacja<{ menuPhotosEnabled: boolean; reviewsEnabled: boolean }>(

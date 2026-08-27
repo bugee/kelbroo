@@ -30,7 +30,7 @@ const PLANY: Plan[] = [
     dlaKogo: 'Cyfrowa karta z kodem QR, bez zamawiania',
     cena: { m: '0', y: '0' },
     podpisStaly: 'na zawsze za darmo',
-    cechy: ['Kody QR bez limitu', '1 język, do 50 pozycji', 'Aktualizacja karty w minutę'],
+    cechy: ['Kody QR bez limitu', '1 język, do 10 pozycji', 'Aktualizacja karty w minutę'],
     cta: { etykieta: 'Załóż konto', href: '/rejestracja' },
   },
   {
@@ -39,7 +39,7 @@ const PLANY: Plan[] = [
     cena: { m: '159', y: '132' },
     podpis: { m: 'rozliczenie miesięczne', y: '1 590 zł rocznie' },
     cechy: [
-      'Do 12 stolików, 2 języki',
+      'Do 12 stolików, 2 języki, 50 pozycji',
       // Płatność gościa w aplikacji należy do etapu 2 i nie istnieje — cennik
       // obiecywał ją do 2026-08-26, mimo że plan Starter da się kupić dziś.
       'Zamawianie do stolika, płatność u kelnera',
@@ -55,7 +55,7 @@ const PLANY: Plan[] = [
     cena: { m: '349', y: '291' },
     podpis: { m: 'rozliczenie miesięczne', y: '3 490 zł rocznie' },
     cechy: [
-      'Do 40 stolików, 6 języków',
+      'Do 40 stolików, 6 języków, karta bez limitu',
       'Zdjęcia dań w karcie',
       'Pełny podział rachunku i grupy',
       'Oceny dań i feedback do managera',

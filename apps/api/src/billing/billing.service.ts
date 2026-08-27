@@ -455,9 +455,9 @@ export class BillingService {
           plan: zamowienie.plan,
           status: 'active',
           currentPeriodEnd: doKiedy,
-          tableLimit: limity.tableLimit,
-          languageLimit: limity.languageLimit,
-          staffLimit: limity.staffLimit,
+          // Rozsypywanie limitów po jednym prosiło się o przeoczenie przy
+          // dodaniu kolejnego — katalog planów jest ich kompletem.
+          ...limity,
           menuPhotosEnabled: plan.features.menuPhotos,
           reviewsEnabled: plan.features.reviews,
         },
@@ -465,9 +465,7 @@ export class BillingService {
           plan: zamowienie.plan,
           status: 'active',
           currentPeriodEnd: doKiedy,
-          tableLimit: limity.tableLimit,
-          languageLimit: limity.languageLimit,
-          staffLimit: limity.staffLimit,
+          ...limity,
           // Zakup planu ustawia funkcję na wartość z cennika. Ręczne włączenie
           // zrobione wcześniej z zaplecza **przepada** — plan jest źródłem prawdy
           // w chwili zakupu, a wyjątek trzeba wtedy nadać na nowo.

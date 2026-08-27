@@ -60,7 +60,7 @@ Szczegółowy diagram sekwencji: patrz [architecture.md §6](architecture.md#6-p
 | **Cena rocznie** (za mies.) | 0 zł | **132 zł** (1 590 zł/rok) | **291 zł** (3 490 zł/rok) | indywidualnie |
 | Stoliki / kody QR | bez limitu | do 12 | do 40 | bez limitu |
 | Języki menu | 1 | 2 | 6 | bez limitu |
-| Pozycje w menu | do 50 | bez limitu | bez limitu | bez limitu |
+| Pozycje w menu *(egzekwowane od 2026-08-27)* | do 10 | do 50 | bez limitu | bez limitu |
 | Cyfrowe menu + QR | ✅ | ✅ | ✅ | ✅ |
 | Zamawianie do stolika | ❌ | ✅ | ✅ | ✅ |
 | Płatność u kelnera (tryb bez płatności online) | — | ✅ | ✅ | ✅ |

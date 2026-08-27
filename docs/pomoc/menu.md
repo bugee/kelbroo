@@ -13,6 +13,18 @@ Karta ma dwa poziomy: kategorie (Przystawki, Dania główne, Napoje) i dania w n
 
 Kolejność kategorii i dań na liście jest tą, którą zobaczy gość.
 
+## Ile pozycji mieści karta
+
+Plan wyznacza limit: **Menu — 10 pozycji, Starter — 50, Pro i Enterprise — bez
+ograniczeń**. Nad listą widać, ile z nich jest zajętych.
+
+Liczą się wyłącznie pozycje **w karcie**. Wycofane dania (niżej) zostają w bazie
+ze względu na historyczne rachunki, ale miejsca w planie nie zajmują — wycofanie
+zwalnia je od razu.
+
+Jeśli potrzebujesz kilku pozycji więcej, a nie całego wyższego planu — napisz do
+nas. Limit da się podnieść na Twoim koncie bez zmiany planu.
+
 ## Dostępność, czyli „skończyło się”
 
 Przy każdym daniu jest przełącznik **dostępne**. Wyłączony — pozycja znika z menu

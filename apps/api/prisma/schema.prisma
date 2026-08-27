@@ -334,6 +334,11 @@ model Subscription {
   /// może nadać pojedynczemu klientowi bez zmiany abonamentu.
   reviewsEnabled Boolean @default(false) @map("reviews_enabled")
 
+  /// Ile pozycji mieści karta. `9999` znaczy „bez limitu" (`BEZ_LIMITU`).
+  /// Liczą się wyłącznie pozycje nie wycofane — wycofana zostaje w bazie
+  /// dla historycznych rachunków i nie zajmuje miejsca w planie.
+  menuItemLimit Int @default(9999) @map("menu_item_limit")
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 

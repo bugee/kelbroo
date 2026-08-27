@@ -67,6 +67,12 @@ function MenuEditor() {
   if (!menu) return <p className="mono text-sm text-[var(--muted)]">Wczytuję…</p>;
 
   const locale = menu.defaultLocale;
+  // Wycofane pozycje zostają w bazie dla historycznych rachunków, ale nie ma ich
+  // w karcie — i nie zajmują miejsca w planie.
+  const pozycjiWKarcie = menu.categories.reduce(
+    (suma, kategoria) => suma + kategoria.items.filter((item) => !item.isArchived).length,
+    0,
+  );
 
   return (
     <>
@@ -99,7 +105,11 @@ function MenuEditor() {
         </label>
 
         <span className="mono ml-auto text-xs text-[var(--muted)]">
-          języki: {menu.supportedLocales.join(', ')} · domyślny {menu.defaultLocale}
+          {pozycjiWKarcie} z{' '}
+          {abonament?.menuItemLimit && abonament.menuItemLimit < 9999
+            ? `${abonament.menuItemLimit} w planie`
+            : 'bez limitu'}{' '}
+          · języki: {menu.supportedLocales.join(', ')} · domyślny {menu.defaultLocale}
         </span>
       </div>
 

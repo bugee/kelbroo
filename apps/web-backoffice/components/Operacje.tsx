@@ -5,6 +5,8 @@ import {
   blockClient,
   changePlan,
   setFeature,
+  setLimit,
+  type Limit,
   extendSubscription,
   unblockClient,
   type KartaKlienta,
@@ -25,6 +27,9 @@ const PLANY: Plan[] = ['menu', 'starter', 'pro', 'enterprise'];
  */
 export function Operacje({ karta, onZmiana }: { karta: KartaKlienta; onZmiana: () => void }) {
   const [powod, setPowod] = useState('');
+  // Pola limitów zaczynają puste: wpisanie liczby jest tu świadomą decyzją,
+  // a podstawienie bieżącej wartości zachęcałoby do klikania „zapisz" bez myślenia.
+  const [limity, setLimity] = useState<Partial<Record<Limit, string>>>({});
   const [dni, setDni] = useState(14);
   const [plan, setPlan] = useState<Plan>((karta.abonament.plan as Plan) ?? 'pro');
   const [pracuje, setPracuje] = useState(false);
@@ -159,6 +164,55 @@ export function Operacje({ karta, onZmiana }: { karta: KartaKlienta; onZmiana: (
           </button>
         </div>
       ))}
+
+      <hr className="border-[var(--line)]" />
+
+      {/*
+        Limity ponad plan. Po co: lokal z kartą na 55 pozycji nie musi przechodzić
+        na Pro dlatego, że przekroczył próg o pięć dań.
+      */}
+      <div className="flex flex-col gap-2">
+        <span className="mono text-sm">Limity ponad plan</span>
+        {(
+          [
+            ['menuItemLimit', 'Pozycje w karcie', karta.abonament.menuItemLimit],
+            ['tableLimit', 'Stoliki', karta.abonament.tableLimit],
+            ['languageLimit', 'Języki', karta.abonament.languageLimit],
+            ['staffLimit', 'Konta personelu', karta.abonament.staffLimit],
+          ] as const
+        ).map(([limit, nazwa, biezacy]) => (
+          <div key={limit} className="flex flex-wrap items-center gap-2">
+            <span className="mono w-40 text-xs text-[var(--muted)]">
+              {nazwa}: {biezacy === null ? '—' : biezacy >= 9999 ? 'bez limitu' : biezacy}
+            </span>
+            <input
+              value={limity[limit] ?? ''}
+              onChange={(zdarzenie) =>
+                setLimity((current) => ({ ...current, [limit]: zdarzenie.target.value }))
+              }
+              inputMode="numeric"
+              placeholder="nowa wartość"
+              className="mono min-h-10 w-32 rounded-[var(--radius-control)] border border-[var(--line-strong)] bg-[var(--surface)] px-3 text-sm"
+            />
+            <button
+              type="button"
+              disabled={pracuje || brakPowodu || !/^\d+$/.test(limity[limit] ?? '')}
+              onClick={() =>
+                void wykonaj(`${nazwa}: limit ${limity[limit]}.`, async () => {
+                  await setLimit(id, limit, Number(limity[limit]), powod);
+                  setLimity((current) => ({ ...current, [limit]: '' }));
+                })
+              }
+              className="min-h-10 rounded-[var(--radius-control)] border border-[var(--line-strong)] px-4 text-sm font-semibold disabled:opacity-40"
+            >
+              Ustaw
+            </button>
+          </div>
+        ))}
+        <p className="text-xs text-[var(--muted)]">
+          9999 znaczy „bez limitu". Zmiana planu <strong>kasuje</strong> te wyjątki.
+        </p>
+      </div>
 
       <hr className="border-[var(--line)]" />
 

@@ -23,6 +23,8 @@ export interface StanAbonamentu {
   tableLimit: number | null;
   languageLimit: number | null;
   staffLimit: number | null;
+  /** Ile pozycji mieści karta. Panel pokazuje to przy liście dań. */
+  menuItemLimit: number | null;
   /** Czy lokal może dodawać zdjęcia dań. Panel chowa po tym cały interfejs wgrywania. */
   menuPhotosEnabled: boolean;
   /** Czy lokal zbiera oceny gości. Panel chowa po tym cały ekran opinii. */
@@ -49,6 +51,7 @@ export async function readSubscription(
     tableLimit: subscription?.tableLimit ?? null,
     languageLimit: subscription?.languageLimit ?? null,
     staffLimit: subscription?.staffLimit ?? null,
+    menuItemLimit: subscription?.menuItemLimit ?? null,
     menuPhotosEnabled: subscription?.menuPhotosEnabled ?? false,
     reviewsEnabled: subscription?.reviewsEnabled ?? false,
     currentPeriodEnd: subscription?.currentPeriodEnd ?? null,
