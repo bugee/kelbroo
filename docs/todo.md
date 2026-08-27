@@ -48,10 +48,10 @@ na e-mail z sekcji 4. `Review` przestał być pustym modelem 2026-08-27.
 
 **Dwie rzeczy ciążą dziś najbardziej i żadna nie jest funkcją:**
 
-1. **Awarię widać dopiero wtedy, gdy ktoś zadzwoni** (§7) — z jednym wyjątkiem:
-   płatności mają od 2026-08-26 własne uzgadnianie z operatorem, więc wpłata
-   bez powiadomienia sama się odnajduje i zgłasza. Reszta systemu takiego
-   czujnika nie ma. **To jest dziś pozycja numer jeden.**
+1. **Nikt nie sprawdza serwera z zewnątrz** (§7). Od 2026-08-27 API zgłasza pocztą
+   własne awarie — bazę, Redisa, wywrócone zadania, odmowy operatora płatności.
+   Zostaje dziura, której z definicji nie da się zatkać od środka: **martwy proces
+   nie wyśle wiadomości o własnej śmierci**. Potrzebny monitor spoza maszyny.
 2. **Dwie obietnice ze strony produktowej nie mają pokrycia w kodzie** (§5f,
    przeliczone 2026-08-27; z pierwotnych ośmiu trzy zamknięto skreśleniem obietnicy,
    trzy dopisaniem kodu). Zostają: analityka i podział po pozycjach.
@@ -613,7 +613,36 @@ Z [product.md §7](product.md#7-wymagania-niefunkcjonalne-dotyczą-wszystkich-tr
 - [x] ~~**Buforowanie offline w panelu.**~~ **Skreślone 2026-08-26** (§5f). kelbroo
       wymaga połączenia i mówi o tym wprost na stronie i w bazie wiedzy.
 - [ ] **Menu gościa < 2 s na 4G** — zmierzyć na produkcji, nie zakładać.
-- [ ] **Monitoring i alerty** — dziś awarię widać dopiero wtedy, gdy ktoś zadzwoni.
+- [x] **Alarmy wewnętrzne** (2026-08-27) — API zgłasza pocztą to, co psuje usługę
+      po cichu: padniętą bazę, padnięty Redis, wywrócone zadanie cykliczne, odmowę
+      operatora płatności i nieudany zakup abonamentu. Adres z `MAIL_NOTIFY`.
+
+      **Redis jest tu najważniejszym z czujników i najmniej oczywistym.** Gdy padnie,
+      nie ma żadnego błędu — panele po prostu przestają dostawać zdarzenia na żywo,
+      a obsługa bierze ciszę za brak zamówień. Baza przeciwnie: wszystko się wywala,
+      ale serwer nadal odpowiada, więc z zewnątrz wygląda na sprawny.
+
+      **Wyciszanie powtórzeń jest częścią mechanizmu, nie ozdobnikiem.** Zepsuta
+      konfiguracja PayU wysyłałaby alarm co dziesięć minut — sto czterdzieści cztery
+      dziennie. Skrzynka zalana jednym alarmem przestaje być czytana dokładnie wtedy,
+      gdy przyjdzie drugi, inny. Stąd godzina ciszy i jedna zbiorcza wiadomość
+      z liczbą wystąpień, plus odwołanie alarmu, gdy awaria ustąpi.
+
+      `/api/health` **zwraca teraz 503 przy awarii** — wcześniej oddawał `200`
+      z `degraded` w treści, co dla dowolnego monitora znaczy „sprawny". Fałszywy
+      spokój jest gorszy od braku monitorowania.
+
+      Przy pierwszym uruchomieniu czujnik Redisa zgłaszał **fałszywy alarm** przy
+      starcie (sonda szła przed nawiązaniem połączenia). Wyszło to dopiero po
+      uruchomieniu API, nie w testach — stąd sprawdzenie na żywo w procedurze
+      wdrożenia.
+- [ ] **Monitor spoza serwera** — jedyna rzecz, której alarmy wewnętrzne nie zrobią:
+      **martwy proces nie wyśle wiadomości o własnej śmierci**. To samo dotyczy
+      padniętej maszyny, zatrzymanego Dockera i wygasłego certyfikatu. Potrzebna
+      usługa odpytująca `https://menu.kelbroo.com/api/health` co minutę i alarmująca
+      na kod inny niż 200 — konfiguracja, nie kod. Do wybrania dostawca (UptimeRobot,
+      Better Stack, healthchecks.io) i kanał powiadomienia inny niż nasza własna
+      poczta, bo ta stoi na tym samym serwerze.
 
 ---
 

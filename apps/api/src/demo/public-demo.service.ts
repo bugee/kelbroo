@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaClient } from '@prisma/client';
+import { AlertsService } from '../alerts/alerts.service';
 
 /**
  * Po ilu minutach bezczynności wizyta zwiedzającego znika.
@@ -33,7 +34,13 @@ export class PublicDemoService {
     datasourceUrl: process.env.DIRECT_DATABASE_URL,
   });
 
+  constructor(private readonly alerts: AlertsService) {}
+
   @Cron(CronExpression.EVERY_30_MINUTES)
+  async dozorowaneSprzatanie(): Promise<void> {
+    await this.alerts.pilnuj('sprzątanie-demo', () => this.posprzataj());
+  }
+
   async posprzataj(): Promise<void> {
     // `TableSession` nie ma relacji do organizacji, tylko jej identyfikator,
     // więc najpierw pytamy, które organizacje są pokazowe.

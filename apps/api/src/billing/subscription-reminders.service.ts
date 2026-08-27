@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import type { SubscriptionReminderKind } from '@prisma/client';
 import { PLANS, type PlanId } from '@kelbroo/types';
+import { AlertsService } from '../alerts/alerts.service';
 import { BillingService } from './billing.service';
 import { MailService } from '../mail/mail.service';
 import { ramka, tekstem, type Ramka } from '../mail/templates';
@@ -54,6 +55,7 @@ export class SubscriptionRemindersService {
   constructor(
     private readonly billing: BillingService,
     private readonly mail: MailService,
+    private readonly alerts: AlertsService,
   ) {}
 
   /**
@@ -64,6 +66,10 @@ export class SubscriptionRemindersService {
    * porze zimą.
    */
   @Cron('0 0 9 * * *', { timeZone: 'Europe/Warsaw' })
+  async dozorowanePrzypomnienia(): Promise<void> {
+    await this.alerts.pilnuj('przypomnienia-o-abonamencie', () => this.przypomnij());
+  }
+
   async przypomnij(): Promise<void> {
     const teraz = Date.now();
     const abonamenty = await this.billing.abonamentyDoPrzypomnienia(

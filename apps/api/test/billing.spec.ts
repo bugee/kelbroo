@@ -17,6 +17,7 @@ import { PayuProvider } from '../src/billing/payu.provider';
 import { PaymentSignatureError, type PaymentNotification } from '../src/billing/payment-provider';
 import { BillingReconciliationService } from '../src/billing/billing-reconciliation.service';
 import type { MailService } from '../src/mail/mail.service';
+import { alertyDoTestow } from './alerty';
 
 const direct = new PrismaClient({ datasourceUrl: process.env.DIRECT_DATABASE_URL });
 const prisma = new PrismaService();
@@ -98,7 +99,7 @@ beforeAll(async () => {
   process.env.PAYU_SECOND_KEY = DRUGI_KLUCZ;
 
   provider = new PayuProvider();
-  billing = new BillingService(prisma, provider, mail);
+  billing = new BillingService(prisma, provider, mail, alertyDoTestow().alerts);
 
   const organizacja = await direct.organization.create({
     data: {
@@ -379,11 +380,16 @@ describe('uzgadnianie', () => {
     });
   }
 
+  let wyslaneAlarmy: { subject: string }[] = [];
+
   beforeEach(async () => {
     atrapa = new Atrapa();
+    const alarmy = alertyDoTestow();
+    wyslaneAlarmy = alarmy.wyslane;
     uzgadnianie = new BillingReconciliationService(
-      new BillingService(prisma, atrapa, mail),
+      new BillingService(prisma, atrapa, mail, alarmy.alerts),
       atrapa,
+      alarmy.alerts,
     );
     await direct.subscriptionOrder.deleteMany({ where: { organizationId } });
     await ustawAbonament(new Date('2027-09-01T12:00:00Z'), 'active');
@@ -405,9 +411,14 @@ describe('uzgadnianie', () => {
     expect(zapisane.status).toBe('completed');
     expect(zapisane.paidUntil).not.toBeNull();
 
-    // Klient dostaje potwierdzenie, my — sygnał, że powiadomienia nie działają.
-    // Bez tego drugiego naprawilibyśmy skutek i przegapili przyczynę.
+    // Klient dostaje potwierdzenie zwykłą pocztą, my — sygnał kanałem alarmowym,
+    // że powiadomienia nie działają. Bez tego drugiego naprawilibyśmy skutek
+    // i przegapili przyczynę. Rozdział kanałów jest tu istotą: wiadomość do
+    // klienta i alarm dla nas mają różnych adresatów i różne wyciszanie.
     expect(wyslane.map((w) => w.subject)).toEqual(
+      expect.arrayContaining([expect.stringContaining('opłacony')]),
+    );
+    expect(wyslaneAlarmy.map((w) => w.subject)).toEqual(
       expect.arrayContaining([expect.stringContaining('odzyskana')]),
     );
   });
@@ -501,7 +512,7 @@ describe('uzgadnianie', () => {
       grossCents: order.grossCents,
       currency: 'PLN',
     };
-    const usluga = new BillingService(prisma, atrapa, mail);
+    const usluga = new BillingService(prisma, atrapa, mail, alertyDoTestow().alerts);
     const przed = await direct.subscription.findUniqueOrThrow({ where: { organizationId } });
 
     // Wyścig jest realny: PayU ponawia powiadomienie akurat wtedy, gdy przegląd

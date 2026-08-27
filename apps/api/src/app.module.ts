@@ -5,6 +5,8 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule } from '@nestjs/throttler';
 import path from 'node:path';
 import { PrismaModule } from './prisma/prisma.module';
+import { AlertsService } from './alerts/alerts.service';
+import { HealthWatchdogService } from './alerts/health-watchdog.service';
 import { BillingController } from './billing/billing.controller';
 import { ContactController } from './contact/contact.controller';
 import { ContactService } from './contact/contact.service';
@@ -70,7 +72,9 @@ import { ReviewsAdminService } from './management/reviews.admin.service';
     // Sekrety podajemy przy każdym podpisie i weryfikacji, bo access i refresh
     // mają osobne klucze — moduł rejestrujemy bez globalnej konfiguracji.
     JwtModule.register({}),
-    // Zadania cykliczne. Dziś jedno: uzgadnianie płatności z operatorem.
+    // Zadania cykliczne: uzgadnianie płatności, przypomnienia, sprzątanie demo
+    // i dozór nad bazą i Redisem. Każde chodzi pod `AlertsService.pilnuj`, bo
+    // zadanie, które przestało chodzić, nie zostawia po sobie żadnego śladu.
     // Zakłada JEDNĄ instancję API — przy skalowaniu w poziomie każda
     // uruchamiałaby je osobno i trzeba będzie dołożyć blokadę w Redisie.
     ScheduleModule.forRoot(),
@@ -107,6 +111,8 @@ import { ReviewsAdminService } from './management/reviews.admin.service';
     AuthService,
     RegistrationService,
     MailService,
+    AlertsService,
+    HealthWatchdogService,
     PlatformAuthService,
     PlatformClientsService,
     PlatformClientService,

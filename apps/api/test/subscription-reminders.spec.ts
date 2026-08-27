@@ -14,6 +14,7 @@ import { BillingService } from '../src/billing/billing.service';
 import { SubscriptionRemindersService } from '../src/billing/subscription-reminders.service';
 import { PayuProvider } from '../src/billing/payu.provider';
 import type { MailService } from '../src/mail/mail.service';
+import { alertyDoTestow } from './alerty';
 
 const direct = new PrismaClient({ datasourceUrl: process.env.DIRECT_DATABASE_URL });
 const prisma = new PrismaService();
@@ -51,8 +52,9 @@ async function ustaw(dni: number, status: 'trialing' | 'active' = 'active') {
 }
 
 beforeAll(async () => {
-  const billing = new BillingService(prisma, new PayuProvider(), mail);
-  przypomnienia = new SubscriptionRemindersService(billing, mail);
+  const { alerts } = alertyDoTestow();
+  const billing = new BillingService(prisma, new PayuProvider(), mail, alerts);
+  przypomnienia = new SubscriptionRemindersService(billing, mail, alerts);
 
   const organizacja = await direct.organization.create({
     data: {

@@ -15,6 +15,7 @@ import {
   type BillingPeriod,
   type PlanId,
 } from '@kelbroo/types';
+import { AlertsService } from '../alerts/alerts.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
 import { ramka, tekstem, type Ramka } from '../mail/templates';
@@ -47,6 +48,7 @@ export class BillingService {
     private readonly prisma: PrismaService,
     private readonly provider: SubscriptionPaymentProvider,
     private readonly mail: MailService,
+    private readonly alerts: AlertsService,
   ) {}
 
   /** Cennik do pokazania w panelu. Ceny liczy serwer, nie przeglądarka. */
@@ -185,19 +187,15 @@ export class BillingService {
     );
   }
 
-  /** Wiadomość do nas — używa jej uzgadnianie, gdy odzyska zgubioną wpłatę. */
+  /**
+   * Wiadomość do nas — używa jej uzgadnianie, gdy odzyska zgubioną wpłatę.
+   *
+   * Idzie tym samym kanałem co alarmy, więc podlega wyciszaniu powtórzeń.
+   * Waga „uwaga", nie „awaria": to zdarzenie **już naprawione** przez uzgadnianie,
+   * z którego zostaje przyczyna do sprawdzenia bez pośpiechu.
+   */
   async zawiadomNas(temat: string, akapity: string[]): Promise<void> {
-    const tresc: Ramka = {
-      adresStrony: this.mail.adresStrony,
-      naglowek: temat,
-      akapity,
-    };
-    await this.mail.send({
-      to: this.mail.skrzynkaKelbroo,
-      subject: temat,
-      text: tekstem(tresc),
-      html: ramka(tresc),
-    });
+    await this.alerts.zglos({ klucz: `billing.${temat}`, temat, akapity, waga: 'uwaga' });
   }
 
   /** Historia zakupów lokalu — także nieudanych. */
@@ -315,6 +313,22 @@ export class BillingService {
           }),
         )
         .catch(() => undefined);
+
+      // Klient chciał zapłacić i nie mógł. To najdroższy rodzaj awarii w całym
+      // systemie: nie zostawia śladu u nikogo poza logiem, a klient zwykle nie
+      // dzwoni — po prostu odchodzi.
+      await this.alerts.zglos({
+        klucz: 'platnosci.zakup',
+        temat: 'Nie da się rozpocząć płatności za abonament',
+        akapity: [
+          `Zakup planu <strong>${plan}</strong> dla <strong>${organizacja.name}</strong> ` +
+            'nie doszedł do bramki płatności: ' +
+            `<code>${przyczyna instanceof Error ? przyczyna.message : String(przyczyna)}</code>`,
+          'Klient zobaczył komunikat o niedostępnym operatorze. Odmowa autoryzacji zwykle ' +
+            'znaczy złe dane POS-u albo wygasły sekret — pełna odpowiedź PayU jest w logu API.',
+        ],
+        waga: 'awaria',
+      });
       throw przyczyna;
     }
   }

@@ -10,9 +10,10 @@ import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { PrismaClient } from '@prisma/client';
 import { PublicDemoService } from '../src/demo/public-demo.service';
+import { alertyDoTestow } from './alerty';
 
 const direct = new PrismaClient({ datasourceUrl: process.env.DIRECT_DATABASE_URL });
-const demo = new PublicDemoService();
+const demo = new PublicDemoService(alertyDoTestow().alerts);
 
 let pokazowa: { organizationId: string; restaurantId: string; tableId: string };
 let prawdziwa: { organizationId: string; restaurantId: string; tableId: string };

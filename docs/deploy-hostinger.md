@@ -272,14 +272,18 @@ Prawidłowy wynik:
 ## Krok 9. Sprawdź, czy żyje
 
 ```bash
-curl https://menu.kelbroo.com/api/health
+curl -i https://menu.kelbroo.com/api/health
 ```
 
-Oczekiwana odpowiedź:
+Oczekiwana odpowiedź — **kod 200** i:
 
 ```json
-{"status":"ok","database":"up"}
+{ "status": "ok", "database": "up", "redis": "up", "alerts": [] }
 ```
+
+Przy awarii adres zwraca **503**, a `alerts` wymienia klucze trwających alarmów.
+Kod odpowiedzi jest tu ważniejszy od treści: monitor patrzy na niego, a nie czyta
+JSON-a. `-i` w poleceniu jest po to, żeby ten kod było widać.
 
 Potem otwórz w przeglądarce:
 
@@ -919,3 +923,50 @@ swoje zamówienia oraz notatki do dań** — dokładnie tak, jak działa wspóln
 rachunek w prawdziwym lokalu. Nie ma tam moderacji; jedyną ochroną jest to, że
 wszystko znika po pół godzinie. Gdyby okazało się to problemem, następnym krokiem
 jest skrócenie tego czasu albo wyłączenie pola notatki w restauracji pokazowej.
+
+---
+
+## Alarmy o awariach
+
+Od 2026-08-27 API samo zgłasza część awarii pocztą na adres z `MAIL_NOTIFY`
+(domyślnie `kontakt@kelbroo.com`). Nie ma tu nic do skonfigurowania poza SMTP,
+który i tak musi działać — ale warto wiedzieć, co przychodzi i czego **nie**
+przyjdzie.
+
+### Co zgłasza samo
+
+| Alarm | Kiedy | Dlaczego to nie może umknąć |
+|---|---|---|
+| `usluga.baza` | PostgreSQL nie odpowiada na `SELECT 1` | Serwer stoi i odpowiada na żądania, więc z zewnątrz wygląda na sprawny |
+| `usluga.redis` | Redis nie odpowiada na `PING` | Panele przestają dostawać zdarzenia na żywo — **bez żadnego komunikatu**. Obsługa bierze ciszę za brak zamówień |
+| `zadanie.*` | Zadanie cykliczne zakończyło się błędem | Uzgadnianie płatności to jedyny mechanizm odzyskujący zgubione wpłaty |
+| `platnosci.operator` | PayU odrzuca pytania o zamówienia | Dopóki trwa, wpłaty bez powiadomienia nie zostaną odzyskane |
+| `platnosci.zakup` | Klient nie mógł rozpocząć płatności | Klient zwykle nie dzwoni — po prostu odchodzi |
+| `proces.nieobsluzony-blad` | Odrzucona obietnica bez obsługi | Potrafi wyłączyć API po cichu |
+
+Każdy alarm ma **klucz** (widoczny w stopce wiadomości i w `/api/health`).
+Powtórzenia tego samego klucza są wyciszane na **godzinę** i wychodzą potem jedną
+wiadomością z liczbą wystąpień — sto czterdzieści cztery wiadomości dziennie
+o tej samej awarii przestałyby być czytane. Gdy awaria ustąpi, przychodzi
+odwołanie z czasem jej trwania.
+
+### Czego nie zgłosi
+
+**Własnej śmierci.** Martwy proces nie wyśle wiadomości o tym, że nie żyje —
+tak samo padnięta maszyna, zatrzymany Docker czy wygasły certyfikat. To zadanie
+dla monitora stojącego **poza** serwerem, odpytującego `/api/health` (zwraca
+`503` przy awarii). Nie jest jeszcze podłączony — zadanie czeka w
+[docs/todo.md §7](todo.md).
+
+### Sprawdzenie, że alarmy chodzą
+
+```bash
+docker compose -f docker-compose.prod.yml --env-file .env.prod stop redis
+sleep 90
+curl -i https://menu.kelbroo.com/api/health   # oczekiwane 503, redis: down
+docker compose -f docker-compose.prod.yml --env-file .env.prod start redis
+```
+
+W ciągu dwóch minut na `MAIL_NOTIFY` powinny przyjść dwie wiadomości: alarm
+i odwołanie. **Rób to poza godzinami serwisu** — przez te półtorej minuty panele
+nie dostają zdarzeń na żywo.

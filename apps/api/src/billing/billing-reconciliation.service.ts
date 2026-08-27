@@ -1,5 +1,6 @@
 import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { AlertsService } from '../alerts/alerts.service';
 import { BillingService } from './billing.service';
 import { SubscriptionPaymentProvider } from './payment-provider';
 
@@ -50,9 +51,21 @@ export class BillingReconciliationService {
   constructor(
     private readonly billing: BillingService,
     private readonly provider: SubscriptionPaymentProvider,
+    private readonly alerts: AlertsService,
   ) {}
 
+  /**
+   * Wywołanie z zegara — pod dozorem.
+   *
+   * Osobna metoda, bo dozór ma obejmować **wyłącznie** przebieg cykliczny.
+   * Wołający wprost (testy) mają nadal widzieć wyjątek, zamiast dostawać ciszę
+   * i zielony wynik.
+   */
   @Cron(CronExpression.EVERY_10_MINUTES)
+  async dozorowanyPrzeglad(): Promise<void> {
+    await this.alerts.pilnuj('uzgadnianie-płatności', () => this.przeglad());
+  }
+
   async przeglad(): Promise<void> {
     // Bez skonfigurowanego operatora nie ma kogo pytać. Cicho, bo to normalny
     // stan wdrożenia przed podłączeniem płatności — nie awaria do zgłaszania
@@ -80,6 +93,20 @@ export class BillingReconciliationService {
         // po cichu wyłączyć tego wyjścia.
         if (przyczyna instanceof ServiceUnavailableException) {
           this.logger.error(`Uzgadnianie przerwane — operator niedostępny: ${przyczyna.message}`);
+          // Niedostępny operator to nie jest awaria jednego zamówienia: dopóki
+          // trwa, żadna wpłata się nie odnajdzie, a klient płaci i czeka.
+          await this.alerts.zglos({
+            klucz: 'platnosci.operator',
+            temat: 'PayU nie odpowiada na pytania o zamówienia',
+            akapity: [
+              'Uzgadnianie wpłat zostało przerwane, bo operator odrzucił żądanie: ' +
+                `<code>${przyczyna.message}</code>`,
+              'Dopóki to trwa, <strong>wpłaty bez powiadomienia nie zostaną odzyskane</strong> — ' +
+                'klient zapłaci, a abonament się nie przedłuży. Odmowa autoryzacji zwykle ' +
+                'znaczy złe dane POS-u albo wygasły sekret; szczegóły odpowiedzi są w logu API.',
+            ],
+            waga: 'awaria',
+          });
           return;
         }
         // Pojedyncze zamówienie nie może zatrzymać przeglądu.
@@ -107,6 +134,13 @@ export class BillingReconciliationService {
     }
 
     const stan = await this.provider.fetchOrder(zamowienie.payuOrderId);
+
+    // Dopiero tutaj wiadomo, że operator **odpowiada** — nie po samym przejściu
+    // przeglądu, bo pusta lista zamówień nie dowodzi niczego o PayU.
+    await this.alerts.ustapilo('platnosci.operator', 'PayU znów odpowiada', [
+      'Uzgadnianie wpłat dostało poprawną odpowiedź od operatora i działa dalej.',
+    ]);
+
     if (!stan) return;
     if (stan.status === 'pending') return;
 

@@ -4,6 +4,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { RedisIoAdapter } from './realtime/redis-io.adapter';
 import { DomainExceptionFilter } from './common/domain-exception.filter';
+import { AlertsService } from './alerts/alerts.service';
 
 async function bootstrap(): Promise<void> {
   // `rawBody` jest potrzebne wyłącznie powiadomieniom od operatora płatności:
@@ -40,6 +41,24 @@ async function bootstrap(): Promise<void> {
   app.useWebSocketAdapter(realtime);
 
   app.enableShutdownHooks();
+
+  // Sieć bezpieczeństwa pod dozorem zadań cyklicznych: łapie to, czego nikt nie
+  // objął `AlertsService.pilnuj` — odrzuconą obietnicę bez `catch` gdziekolwiek
+  // w procesie. Nowsze wersje Node kończą wtedy proces, więc bez tej linii
+  // pojedynczy przeoczony `await` potrafi wyłączyć API po cichu.
+  const alerts = app.get(AlertsService);
+  process.on('unhandledRejection', (przyczyna) => {
+    const opis = przyczyna instanceof Error ? przyczyna.message : String(przyczyna);
+    void alerts.zglos({
+      klucz: 'proces.nieobsluzony-blad',
+      temat: 'Nieobsłużony błąd w API',
+      akapity: [
+        `W procesie API powstała odrzucona obietnica bez obsługi: <code>${opis}</code>`,
+        'To błąd programistyczny, nie awaria infrastruktury. Ślad stosu jest w logu API.',
+      ],
+      waga: 'awaria',
+    });
+  });
 
   const port = Number(process.env.API_PORT ?? 4000);
   await app.listen(port);
