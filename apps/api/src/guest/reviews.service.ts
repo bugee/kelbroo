@@ -1,5 +1,11 @@
-import { BadRequestException, ConflictException, Injectable, Logger } from '@nestjs/common';
-import type { ReviewTarget } from '@prisma/client';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
+import type { Prisma, ReviewTarget } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 /** Skala z dokumentu Systemu 3 (§3.8): pięć gwiazdek, bez połówek. */
@@ -48,8 +54,26 @@ export class ReviewsService {
    * dostał, nie niesie żadnej informacji, a pytanie o nią w trakcie serwisu
    * wygląda jak pomyłka.
    */
+  /**
+   * Czy lokal w ogóle zbiera oceny.
+   *
+   * Funkcja planu Pro i wyższych, z możliwością ręcznego włączenia z zaplecza.
+   * Sprawdzana **po stronie serwera przy każdym zgłoszeniu**, nie tylko przy
+   * rysowaniu przycisku: ukrycie kontrolki jest wygodą, nie zabezpieczeniem.
+   */
+  private async wlaczone(tx: Prisma.TransactionClient, organizationId: string): Promise<boolean> {
+    const subscription = await tx.subscription.findUnique({ where: { organizationId } });
+    return subscription?.reviewsEnabled === true;
+  }
+
   async reviewable(organizationId: string, guestSessionId: string) {
     return this.prisma.withTenant(organizationId, async (tx) => {
+      // Wyłączona funkcja znaczy „nie ma czego oceniać" — gość nie zobaczy
+      // wtedy u siebie żadnego zaproszenia.
+      if (!(await this.wlaczone(tx, organizationId))) {
+        return { dishes: [], alreadySubmitted: false };
+      }
+
       const guestSession = await tx.guestSession.findUnique({
         where: { id: guestSessionId },
         select: { tableSessionId: true, participantId: true },
@@ -97,6 +121,10 @@ export class ReviewsService {
     }
 
     return this.prisma.withTenant(organizationId, async (tx) => {
+      if (!(await this.wlaczone(tx, organizationId))) {
+        throw new ForbiddenException('Ten lokal nie zbiera ocen.');
+      }
+
       const guestSession = await tx.guestSession.findUnique({
         where: { id: guestSessionId },
         select: {

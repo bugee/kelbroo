@@ -459,6 +459,7 @@ export class BillingService {
           languageLimit: limity.languageLimit,
           staffLimit: limity.staffLimit,
           menuPhotosEnabled: plan.features.menuPhotos,
+          reviewsEnabled: plan.features.reviews,
         },
         update: {
           plan: zamowienie.plan,
@@ -471,6 +472,7 @@ export class BillingService {
           // zrobione wcześniej z zaplecza **przepada** — plan jest źródłem prawdy
           // w chwili zakupu, a wyjątek trzeba wtedy nadać na nowo.
           menuPhotosEnabled: plan.features.menuPhotos,
+          reviewsEnabled: plan.features.reviews,
         },
       });
 

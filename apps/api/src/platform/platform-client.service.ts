@@ -186,6 +186,7 @@ export class PlatformClientService {
           // Funkcje też idą z planem. Ręczne włączenie zdjęć u kogoś na Starterze
           // przepada przy zmianie planu — trzeba je wtedy nadać na nowo, świadomie.
           menuPhotosEnabled: PLANS[plan].features.menuPhotos,
+          reviewsEnabled: PLANS[plan].features.reviews,
         },
       });
     });
@@ -199,6 +200,7 @@ export class PlatformClientService {
       tableLimit: wynik.tableLimit,
       languageLimit: wynik.languageLimit,
       menuPhotosEnabled: wynik.menuPhotosEnabled,
+      reviewsEnabled: wynik.reviewsEnabled,
     };
   }
 
@@ -213,7 +215,7 @@ export class PlatformClientService {
   async setFeature(
     admin: PlatformAdminContext,
     organizationId: string,
-    feature: 'menuPhotos',
+    feature: 'menuPhotos' | 'reviews',
     enabled: boolean,
     powod: string,
   ) {
@@ -228,7 +230,8 @@ export class PlatformClientService {
       }
       return tx.subscription.update({
         where: { organizationId },
-        data: { menuPhotosEnabled: enabled },
+        data:
+          feature === 'menuPhotos' ? { menuPhotosEnabled: enabled } : { reviewsEnabled: enabled },
       });
     });
 
@@ -236,7 +239,10 @@ export class PlatformClientService {
       feature,
       enabled,
     });
-    return { menuPhotosEnabled: wynik.menuPhotosEnabled };
+    return {
+      menuPhotosEnabled: wynik.menuPhotosEnabled,
+      reviewsEnabled: wynik.reviewsEnabled,
+    };
   }
 
   /**

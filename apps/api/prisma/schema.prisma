@@ -328,9 +328,14 @@ model Subscription {
   /// Zdjęcia dań w karcie. Domyślnie z planu (Pro i wyżej), ale zaplecze może
   /// je włączyć pojedynczemu klientowi bez zmiany planu — stąd kolumna, a nie
   /// wyliczanie z `plan` przy każdym pytaniu.
-  menuPhotosEnabled Boolean  @default(false) @map("menu_photos_enabled")
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @updatedAt @map("updated_at")
+  menuPhotosEnabled Boolean @default(false) @map("menu_photos_enabled")
+
+  /// Oceny dań i wizyty. Tak samo jak zdjęcia: wartość z planu, którą zaplecze
+  /// może nadać pojedynczemu klientowi bez zmiany abonamentu.
+  reviewsEnabled Boolean @default(false) @map("reviews_enabled")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 

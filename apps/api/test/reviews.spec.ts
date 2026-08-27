@@ -137,7 +137,25 @@ beforeAll(async () => {
   staff = { staffId: member.id, organizationId, restaurantId, role: 'manager', name: 'Manager' };
 });
 
+/** Oceny są funkcją planu Pro — testy sprzed bramki muszą ją mieć włączoną. */
+async function ustawFunkcje(enabled: boolean) {
+  await direct.subscription.upsert({
+    where: { organizationId },
+    update: { reviewsEnabled: enabled },
+    create: {
+      organizationId,
+      plan: 'pro',
+      status: 'active',
+      tableLimit: 40,
+      languageLimit: 6,
+      staffLimit: 9999,
+      reviewsEnabled: enabled,
+    },
+  });
+}
+
 beforeEach(async () => {
+  await ustawFunkcje(true);
   await direct.review.deleteMany({ where: { organizationId } });
   await direct.tableSession.deleteMany({ where: { organizationId } });
   const session = await direct.tableSession.create({
@@ -279,6 +297,43 @@ describe('wystawienie oceny', () => {
     expect((await reviews.reviewable(organizationId, gosc.guestSessionId)).alreadySubmitted).toBe(
       true,
     );
+  });
+});
+
+describe('bramka planu', () => {
+  it('bez funkcji gość nie dostaje zaproszenia do oceny', async () => {
+    await ustawFunkcje(false);
+    const gosc = await goscZDaniem();
+
+    // Zamiast błędu — pusta lista. Gość nie ma prawa zobaczyć, że coś mu
+    // odebrano; dla niego ten lokal po prostu nie zbiera ocen.
+    expect(await reviews.reviewable(organizationId, gosc.guestSessionId)).toEqual({
+      dishes: [],
+      alreadySubmitted: false,
+    });
+  });
+
+  it('bez funkcji nie przyjmujemy oceny wysłanej mimo wszystko', async () => {
+    await ustawFunkcje(false);
+    const gosc = await goscZDaniem();
+
+    // Ukrycie przycisku jest wygodą, nie zabezpieczeniem — bramka stoi tutaj.
+    await expect(
+      reviews.submit(organizationId, gosc.guestSessionId, {
+        visit: { rating: 5, target: 'kitchen' },
+      }),
+    ).rejects.toThrow(/nie zbiera ocen/);
+  });
+
+  it('zaplecze może włączyć oceny bez zmiany planu', async () => {
+    await ustawFunkcje(true);
+    const gosc = await goscZDaniem();
+
+    await expect(
+      reviews.submit(organizationId, gosc.guestSessionId, {
+        visit: { rating: 5, target: 'kitchen' },
+      }),
+    ).resolves.toEqual({ saved: 1 });
   });
 });
 

@@ -658,6 +658,8 @@ export interface SubscriptionState {
   trial: boolean;
   /** Czy plan obejmuje zdjęcia dań. Panel chowa po tym cały interfejs wgrywania. */
   menuPhotosEnabled: boolean;
+  /** Czy lokal zbiera oceny gości. Panel chowa po tym ekran opinii. */
+  reviewsEnabled: boolean;
 }
 
 export const fetchSubscription = () => authorized<SubscriptionState>('/staff/subscription');

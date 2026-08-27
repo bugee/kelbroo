@@ -16,7 +16,16 @@ import {
   type SubscriptionState,
 } from '@/lib/api';
 
-type NavItem = { href: string; label: string; roles: StaffRole[] };
+type NavItem = {
+  href: string;
+  label: string;
+  roles: StaffRole[];
+  /**
+   * Pozycja zależna od funkcji w planie. Ukrycie jest wygodą, nie
+   * zabezpieczeniem — bramka stoi po stronie serwera.
+   */
+  feature?: 'reviews';
+};
 
 /**
  * Praca na zmianie: to, co kelner i kuchnia klikają dziesiątki razy dziennie.
@@ -40,7 +49,7 @@ const NAV: NavItem[] = [
 const SETTINGS_NAV: NavItem[] = [
   { href: '/menu', label: 'Menu', roles: ['owner', 'manager'] },
   { href: '/qr', label: 'Stoliki i QR', roles: ['owner', 'manager'] },
-  { href: '/opinie', label: 'Opinie gości', roles: ['owner', 'manager'] },
+  { href: '/opinie', label: 'Opinie gości', roles: ['owner', 'manager'], feature: 'reviews' },
   { href: '/staff', label: 'Zespół', roles: ['owner', 'manager'] },
   { href: '/password', label: 'Zmień hasło', roles: ['owner', 'manager', 'waiter', 'kitchen'] },
   { href: '/settings', label: 'Lokal', roles: ['owner', 'manager'] },
@@ -76,6 +85,8 @@ export function StaffShell({ children }: { children: (staff: Staff) => React.Rea
   }
 
   const visible = NAV.filter((item) => item.roles.includes(staff.role));
+  // Filtr po roli tutaj, po funkcjach planu niżej — stan abonamentu mieszka
+  // w powłoce, bo pasek o wygaśnięciu ma być widoczny z każdego ekranu.
   const settings = SETTINGS_NAV.filter((item) => item.roles.includes(staff.role));
   return (
     <Shell staff={staff} visible={visible} settings={settings}>
@@ -108,6 +119,13 @@ function Shell({
   const loadSubscription = useCallback(() => fetchSubscription(), []);
   const { data: abonament } = useLiveData(loadSubscription, 300_000);
 
+  // Pozycje zależne od planu pokazujemy dopiero, gdy znamy plan. Menu, w którym
+  // coś migocze i znika, czyta się jak usterka; pojawienie się chwilę później
+  // nie przeszkadza nikomu.
+  const widoczneUstawienia = settings.filter(
+    (item) => !item.feature || abonament?.reviewsEnabled === true,
+  );
+
   return (
     <div className="min-h-dvh">
       <header className="sticky top-0 z-20 border-b border-[var(--line)] bg-[var(--surface)] px-4 py-2 print:hidden">
@@ -137,7 +155,9 @@ function Shell({
             {staff.name} · {staff.role}
           </span>
 
-          {settings.length > 0 && <SettingsMenu items={settings} pathname={pathname} />}
+          {widoczneUstawienia.length > 0 && (
+            <SettingsMenu items={widoczneUstawienia} pathname={pathname} />
+          )}
 
           {/* Kuchnia często pracuje przy słabym świetle — wybór palety
               zostaje na urządzeniu, nie na koncie pracownika. */}

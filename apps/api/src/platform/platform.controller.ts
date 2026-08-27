@@ -49,8 +49,8 @@ class PlanDto extends PowodDto {
 
 /** Włączenie funkcji poza planem — dziś jedna, ale lista z założenia urośnie. */
 class FeatureDto extends PowodDto {
-  @IsIn(['menuPhotos'])
-  feature!: 'menuPhotos';
+  @IsIn(['menuPhotos', 'reviews'])
+  feature!: 'menuPhotos' | 'reviews';
 
   @IsBoolean()
   enabled!: boolean;

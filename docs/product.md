@@ -68,7 +68,7 @@ Szczegółowy diagram sekwencji: patrz [architecture.md §6](architecture.md#6-p
 | Panel kuchni (KDS) + panel kelnera | ❌ | ✅ | ✅ | ✅ |
 | Konta personelu *(egzekwowane od 2026-08-26)* | 1 | 3 | bez limitu | bez limitu |
 | Zdjęcia dań w karcie *(od 2026-08-27; zaplecze może włączyć w niższym planie)* | ❌ | ❌ | ✅ | ✅ |
-| Oceny dań i feedback do managera *(od 2026-08-27 **jedna wersja we wszystkich planach** — podziału „podstawowe/pełne" nie zdefiniowano i nie zbudowano)* | ❌ | ✅ | ✅ | ✅ |
+| Oceny dań i feedback do managera *(od 2026-08-27; jedna wersja, bez podziału „podstawowe/pełne"; zaplecze może włączyć w niższym planie)* | ❌ | ❌ | ✅ | ✅ |
 | Analityka i raporty | ❌ | podstawowy pulpit | ✅ pełna + eksport | ✅ + API raportowe |
 | Podział rachunku | ❌ | „każdy za siebie” | ✅ pełny (po pozycjach, grupami, po równo) | ✅ pełny |
 | Wiele lokali w jednej organizacji | ❌ | ❌ | ❌ | ✅ |

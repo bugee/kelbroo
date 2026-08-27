@@ -25,6 +25,8 @@ export interface StanAbonamentu {
   staffLimit: number | null;
   /** Czy lokal może dodawać zdjęcia dań. Panel chowa po tym cały interfejs wgrywania. */
   menuPhotosEnabled: boolean;
+  /** Czy lokal zbiera oceny gości. Panel chowa po tym cały ekran opinii. */
+  reviewsEnabled: boolean;
   /** `null`, gdy abonament nie ma daty końca. */
   currentPeriodEnd: Date | null;
   /** Ile dni zostało; ujemne, gdy termin minął. `null` przy braku daty. */
@@ -48,6 +50,7 @@ export async function readSubscription(
     languageLimit: subscription?.languageLimit ?? null,
     staffLimit: subscription?.staffLimit ?? null,
     menuPhotosEnabled: subscription?.menuPhotosEnabled ?? false,
+    reviewsEnabled: subscription?.reviewsEnabled ?? false,
     currentPeriodEnd: subscription?.currentPeriodEnd ?? null,
     daysLeft: subscription?.currentPeriodEnd
       ? Math.ceil((subscription.currentPeriodEnd.getTime() - Date.now()) / DZIEN)

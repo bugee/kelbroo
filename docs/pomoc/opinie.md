@@ -2,6 +2,9 @@
 
 **Ustawienia → Opinie gości.** Ekran widzi właściciel i manager.
 
+Funkcja planu **Pro i wyższych**. Jeśli masz niższy plan, a chcesz ją włączyć,
+napisz na kontakt@kelbroo.com — da się to zrobić bez zmiany abonamentu.
+
 ## Jak gość ocenia
 
 Po wydaniu dania, na ekranie rachunku, gość dostaje pytanie „Jak było?".

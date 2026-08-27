@@ -164,6 +164,7 @@ export class RegistrationService {
           // Okres próbny jest planem Pro, więc daje też jego funkcje — inaczej
           // klient testowałby coś innego, niż potem kupi.
           menuPhotosEnabled: PLANS.pro.features.menuPhotos,
+          reviewsEnabled: PLANS.pro.features.reviews,
         },
       });
 

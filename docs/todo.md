@@ -78,6 +78,12 @@ Modele są w schemacie od pierwszej migracji i nie mają ani jednego odwołania 
       ma powiedzieć restauracji, zanim powie internetowi. Dlatego w panelu
       nieprzeczytane stoją na górze — bez czytania mechanizm jest pozorny.
 
+      **Funkcja planu Pro i wyższych** (2026-08-27), z możliwością włączenia
+      pojedynczemu klientowi z zaplecza. Bramka stoi po stronie serwera: przy
+      wyłączonej funkcji gość nie dostaje zaproszenia, a zgłoszenie wysłane mimo
+      wszystko jest odrzucane. Historii już zebranych opinii **nie odbieramy** przy
+      spadku planu — plan ogranicza zbieranie, nie dostęp do własnych danych.
+
       **Nie zbudowane z docs/03 §3.8:** odnośnik do opinii w Google przy ocenie 4–5
       (wymaga adresu per lokal), średnia ocena na karcie dania i pokazywanie ocen
       innych gości (to decyzja restauracji, więc osobny przełącznik).
@@ -350,12 +356,11 @@ Kolejność według tego, ile kosztuje odkrycie braku przez klienta, który już
       poprawiony nagłówek sekcji, cecha planu Starter w cenniku i odpowiedź w FAQ.
       W miejscu karty stoi zdanie, że przygotowujemy tę płatność — bo pytają o nią
       klienci i milczenie byłoby gorsze niż „jeszcze nie".
-- [x] **„Oceny dań i feedback do managera" — zbudowane** (2026-08-27, §4), z jedną
-      rozbieżnością do rozstrzygnięcia: `product.md` §5.1 dzieli tę funkcję na
-      „podstawowe" (Starter) i „pełne" (Pro), a my zbudowaliśmy **jedną wersję dla
-      wszystkich planów** — nie ma zdefiniowanego kryterium tego podziału i nie ma
-      go w kodzie. Do decyzji: skreślić podział z cennika czy dopisać, co odróżnia
-      wersje. Kafelek na stronie głównej ma teraz pokrycie.
+- [x] **„Oceny dań i feedback do managera" — zbudowane i zamknięte w planie Pro**
+      (2026-08-27, §4). Podział „podstawowe/pełne" **skreślony**: nic go nie definiowało,
+      a definiowanie różnicy po to, żeby ją sprzedać, byłoby wymyślaniem ograniczenia.
+      Jedna wersja, w Pro i wyżej; w niższych planach domyślnie wyłączona i nieopisana
+      w cenniku, z możliwością ręcznego włączenia z zaplecza (§6c).
 - [ ] **Pro: „Analityka i eksport raportów".**
       Zero kodu, także w panelu. Obiecane kafelkiem „Raporty i analityka".
       To najbardziej rozbudowana pozycja z całej listy.
@@ -457,8 +462,8 @@ Do rozstrzygnięcia **przed** napisaniem pierwszego ekranu:
 
 ### 6c. Parametryzacja klienta
 
-- [x] **Włączanie funkcji poza planem** (2026-08-27) — pierwsza taka funkcja to
-      zdjęcia dań. Wartość siedzi na abonamencie, więc zaplecze może ją nadać
+- [x] **Włączanie funkcji poza planem** (2026-08-27) — dziś dwie: zdjęcia dań
+      i oceny gości. Wartość siedzi na abonamencie, więc zaplecze może ją nadać
       lokalowi na Starterze na czas rozmowy o przejściu na Pro, nie ruszając
       abonamentu. **Zmiana planu kasuje taki wyjątek** — plan jest wtedy świeżą
       decyzją i ustawia funkcje na wartości z cennika; panel mówi o tym wprost

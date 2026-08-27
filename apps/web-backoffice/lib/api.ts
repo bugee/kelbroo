@@ -160,6 +160,8 @@ export interface KartaKlienta {
     staffLimit: number | null;
     /** Zdjęcia dań. Domyślnie z planu, ale da się włączyć pojedynczemu klientowi. */
     menuPhotosEnabled: boolean;
+    /** Oceny gości. Tak samo: wartość z planu, z możliwością nadpisania. */
+    reviewsEnabled: boolean;
   };
   lokale: {
     id: string;
@@ -207,12 +209,13 @@ export const changePlan = (id: string, plan: Plan, reason: string) =>
  * **Zmiana planu kasuje taki wyjątek** — plan jest wtedy świeżą decyzją i ustawia
  * funkcje na wartości z cennika. Trzeba go wtedy nadać na nowo.
  */
-export const setFeature = (id: string, enabled: boolean, reason: string) =>
-  operacja<{ menuPhotosEnabled: boolean }>(`/platform/clients/${id}/feature`, {
-    feature: 'menuPhotos',
-    enabled,
-    reason,
-  });
+export type Funkcja = 'menuPhotos' | 'reviews';
+
+export const setFeature = (id: string, feature: Funkcja, enabled: boolean, reason: string) =>
+  operacja<{ menuPhotosEnabled: boolean; reviewsEnabled: boolean }>(
+    `/platform/clients/${id}/feature`,
+    { feature, enabled, reason },
+  );
 
 export const blockClient = (id: string, reason: string) =>
   operacja<{ zablokowane: boolean }>(`/platform/clients/${id}/block`, { reason });
