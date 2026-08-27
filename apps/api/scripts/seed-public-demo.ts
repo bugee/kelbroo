@@ -13,9 +13,11 @@
  * pracownika i nie da się przez nią wejść do panelu.
  */
 import path from 'node:path';
+import { readdir, readFile } from 'node:fs/promises';
 import { config as loadEnv } from 'dotenv';
 import { PrismaClient } from '@prisma/client';
 import { CURRENCY, MENU, VAT_FOOD } from '../prisma/demo-menu';
+import { LocalDiskImageStorage } from '../src/media/menu-image.storage';
 
 loadEnv({ path: path.resolve(__dirname, '../../../.env'), quiet: true });
 
@@ -50,6 +52,9 @@ async function main() {
               currentPeriodEnd: new Date('2099-12-31T00:00:00Z'),
               tableLimit: 40,
               languageLimit: 6,
+              // Pokazowa restauracja ma pokazywać także zdjęcia dań — to jedna
+              // z rzeczy, dla których restaurator w ogóle otwiera demo.
+              menuPhotosEnabled: true,
             },
           },
         },
@@ -139,9 +144,78 @@ async function main() {
     }
   }
 
+  await wgrajZdjecia(organizationId, restaurant.id);
+
   console.log(`Restauracja pokazowa: ${restaurant.name} (${restaurant.slug})`);
   console.log(`Adres dla gościa: /t/${DEMO_QR_TOKEN}`);
   console.log(maMenu === 0 ? 'Menu utworzone.' : 'Menu już istniało — pominięte.');
+}
+
+/** Do porównania nazwy pliku z nazwą dania: bez ogonków, wielkości liter i interpunkcji. */
+const uprosc = (tekst: string) =>
+  tekst
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+
+/**
+ * Zdjęcia dań dla restauracji pokazowej.
+ *
+ * Pliki leżą w repozytorium już **zmniejszone** (dłuższy bok 1400 px, JPEG) —
+ * tą samą arytmetyką, którą stosuje panel przy wgrywaniu. Oryginały z aparatu
+ * ważą po ~1,8 MB każdy; niezmniejszone dałyby kartę demo ważącą osiemnaście
+ * megabajtów na telefonie kogoś, kto ogląda ją na komórkowym internecie.
+ *
+ * Dopasowanie po nazwie pliku. **Brak dopasowania jest błędem, nie ciszą**:
+ * przemianowane danie inaczej po cichu zostałoby bez zdjęcia i nikt by tego
+ * nie zauważył, dopóki nie zajrzałby do demo.
+ */
+async function wgrajZdjecia(organizationId: string, restaurantId: string) {
+  const katalog = path.join(__dirname, '..', 'prisma', 'demo-images');
+  const pliki = (await readdir(katalog).catch(() => [])).filter((n) => n.endsWith('.jpg'));
+  if (pliki.length === 0) {
+    console.log('Brak katalogu ze zdjęciami — pomijam.');
+    return;
+  }
+
+  const storage = new LocalDiskImageStorage();
+  const dania = await prisma.menuItem.findMany({
+    where: { restaurantId },
+    select: { id: true, imageUrl: true, translations: { select: { locale: true, name: true } } },
+  });
+
+  let wgrane = 0;
+  const nieznane: string[] = [];
+
+  for (const plik of pliki) {
+    const szukane = uprosc(plik.replace(/\.jpg$/, ''));
+    const danie = dania.find((pozycja) => {
+      const nazwa = uprosc(pozycja.translations.find((t) => t.locale === 'pl')?.name ?? '');
+      // Pełna zgodność albo nazwa pliku jako początek nazwy dania — „wino"
+      // opisuje „Wino domu, kieliszek".
+      return nazwa === szukane || nazwa.startsWith(`${szukane} `);
+    });
+
+    if (!danie) {
+      nieznane.push(plik);
+      continue;
+    }
+    if (danie.imageUrl) continue;
+
+    const nazwa = await storage.save(await readFile(path.join(katalog, plik)));
+    await prisma.menuItem.update({ where: { id: danie.id }, data: { imageUrl: nazwa } });
+    wgrane += 1;
+  }
+
+  console.log(`Zdjęcia: wgrano ${wgrane}, pominięto ${pliki.length - wgrane - nieznane.length}.`);
+  if (nieznane.length > 0) {
+    throw new Error(
+      `Te zdjęcia nie pasują do żadnego dania: ${nieznane.join(', ')}. ` +
+        'Sprawdź nazwy plików albo nazwy pozycji w karcie.',
+    );
+  }
 }
 
 main()

@@ -263,7 +263,12 @@ co człowiek** — automat, któremu powiemy „odrzucono", spróbuje inaczej.
       i nie dostaje przypomnień o abonamencie. Potwierdzanie przez kelnera jest w niej
       wyłączone, bo żadnego kelnera tam nie ma — z włączonym zwiedzający zobaczyłby
       zamówienie wiszące w nieskończoność. Gość widzi u góry pasek, że to demonstracja.
-      Wizyty starsze niż 30 minut kasuje zadanie cykliczne.
+      Wizyty starsze niż 30 minut kasuje zadanie cykliczne. Od 2026-08-27 karta
+      pokazowa ma **zdjęcia wszystkich dziesięciu dań** — wgrywa je ten sam skrypt,
+      z plików trzymanych w repozytorium już zmniejszonych (dłuższy bok 1400 px,
+      ~160 kB zamiast ~1,8 MB oryginału). Brak dopasowania nazwy pliku do dania
+      **przerywa skrypt**: po cichu pominięte zdjęcie zauważyłby dopiero ktoś,
+      kto zajrzy do demo.
 - [x] **Baza wiedzy** (2026-08-26) — `/pomoc` ze spisem i sześcioma artykułami:
       pierwsze kroki, karta menu, stoliki i kody QR, obsługa zamówień na zmianie,
       konta pracowników, abonament i faktury.

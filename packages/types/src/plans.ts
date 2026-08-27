@@ -33,10 +33,23 @@ export interface PlanLimits {
  */
 export const BEZ_LIMITU = 9_999;
 
+/**
+ * Funkcje włączane planem.
+ *
+ * Osobno od limitów, bo to inne pytanie: limit mówi „ile", funkcja mówi „czy
+ * w ogóle". Wartość z planu jest **wartością startową** — zaplecze może ją
+ * podnieść pojedynczemu klientowi, nie ruszając jego planu.
+ */
+export interface PlanFeatures {
+  /** Zdjęcia dań w karcie: jedno na pozycję, widoczne u gościa. */
+  menuPhotos: boolean;
+}
+
 export interface Plan {
   id: PlanId;
   name: string;
   limits: PlanLimits;
+  features: PlanFeatures;
   /**
    * Cena netto w groszach za okres. `null` znaczy „nie do kupienia samodzielnie":
    * plan Menu jest bezpłatny, a Enterprise wyceniany indywidualnie — w obu
@@ -59,12 +72,14 @@ export const PLANS: Record<PlanId, Plan> = {
     id: 'menu',
     name: 'Menu',
     limits: { tableLimit: BEZ_LIMITU, languageLimit: 1, staffLimit: 1 },
+    features: { menuPhotos: false },
     netCents: { month: 0, year: 0 },
   },
   starter: {
     id: 'starter',
     name: 'Starter',
     limits: { tableLimit: 12, languageLimit: 2, staffLimit: 3 },
+    features: { menuPhotos: false },
     // 159 zł/mies albo 1 590 zł/rok (132 zł/mies w przeliczeniu).
     netCents: { month: 15_900, year: 159_000 },
   },
@@ -72,6 +87,7 @@ export const PLANS: Record<PlanId, Plan> = {
     id: 'pro',
     name: 'Pro',
     limits: { tableLimit: 40, languageLimit: 6, staffLimit: BEZ_LIMITU },
+    features: { menuPhotos: true },
     // 349 zł/mies albo 3 490 zł/rok (291 zł/mies w przeliczeniu).
     netCents: { month: 34_900, year: 349_000 },
   },
@@ -79,6 +95,7 @@ export const PLANS: Record<PlanId, Plan> = {
     id: 'enterprise',
     name: 'Enterprise',
     limits: { tableLimit: BEZ_LIMITU, languageLimit: 99, staffLimit: BEZ_LIMITU },
+    features: { menuPhotos: true },
     netCents: { month: null, year: null },
   },
 };

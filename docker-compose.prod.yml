@@ -158,6 +158,12 @@ services:
     environment:
       DATABASE_URL: postgresql://kelbroo:${POSTGRES_PASSWORD}@postgres:5432/kelbroo?schema=public
       DIRECT_DATABASE_URL: postgresql://kelbroo:${POSTGRES_PASSWORD}@postgres:5432/kelbroo?schema=public
+      # Ten sam katalog co API: skrypty uruchamiane przez `run --rm migrate`
+      # zapisują zdjęcia restauracji pokazowej. Bez tego wolumenu wylądowałyby
+      # w kontenerze i zniknęły razem z nim.
+      MEDIA_ROOT: /media
+    volumes:
+      - media:/media
     depends_on:
       postgres:
         condition: service_healthy

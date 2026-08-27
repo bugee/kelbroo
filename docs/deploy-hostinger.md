@@ -881,8 +881,13 @@ docker compose -f docker-compose.prod.yml --env-file .env.prod \
 ```
 
 Skrypt jest bezpieczny do powtórzenia — drugie uruchomienie nie utworzy drugiej
-restauracji ani nie zduplikuje menu. Uruchamiaj go przez usługę **`migrate`**,
-nie `api`: obraz produkcyjny API zawiera wyłącznie skompilowany `dist`.
+restauracji, nie zduplikuje menu ani nie wgra zdjęć po raz drugi. Uruchamiaj go
+przez usługę **`migrate`**, nie `api`: obraz produkcyjny API zawiera wyłącznie
+skompilowany `dist`.
+
+Ten sam skrypt wgrywa **zdjęcia dań** (od 2026-08-27). Jeśli restaurację pokazową
+założyłeś wcześniej, uruchom go ponownie — dołoży brakujące zdjęcia i nie ruszy
+reszty.
 
 ### Krok 2. Sprawdź
 
@@ -898,6 +903,8 @@ jedzenie.
 
 ### Co dzieje się dalej samo
 
+- **Zdjęcia dań** leżą w wolumenie `media`, tym samym co zdjęcia klientów.
+  Wgrywa je skrypt z kroku 1 — nie ma osobnej czynności.
 - **Co pół godziny znikają wizyty zwiedzających** starsze niż 30 minut, razem
   z ich zamówieniami. Bez tego stolik pokazowy po tygodniu pokazywałby nowemu
   odwiedzającemu cudzy rachunek sprzed dni.
