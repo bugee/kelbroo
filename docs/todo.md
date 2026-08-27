@@ -78,28 +78,28 @@ Modele są w schemacie od pierwszej migracji i nie mają ani jednego odwołania 
       **Awatara gość nie wybiera** i na razie nie będzie: znak rozpoznawczy służy do
       wypowiedzenia kelnerowi („żółty samochodzik") i musi zostać niepowtarzalny przy
       stoliku — wybór gościa psułby tę gwarancję, nic nie dodając.
-- [ ] **Powrót do wizyty bez ponownego skanowania** — gość zamyka kartę albo przeglądarkę
-      i wraca na `menu.kelbroo.com` z historii. Dziś widzi tam statyczne „Zeskanuj kod QR",
-      więc musi fizycznie znaleźć kod na stoliku, mimo że jego wizyta trwa.
+- [x] **Powrót do wizyty bez ponownego skanowania** (2026-08-27) — strona startowa
+      aplikacji gościa sprawdza zapamiętane wizyty i przerzuca do menu, jeśli rachunek
+      jest wciąż otwarty. Gość odzyskuje swój nick, znak i historię zamówień.
 
-      **Połowa tego już działa:** token gościa leży w `localStorage` pod kluczem
-      `kelbroo.guest.{qrToken}`, a `enterTable` wysyła go przy wejściu — serwer odzyskuje
-      wtedy uczestnika i historię (`reuseGuestSession` w `table.service.ts`). Brakuje
-      **strony startowej, która to wykorzysta**: sprawdzi zapamiętaną wizytę i przerzuci
-      gościa prosto do menu, jeśli rachunek nie jest jeszcze zamknięty.
+      **Przekierowanie wymaga potwierdzenia z serwera** (`POST /guest/resume`), nie samej
+      obecności tokenu w przeglądarce. Wejście z nieaktualnym tokenem nie kończy się
+      błędem — serwer zakłada wtedy nową tożsamość przy bieżącej wizycie stolika. Przy
+      skanie to jest świadome „dosiadam się tutaj, teraz"; przy cichym przekierowaniu
+      z zakładki byłoby dopisaniem gościa do cudzego rachunku bez jego wiedzy. Serwer
+      sprawdza trzy warunki naraz: token jest jego, wizyta **ta sama** i sesja nieprzeterminowana.
 
-      Do rozstrzygnięcia przy realizacji:
-      - **ciasteczko zamiast (albo obok) `localStorage`** — ciasteczko czyta serwer, więc
-        przekierowanie dzieje się przed wyrenderowaniem strony, bez migotania. Techniczne,
-        niezbędne do działania usługi, więc nie wymaga banera zgody; trzeba je opisać
-        w polityce prywatności (§5c).
-      - **wygasanie** — sesja gościa żyje `GUEST_SESSION_TTL_HOURS` (domyślnie 6 h),
-        a wizyta kończy się zamknięciem rachunku. Powrót po zamkniętym rachunku ma
-        prowadzić do ekranu „Zeskanuj kod QR", nie do cudzego stolika.
-      - **kilka stolików** — klucz jest per kod QR, więc przesiadka to inna wizyta.
-        Strona startowa musi wybrać tę właściwą, nie pierwszą z brzegu.
-      - **okno prywatne i wyczyszczone dane** — pamięci wtedy nie ma i ścieżka ma
-        po cichu wrócić do skanowania, a nie pokazać błąd.
+      Rozstrzygnięcia z listy powyżej:
+      - **bez ciasteczka.** Wystarczył `localStorage` i krótki komunikat „Sprawdzamy Twój
+        stolik…" zamiast pokazywania „Zeskanuj kod QR", które za chwilę znika. Zysk poza
+        prostotą: zostajemy w tym, co polityka prywatności **już opisuje** (token w pamięci
+        lokalnej, technicznie niezbędny, bez banera zgody) — ciasteczko wymagałoby dopisku.
+      - **wygasanie** — rozliczony rachunek i przeterminowana sesja prowadzą do ekranu
+        skanowania. Nieaktualny wpis jest przy okazji kasowany z pamięci, żeby nie pytać
+        o niego przy każdym kolejnym wejściu.
+      - **kilka stolików** — sprawdzamy po kolei od ostatnio zapisanej wizyty.
+      - **okno prywatne** — brak pamięci daje ekran skanowania **od razu**, bez pytania
+        serwera o cokolwiek.
 - [ ] **Zmiana hosta wizyty** — dwa wejścia: host wskazuje następcę spośród uczestników,
       a kelner może go zmienić z panelu. Dziś hostem zostaje na stałe pierwszy skanujący,
       co psuje się, gdy wychodzi wcześniej albo skanował ktoś przypadkowy.

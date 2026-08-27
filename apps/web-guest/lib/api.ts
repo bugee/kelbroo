@@ -153,6 +153,53 @@ export function readToken(qrToken: string): string | null {
   }
 }
 
+/**
+ * Zapamiętane wizyty, od ostatnio zapisanej.
+ *
+ * Klucz jest per kod QR, więc przesiadka do innego stolika to osobny wpis.
+ * Kolejność ma znaczenie: przy dwóch stolikach tego samego dnia gość chce
+ * wrócić do tego, przy którym siedzi teraz, a nie do pierwszego z brzegu.
+ */
+export function storedVisits(): { qrToken: string; guestToken: string }[] {
+  try {
+    return Object.keys(localStorage)
+      .filter((klucz) => klucz.startsWith('kelbroo.guest.'))
+      .map((klucz) => ({
+        qrToken: klucz.slice('kelbroo.guest.'.length),
+        guestToken: localStorage.getItem(klucz) ?? '',
+      }))
+      .filter((wpis) => wpis.guestToken !== '')
+      .reverse();
+  } catch {
+    // Okno prywatne albo zablokowane dane witryny: nie ma czego wznawiać
+    // i nie jest to błąd — ścieżka wraca do skanowania.
+    return [];
+  }
+}
+
+/**
+ * Czy da się wrócić do zapamiętanej wizyty.
+ *
+ * Pyta **serwer**, a nie samą pamięć przeglądarki: token może być nasz, a wizyta
+ * już rozliczona albo zastąpiona nową. Wejście z takim tokenem dopisałoby gościa
+ * do cudzego stolika, więc decyzję podejmuje ta odpowiedź, nie obecność klucza.
+ */
+export async function canResume(qrToken: string, guestToken: string): Promise<boolean> {
+  try {
+    const response = await fetch(`${API}/guest/resume`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ qrToken, guestToken }),
+    });
+    if (!response.ok) return false;
+    const wynik = (await response.json()) as { resumable?: boolean };
+    return wynik.resumable === true;
+  } catch {
+    // Brak sieci: nie zgadujemy. Ekran skanowania jest zawsze poprawną odpowiedzią.
+    return false;
+  }
+}
+
 function writeToken(qrToken: string, token: string): void {
   try {
     localStorage.setItem(tokenKey(qrToken), token);

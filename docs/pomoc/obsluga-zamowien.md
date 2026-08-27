@@ -37,6 +37,10 @@ Stolik **zajęty** pokazuje, ile trwa wizyta, ilu jest gości, kwotę **Do zapł
 oraz znaki rozpoznawcze gości (nick i symbol). Gospodarz wizyty ma przy nicku
 oznaczenie `host`.
 
+Gość, który zamknął kartę w przeglądarce, **nie musi skanować kodu ponownie** —
+wchodząc na `menu.kelbroo.com` wraca do swojej wizyty razem z historią zamówień,
+dopóki rachunek jest otwarty. Po rozliczeniu widzi już tylko prośbę o skan.
+
 Nick jest losowany przy wejściu („Wesoły Borsuk"), ale gość może raz wpisać
 własny. Symbolu i koloru nie wybiera — one służą do wypowiedzenia przy stoliku
 („ten z żółtym samochodzikiem") i muszą pozostać niepowtarzalne.

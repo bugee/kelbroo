@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { IsBoolean, IsIn, IsString, MaxLength } from 'class-validator';
 import { TableAccessService } from './table-access.service';
 import type { SplitMode } from '@kelbroo/types';
@@ -6,6 +15,17 @@ import { Guest, GuestAuthGuard } from './guest.guard';
 import type { ResolvedGuest } from './guest-session.service';
 import { GuestSignalsService, type CallReason } from './guest-signals.service';
 import { GuestNameService } from './guest-name.service';
+import { GuestResumeService } from './guest-resume.service';
+
+class ResumeDto {
+  @IsString()
+  @MaxLength(200)
+  qrToken!: string;
+
+  @IsString()
+  @MaxLength(400)
+  guestToken!: string;
+}
 
 class NameDto {
   /**
@@ -51,7 +71,23 @@ class BillRequestDto {
  */
 @Controller('guest')
 export class GuestOpenTableController {
-  constructor(private readonly signals: GuestSignalsService) {}
+  constructor(
+    private readonly signals: GuestSignalsService,
+    private readonly resume: GuestResumeService,
+  ) {}
+
+  /**
+   * Czy gość może wrócić do swojej wizyty bez skanowania.
+   *
+   * Poza strażnikiem sesji, bo pyta właśnie o to, czy ta sesja jeszcze jest coś
+   * warta — strażnik odpowiedziałby błędem 401 tam, gdzie potrzebne jest
+   * zwykłe „nie".
+   */
+  @Post('resume')
+  @HttpCode(HttpStatus.OK)
+  async canResume(@Body() dto: ResumeDto) {
+    return { resumable: await this.resume.canResume(dto.qrToken, dto.guestToken) };
+  }
 
   @Post('tables/:qrToken/open-request')
   requestOpen(@Param('qrToken') qrToken: string) {

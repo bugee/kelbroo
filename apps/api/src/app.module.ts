@@ -10,6 +10,7 @@ import { ContactController } from './contact/contact.controller';
 import { ContactService } from './contact/contact.service';
 import { PublicDemoService } from './demo/public-demo.service';
 import { GuestNameService } from './guest/guest-name.service';
+import { GuestResumeService } from './guest/guest-resume.service';
 import { MenuImageAdminController, MenuImagePublicController } from './media/menu-image.controller';
 import { MenuImageService } from './media/menu-image.service';
 import { LocalDiskImageStorage, MenuImageStorage } from './media/menu-image.storage';
@@ -130,6 +131,7 @@ import { StaffAdminService } from './management/staff.admin.service';
     ContactService,
     PublicDemoService,
     GuestNameService,
+    GuestResumeService,
     MenuImageService,
     // Dziś dysk serwera; docelowo S3/R2 z CDN-em — wymiana to podmiana tej linii.
     { provide: MenuImageStorage, useClass: LocalDiskImageStorage },
