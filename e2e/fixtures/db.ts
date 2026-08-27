@@ -369,6 +369,22 @@ export async function setHostApproval(enabled: boolean): Promise<void> {
  * Test potrzebuje stanu „kelner idzie", a przechodzenie po to przez logowanie
  * i kolejkę mierzyłoby panel zamiast przycisku gościa.
  */
+/**
+ * Przełącza potwierdzanie zamówień przez obsługę.
+ *
+ * Domyślnie **włączone** (tryb `pay_at_table`), więc zamówienie gościa czeka
+ * w kolejce, zanim trafi na kuchnię. To jest bramka do kuchni i test musi umieć
+ * sprawdzić obie jej strony.
+ */
+export async function setStaffConfirmation(enabled: boolean): Promise<void> {
+  await withClient(async (client) => {
+    await client.query(
+      'UPDATE restaurant SET require_staff_confirmation = $1, updated_at = now() WHERE slug = $2',
+      [enabled, E2E_SLUG],
+    );
+  });
+}
+
 export async function acknowledgeCallAt(tableId: string): Promise<void> {
   await withClient(async (client) => {
     await client.query(

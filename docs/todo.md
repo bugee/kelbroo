@@ -538,9 +538,19 @@ Do rozstrzygnięcia **przed** napisaniem pierwszego ekranu:
 
 Z [product.md §7](product.md#7-wymagania-niefunkcjonalne-dotyczą-wszystkich-trzech-systemów).
 
-- [ ] **Testy e2e ścieżki gościa: zamawianie** — jest już dymny test wejścia po kodzie QR,
-      znaku rozpoznawczego i wezwania kelnera. Brakuje pełnej drogi: koszyk, złożenie
-      zamówienia, prośba o rachunek.
+- [x] **Testy e2e ścieżki gościa: zamawianie** (2026-08-27) — `guest-ordering.spec.ts`:
+      koszyk z ilością i notatką, złożenie zamówienia, kolejka potwierdzeń, ekran kuchni
+      po obu stronach bramki, tryb bez potwierdzania i rozliczenie stolika przez kelnera.
+
+      **Pierwsza wersja tego testu była fałszywie zielona.** Sprawdzenie „zamówienia nie
+      ma na kuchni" wykonane tuż po nawigacji przechodzi na jeszcze pustej stronie
+      i nie dowodzi niczego. Poprawione dwoma sposobami: najpierw pozytywna asercja,
+      że zamówienie w ogóle dotarło do panelu, potem czekanie na wyrenderowany ekran
+      kuchni. Zęby sprawdzone przez zepsucie `statusAfterSubmission` — test pada.
+
+      Przy okazji wyszło, że bramka jest **podwójna**: filtruje i zapytanie serwera,
+      i grupowanie kolumn w panelu. Zepsucie samego zapytania nie zmienia tego,
+      co widać.
 - [ ] **Dostępność WCAG 2.1 AA** w aplikacji gościa — używa jej przypadkowa publiczność.
 - [x] ~~**Buforowanie offline w panelu.**~~ **Skreślone 2026-08-26** (§5f). kelbroo
       wymaga połączenia i mówi o tym wprost na stronie i w bazie wiedzy.
