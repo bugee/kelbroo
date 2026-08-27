@@ -532,14 +532,18 @@ Do rozstrzygnięcia **przed** napisaniem pierwszego ekranu:
       przy przycisku. Każde przełączenie wymaga powodu i trafia do dziennika.
 
 - [x] **Limity planu** (2026-08-26) — widoczne na karcie i przestawiane razem
-      ze zmianą planu. Osobnego nadpisania limitu ponad plan wciąż nie ma —
-      w odróżnieniu od funkcji, które da się już włączyć pojedynczo (wyżej).
+      ze zmianą planu.
 - [ ] **Ustawienia lokalu z poziomu wsparcia** — te same przełączniki, które ma manager
       (tryb zamawiania, potwierdzanie, zgoda hosta, rozliczanie po jednym).
 - [ ] **Przełączniki funkcji per klient** — pilotaż nowej funkcji u jednego lokalu bez
       wypuszczania jej wszystkim. Dziś każda taka decyzja to wdrożenie całej aplikacji.
-- [ ] **Nadpisanie limitu ponad plan** — sieć na 45 stolikach przy planie na 40 ma
-      dostać zgodę handlową, a nie awarię w piątek wieczorem.
+- [x] **Nadpisanie limitu ponad plan** (2026-08-27) — cztery pola na karcie klienta:
+      pozycje w karcie, stoliki, języki, konta personelu. Sieć na 45 stolikach przy planie
+      na 40 dostaje zgodę handlową, a nie awarię w piątek wieczorem; lokal z kartą na
+      55 pozycji nie musi przechodzić na Pro dlatego, że przekroczył próg o pięć dań.
+      Każda zmiana wymaga powodu i trafia do dziennika (`subscription.limits_changed`).
+      **Zmiana planu kasuje wyjątek** — tak samo jak przy funkcjach; panel mówi o tym
+      pod formularzem, bo inaczej byłaby to pułapka.
 
 ### 6d. Abonamenty i płatności
 
