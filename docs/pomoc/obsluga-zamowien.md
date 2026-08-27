@@ -81,6 +81,35 @@ Czego przesiadka **nie** zrobi: nie połączy dwóch rachunków. Jeśli przy doc
 stoliku trwa inna wizyta, kelbroo odmówi — dwa rachunki przy jednym stole to
 osobna decyzja, a nie skutek uboczny przesiadki.
 
+## Podział rachunku
+
+Na ekranie wizyty (**Podziel rachunek** przy stoliku) wybierasz sposób:
+
+- **Jeden rachunek** — bez podziału.
+- **Każdy za siebie** — każdy płaci za to, co zamówił.
+- **Po pozycjach** — przypisujesz pozycje ręcznie, z możliwością podzielenia jednej
+  między kilka osób (niżej).
+- **Po równo** — suma dzielona przez liczbę gości.
+- **Grupami** — układasz, kto z kim płaci.
+
+### Po pozycjach
+
+Stukasz gościa przy pozycji, żeby mu ją przypisać; drugie stuknięcie odpina.
+Kilku gości przy jednej pozycji dzieli ją **na części** — plusem zwiększasz czyjś
+udział. Dwie części z trzech przy butelce wina to dwie trzecie ceny, a kwota pod
+znakiem gościa pokazuje, ile z tego wyszło.
+
+Dwie rzeczy działają tu inaczej niż w pozostałych trybach:
+
+- **Pozycja bez adresata blokuje rozliczenie.** Widać ją na pomarańczowo, z licznikiem
+  „Do przypisania". Nie doliczamy jej po cichu gospodarzowi — pominięta pozycja to
+  przeoczenie, a nie decyzja.
+- **Przypisania przeżywają dokładkę.** Deser zamówiony po ustaleniu podziału nie kasuje
+  Twojej pracy — wchodzi jako nieprzypisany i czeka.
+
+Podziału nie da się zmienić po pierwszej płatności. Przeliczenie kwoty komuś, kto już
+uregulował swoją część, byłoby cichą zmianą rachunku po fakcie.
+
 ## Zestawienie na e-mail dla gościa
 
 Gość może wysłać sobie na e-mail zestawienie **kto co zamówił** — z podziałem na

@@ -6,7 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { MoneySplitError, type SplitMode } from '@kelbroo/types';
+import { allocateByShares, MoneySplitError, type SplitMode } from '@kelbroo/types';
 import { PrismaService } from '../prisma/prisma.service';
 import { planSplit, type SplitGroupInput } from './split-plan';
 import { TableLifecycleService } from './table-lifecycle.service';
@@ -171,6 +171,125 @@ export class SplitService {
   }
 
   /**
+   * Przypisanie pozycji do osób — sedno trybu `per_item`.
+   *
+   * Trzy przypadki, jedno wejście. Pusta lista **odpina** pozycję: wraca na listę
+   * „do przypisania" i blokuje rozliczenie, zamiast po cichu wpaść hostowi.
+   * Jedna osoba to zwykłe `for_participant_id`, bez wierszy udziału — pozycja
+   * niedzielona nie ma powodu ich mieć, a im mniej wierszy, tym mniej miejsc,
+   * w których podział może się rozjechać. Kilka osób to dopiero `OrderItemShare`.
+   *
+   * Udziały podaje się w **jednostkach, nie w kwotach**: trzy piwa na dwie osoby
+   * to 2:1. Kwoty liczy `allocateByShares` metodą największych reszt, więc suma
+   * udziałów zawsze równa się wartości pozycji co do grosza.
+   */
+  async setItemShares(
+    staff: StaffContext,
+    sessionId: string,
+    orderItemId: string,
+    shares: { participantId: string; units: number }[],
+  ) {
+    return this.prisma.withTenant(staff.organizationId, async (tx) => {
+      const session = await this.load(tx, staff, sessionId);
+      if (await this.hasPayments(tx, session.id)) {
+        throw new ConflictException(
+          'Rachunek jest już częściowo zapłacony — przypisania nie da się zmienić.',
+        );
+      }
+
+      const item = await tx.orderItem.findFirst({
+        where: { id: orderItemId, order: { tableSessionId: session.id } },
+        select: { id: true, unitPriceCents: true, quantity: true },
+      });
+      if (!item) {
+        throw new NotFoundException('Pozycja nie należy do tej wizyty.');
+      }
+
+      const uczestnicy = await tx.tableParticipant.findMany({
+        where: { tableSessionId: session.id, leftAt: null },
+        select: { id: true, isHost: true },
+      });
+      const znani = new Map(uczestnicy.map((uczestnik) => [uczestnik.id, uczestnik]));
+
+      const podzial = shares.filter((share) => share.units > 0);
+      if (new Set(podzial.map((share) => share.participantId)).size !== podzial.length) {
+        throw new BadRequestException('Ten sam gość podany dwa razy przy jednej pozycji.');
+      }
+      for (const share of podzial) {
+        if (!znani.has(share.participantId)) {
+          throw new BadRequestException('Ten gość nie siedzi przy tym stoliku.');
+        }
+      }
+
+      // Stare udziały znikają w całości — przypisanie liczy się od nowa, nie łata.
+      await tx.orderItemShare.deleteMany({ where: { orderItemId: item.id } });
+
+      if (podzial.length === 0) {
+        await tx.orderItem.update({
+          where: { id: item.id },
+          data: { forParticipantId: null, isShared: false },
+        });
+        return this.afterAssignment(tx, session, staff.organizationId);
+      }
+
+      const [jedyny] = podzial;
+      if (podzial.length === 1 && jedyny) {
+        await tx.orderItem.update({
+          where: { id: item.id },
+          data: { forParticipantId: jedyny.participantId, isShared: false },
+        });
+        return this.afterAssignment(tx, session, staff.organizationId);
+      }
+
+      const kwoty = allocateByShares(
+        item.unitPriceCents * item.quantity,
+        podzial.map((share) => ({
+          key: share.participantId,
+          units: share.units,
+          isHost: znani.get(share.participantId)?.isHost ?? false,
+        })),
+      );
+
+      await tx.orderItemShare.createMany({
+        data: kwoty.map((kwota) => ({
+          organizationId: staff.organizationId,
+          orderItemId: item.id,
+          participantId: kwota.key,
+          shareUnits: podzial.find((share) => share.participantId === kwota.key)?.units ?? 1,
+          amountCents: kwota.amountCents,
+        })),
+      });
+
+      // Pozycja dzielona nie ma jednego właściciela. Zostawienie tu kogokolwiek
+      // dałoby drugie źródło prawdy o tych samych pieniądzach.
+      await tx.orderItem.update({
+        where: { id: item.id },
+        data: { forParticipantId: null, isShared: true },
+      });
+
+      return this.afterAssignment(tx, session, staff.organizationId);
+    });
+  }
+
+  /**
+   * Po każdej zmianie przypisania kwoty grup muszą się przeliczyć.
+   *
+   * Grup **nie kasujemy i nie budujemy od nowa** — inaczej ręczna praca kelnera
+   * parowałaby przy każdym kliknięciu. Udziały żyją na pozycjach zamówienia,
+   * więc przeżywają i dokładkę, i zmianę trybu podziału.
+   */
+  private async afterAssignment(
+    tx: Prisma.TransactionClient,
+    session: { id: string; splitMode: SplitMode; totalCents: number },
+    _organizationId: string,
+  ) {
+    if (session.splitMode !== 'none') {
+      await this.recompute(tx, session.id, session.splitMode, session.totalCents);
+    }
+    return this.view(tx, session.id);
+  }
+
+  /**
    * Rozliczenie jednej grupy. Płatność jest zapisem ewidencyjnym — fiskalizacja
    * dzieje się na kasie lokalu, poza kelbroo.
    */
@@ -191,6 +310,30 @@ export class SplitService {
       }
       if (group.status === 'paid' || group.status === 'settled') {
         throw new ConflictException('Ta grupa jest już rozliczona.');
+      }
+
+      /**
+       * W `per_item` nieprzypisana pozycja **blokuje rozliczenie**.
+       *
+       * W pozostałych trybach taka pozycja dzieli się po równo i to jest
+       * zrozumiałe. Tutaj nie: skoro kelner przypisuje pozycje ręcznie, to
+       * pominięta oznacza przeoczenie, a nie decyzję — a ciche doliczenie jej
+       * hostowi to dokładnie ten rodzaj błędu, którego nikt nie zauważy przed
+       * zamknięciem zmiany.
+       */
+      if (session.splitMode === 'per_item') {
+        const nieprzypisane = await tx.orderItem.count({
+          where: {
+            order: { tableSessionId: session.id, status: { notIn: ['rejected', 'canceled'] } },
+            forParticipantId: null,
+            shares: { none: {} },
+          },
+        });
+        if (nieprzypisane > 0) {
+          throw new ConflictException(
+            `Nieprzypisane pozycje: ${nieprzypisane}. Przypisz je do gości albo zmień tryb podziału.`,
+          );
+        }
       }
 
       // Lokal może nie chcieć rachunków rozliczanych po kawałku: przy jednej
@@ -364,16 +507,39 @@ export class SplitService {
       where: {
         order: { tableSessionId: sessionId, status: { notIn: ['rejected', 'canceled'] } },
       },
-      select: { forParticipantId: true, unitPriceCents: true, quantity: true },
+      select: {
+        forParticipantId: true,
+        unitPriceCents: true,
+        quantity: true,
+        shares: { select: { participantId: true, amountCents: true } },
+      },
     });
 
     const attributedByParticipant: Record<string, number> = {};
     let unattributedCents = 0;
+    const dodaj = (participantId: string, kwota: number) => {
+      attributedByParticipant[participantId] =
+        (attributedByParticipant[participantId] ?? 0) + kwota;
+    };
+
     for (const item of items) {
       const line = item.unitPriceCents * item.quantity;
+
+      /**
+       * Udziały mają pierwszeństwo przed `for_participant_id`.
+       *
+       * Dwa źródła prawdy o tej samej kwocie zawsze się kiedyś rozjadą, więc
+       * kolejność jest tu regułą, nie wygodą: pozycja podzielona między kilka
+       * osób ma udziały i to one liczą pieniądze; pozycja jednej osoby nie ma
+       * udziałów wcale i liczy się po `for_participant_id`, jak dotąd.
+       */
+      if (item.shares.length > 0) {
+        for (const share of item.shares) dodaj(share.participantId, share.amountCents);
+        continue;
+      }
+
       if (item.forParticipantId) {
-        attributedByParticipant[item.forParticipantId] =
-          (attributedByParticipant[item.forParticipantId] ?? 0) + line;
+        dodaj(item.forParticipantId, line);
       } else {
         unattributedCents += line;
       }
@@ -425,6 +591,52 @@ export class SplitService {
       },
     });
 
+    /**
+     * Pozycje rachunku z przypisaniem — bez nich nie da się narysować ekranu
+     * podziału po pozycjach. Wysyłamy je zawsze, nie tylko w `per_item`:
+     * kelner musi widzieć, co komu przypadnie, **zanim** wybierze tryb.
+     */
+    const pozycje = await tx.orderItem.findMany({
+      where: {
+        order: { tableSessionId: sessionId, status: { notIn: ['rejected', 'canceled'] } },
+      },
+      orderBy: { createdAt: 'asc' },
+      select: {
+        id: true,
+        nameSnapshot: true,
+        quantity: true,
+        unitPriceCents: true,
+        forParticipantId: true,
+        shares: {
+          select: { participantId: true, shareUnits: true, amountCents: true },
+          orderBy: { participantId: 'asc' },
+        },
+      },
+    });
+
+    const items = pozycje.map((pozycja) => ({
+      id: pozycja.id,
+      name: pozycja.nameSnapshot,
+      quantity: pozycja.quantity,
+      lineCents: pozycja.unitPriceCents * pozycja.quantity,
+      shares:
+        pozycja.shares.length > 0
+          ? pozycja.shares.map((share) => ({
+              participantId: share.participantId,
+              units: share.shareUnits,
+              amountCents: share.amountCents,
+            }))
+          : pozycja.forParticipantId
+            ? [
+                {
+                  participantId: pozycja.forParticipantId,
+                  units: 1,
+                  amountCents: pozycja.unitPriceCents * pozycja.quantity,
+                },
+              ]
+            : [],
+    }));
+
     return {
       id: session.id,
       number: session.sessionNumber,
@@ -438,6 +650,13 @@ export class SplitService {
       // Po pierwszej płatności kwoty grup są zamrożone.
       locked: session.paidCents > 0,
       participants: session.participants,
+      items,
+      /**
+       * Pozycje bez adresata. W `per_item` blokują rozliczenie — aplikacja nie
+       * ma prawa po cichu doliczyć ich hostowi (architecture.md §14.5). W innych
+       * trybach dzielą się po równo, więc są informacją, nie przeszkodą.
+       */
+      unassignedItemIds: items.filter((item) => item.shares.length === 0).map((item) => item.id),
       groups: session.settlementGroups.map((group) => ({
         id: group.id,
         label: group.label,

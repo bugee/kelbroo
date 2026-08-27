@@ -6,11 +6,13 @@ import {
   Param,
   ParseUUIDPipe,
   Patch,
+  Put,
   Post,
   UseGuards,
 } from '@nestjs/common';
 import { Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
   ArrayMinSize,
   IsArray,
   IsIn,
@@ -130,10 +132,32 @@ class SplitGroupDto {
   participantIds!: string[];
 }
 
+class ItemShareDto {
+  @IsUUID()
+  participantId!: string;
+
+  /**
+   * Udział w częściach, nie w kwotach: trzy piwa na dwie osoby to 2:1.
+   * Kwoty liczy serwer, bo tylko tam wolno dzielić pieniądze.
+   */
+  @IsInt()
+  @Min(1)
+  @Max(99)
+  units!: number;
+}
+
+class ItemSharesDto {
+  /** Pusta lista odpina pozycję — wraca na listę „do przypisania". */
+  @IsArray()
+  @ArrayMaxSize(20)
+  @ValidateNested({ each: true })
+  @Type(() => ItemShareDto)
+  shares!: ItemShareDto[];
+}
+
 class SplitModeDto {
-  // `per_item` należy do etapu 2 i celowo nie jest tu przyjmowane.
-  @IsIn(['none', 'per_person', 'equal', 'groups'])
-  splitMode!: Extract<SplitMode, 'none' | 'per_person' | 'equal' | 'groups'>;
+  @IsIn(['none', 'per_person', 'per_item', 'equal', 'groups'])
+  splitMode!: Extract<SplitMode, 'none' | 'per_person' | 'per_item' | 'equal' | 'groups'>;
 
   /** Wymagane wyłącznie dla trybu `groups` — pozostałe liczą się same. */
   @IsArray()
@@ -339,6 +363,25 @@ export class StaffController {
     @Body() dto: SplitModeDto,
   ) {
     return this.split.setMode(staff, id, dto);
+  }
+
+  /**
+   * Przypisanie pozycji do gości — ekran podziału po pozycjach.
+   *
+   * Kelner, nie gość: rozmowa „kto brał wino?" toczy się przy stoliku, a układanie
+   * dwudziestu pozycji palcem na telefonie, przez pięć osób naraz i na wspólnym
+   * stanie, byłoby najgorszym możliwym pierwszym wariantem. Ekran gościa da się
+   * dołożyć później bez zmiany modelu.
+   */
+  @Put('sessions/:id/items/:itemId/shares')
+  @Roles('owner', 'manager', 'waiter')
+  setItemShares(
+    @Staff() staff: StaffContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('itemId', ParseUUIDPipe) itemId: string,
+    @Body() dto: ItemSharesDto,
+  ) {
+    return this.split.setItemShares(staff, id, itemId, dto.shares);
   }
 
   /**

@@ -188,7 +188,7 @@ export interface OrderEventView {
   reason: string | null;
 }
 
-export type SplitMode = 'none' | 'per_person' | 'equal' | 'groups';
+export type SplitMode = 'none' | 'per_person' | 'per_item' | 'equal' | 'groups';
 
 export interface SplitPlan {
   id: string;
@@ -217,6 +217,17 @@ export interface SplitPlan {
     totalCents: number;
     members: { id: string; displayName: string; symbol: string; color: string }[];
   }[];
+  /** Pozycje rachunku z przypisaniem — podstawa ekranu podziału po pozycjach. */
+  items: {
+    id: string;
+    name: string;
+    quantity: number;
+    lineCents: number;
+    /** Puste = pozycja nieprzypisana. Jeden wpis = cała pozycja dla tej osoby. */
+    shares: { participantId: string; units: number; amountCents: number }[];
+  }[];
+  /** W trybie `per_item` blokują rozliczenie — nie wolno ich doliczyć hostowi. */
+  unassignedItemIds: string[];
 }
 
 export interface WaiterCall {
@@ -317,6 +328,23 @@ export const setSplitMode = (
   authorized<SplitPlan>(`/staff/sessions/${sessionId}/split`, {
     method: 'PATCH',
     body: JSON.stringify(payload),
+  });
+
+/**
+ * Przypisanie pozycji do gości.
+ *
+ * Udziały w **częściach, nie w kwotach**: trzy piwa na dwie osoby to 2:1.
+ * Pieniądze dzieli serwer, bo tylko tam wolno to robić. Pusta lista odpina
+ * pozycję i odsyła ją na listę „do przypisania".
+ */
+export const setItemShares = (
+  sessionId: string,
+  itemId: string,
+  shares: { participantId: string; units: number }[],
+) =>
+  authorized<SplitPlan>(`/staff/sessions/${sessionId}/items/${itemId}/shares`, {
+    method: 'PUT',
+    body: JSON.stringify({ shares }),
   });
 
 export const settleSplitGroup = (

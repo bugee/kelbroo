@@ -11,6 +11,46 @@ async function logInAsOwner(page: Page): Promise<void> {
 }
 
 test.describe('podział rachunku', () => {
+  test('po pozycjach: kelner przypisuje pozycję dwóm osobom w częściach', async ({ page }) => {
+    const fixture = await seedMenuAndTable();
+
+    try {
+      // 90,00 zł na jednej pozycji — dzieli się na trzy części bez reszty,
+      // więc kwoty w teście są jednoznaczne: 60,00 i 30,00.
+      const { sessionId, guests } = await seedSessionWithBill({
+        tableId: fixture.tableId,
+        totalCents: 9000,
+      });
+
+      await logInAsOwner(page);
+      await page.goto(`/tables/${sessionId}`);
+      await page.getByRole('button', { name: 'Po pozycjach' }).click();
+
+      // Dopóki pozycja nie ma adresata, rachunku nie wolno rozliczyć.
+      await expect(page.getByText(/Do przypisania: 1/)).toBeVisible();
+
+      const pozycja = page.locator('li').filter({ hasText: 'Rachunek testowy' });
+      await pozycja.getByRole('button', { name: new RegExp(guests[0]!.name) }).click();
+      await pozycja.getByRole('button', { name: new RegExp(guests[1]!.name) }).click();
+
+      // Dwie osoby po jednej części: 45,00 na głowę.
+      await expect(page.getByText(/Do przypisania/)).toHaveCount(0);
+      await expect(page.getByText('45,00 zł').first()).toBeVisible();
+
+      // Plus przy pierwszym gościu robi z tego dwie części z trzech.
+      await pozycja.getByRole('button', { name: `Więcej dla ${guests[0]!.name}` }).click();
+
+      const doZaplaty = page.locator('li').filter({ hasText: 'Gotówka' });
+      await expect(doZaplaty.filter({ hasText: '60,00 zł' })).toHaveCount(1);
+      await expect(doZaplaty.filter({ hasText: '30,00 zł' })).toHaveCount(1);
+
+      // Niezmiennik na ekranie: suma części równa się wartości pozycji.
+      await expect(page.getByText('zostaje 90,00 zł')).toBeVisible();
+    } finally {
+      await fixture.cleanup();
+    }
+  });
+
   test('dzieli po równo i zamyka wizytę dopiero po ostatniej grupie', async ({ page }) => {
     const fixture = await seedMenuAndTable();
 

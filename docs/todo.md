@@ -42,9 +42,9 @@ o nowych wersjach obu dokumentów.
 kartę klienta oraz operacje na abonamencie z dziennikiem. Obsługa klienta nie
 wymaga już `psql` ani ręcznej edycji `.env.prod`.
 
-Czego brakuje do pełnego zakresu etapu 1: modelu `OrderItemShare` (podział
-`per_item`, zakres etapu 2, bez ani jednej linii kodu) oraz zestawienia rachunku
-na e-mail z sekcji 4. `Review` przestał być pustym modelem 2026-08-27.
+**Zakres etapu 1 jest domknięty co do funkcji** (2026-08-27): ostatnie dwa braki —
+zestawienie rachunku na e-mail i podział `per_item` — zostały dopisane. Żaden model
+ze schematu nie stoi już bez kodu.
 
 **Dwie rzeczy ciążą dziś najbardziej i żadna nie jest funkcją:**
 
@@ -52,9 +52,10 @@ na e-mail z sekcji 4. `Review` przestał być pustym modelem 2026-08-27.
    własne awarie — bazę, Redisa, wywrócone zadania, odmowy operatora płatności.
    Zostaje dziura, której z definicji nie da się zatkać od środka: **martwy proces
    nie wyśle wiadomości o własnej śmierci**. Potrzebny monitor spoza maszyny.
-2. **Dwie obietnice ze strony produktowej nie mają pokrycia w kodzie** (§5f,
+2. **Jedna obietnica ze strony produktowej nie ma pokrycia w kodzie** (§5f,
    przeliczone 2026-08-27; z dziewięciu trzy zamknięto skreśleniem obietnicy,
-   cztery dopisaniem kodu). Zostają: analityka i podział po pozycjach.
+   pięć dopisaniem kodu). Zostaje **analityka i eksport raportów** — najbardziej
+   rozbudowana pozycja z całej listy.
 
 Ścieżka gościa ma od 2026-08-27 test e2e (§7) — zamawianie, kolejka potwierdzeń,
 obie strony bramki kuchennej i rozliczenie stolika. Regresja nie wróci już
@@ -408,10 +409,11 @@ co człowiek** — automat, któremu powiemy „odrzucono", spróbuje inaczej.
 ### 5f. Obietnice ze strony bez pokrycia w kodzie
 
 Rejestr sporządzony 2026-08-26 przez porównanie cennika, siatki funkcji i FAQ ze
-stanem kodu. **Dziewięć pozycji, z czego siedem zamkniętych:** trzy
+stanem kodu. **Dziewięć pozycji, z czego osiem zamkniętych:** trzy
 skreśleniem obietnicy (praca offline, instalacja, płatność gościa w aplikacji —
-ta ostatnia wraca razem z kodem), cztery dopisaniem brakującego kodu (limit kont
-personelu, oceny dań, limit pozycji w karcie, zestawienie rachunku na e-mail).
+ta ostatnia wraca razem z kodem), pięć dopisaniem brakującego kodu (limit kont
+personelu, oceny dań, limit pozycji w karcie, zestawienie rachunku na e-mail,
+podział po pozycjach).
 
 **Dziewiąta pozycja doszła 2026-08-27 i warto wiedzieć dlaczego jej nie było.**
 Pierwszy audyt szedł po kaflach funkcji i po tabeli cennika — a obietnica
@@ -450,11 +452,36 @@ Kolejność według tego, ile kosztuje odkrycie braku przez klienta, który już
 - [ ] **Pro: „Analityka i eksport raportów".**
       Zero kodu, także w panelu. Obiecane kafelkiem „Raporty i analityka".
       To najbardziej rozbudowana pozycja z całej listy.
-- [ ] **Pro: podział rachunku „po pozycjach".**
-      `none`, `per_person`, `equal` i `groups` działają; **`per_item` nie** — wymaga
-      `OrderItemShare`, który należy do etapu 2. Cennik mówi „pełny podział
-      rachunku i grupy", co jest prawdą; product.md §5.1 mówi „po pozycjach",
-      co prawdą nie jest.
+- [x] **Pro: podział rachunku „po pozycjach"** (2026-08-27). Domyka ostatnią
+      rozbieżność między `product.md` a kodem: dokument mówił „po pozycjach", a tryb
+      nie istniał.
+
+      **Okazał się nie nową strukturą płatności, tylko doprecyzowaniem atrybucji.**
+      Rozliczenie nadal idzie przez `SettlementGroup` (grupy jednoosobowe, jak
+      `per_person`); zmienia się wyłącznie **źródło kwoty uczestnika** — `OrderItemShare`
+      zamiast samego `for_participant_id`. Dlatego `planSplit` nie dostał osobnej gałęzi:
+      druga gałąź to drugie miejsce, w którym rachunek może przestać się sumować.
+
+      **Powód odłożenia przestał obowiązywać.** Zapisany był jako „najbardziej złożona
+      arytmetycznie część", a arytmetyka — największe reszty, deterministyczna kolejność,
+      niezmiennik — leżała gotowa i przetestowana w `packages/types` od początku.
+
+      Rozstrzygnięcia:
+      - **Przypisuje kelner, nie gość.** Rozmowa „kto brał wino?" toczy się przy stoliku,
+        a układanie dwudziestu pozycji palcem na telefonie, przez pięć osób naraz i na
+        wspólnym stanie, byłoby najgorszym pierwszym wariantem. Ekran gościa da się
+        dołożyć później bez zmiany modelu.
+      - **Udziały w częściach, nie w kwotach** — trzy piwa na dwie osoby to 2:1.
+      - **Pozycja jednej osoby nie zakłada wierszy udziału** — zostaje przy
+        `for_participant_id`. Im mniej wierszy, tym mniej miejsc na rozjazd.
+      - **Udziały przeżywają dokładkę**, bo żyją na pozycji zamówienia, a nie na grupie.
+        Nowe danie wchodzi jako nieprzypisane i **blokuje rozliczenie** — ciche doliczenie
+        go hostowi to błąd, którego nikt nie zauważy przed zamknięciem zmiany.
+
+      Test niezmiennika miał najpierw **fałszywe zęby**: sprawdzał sumę grup, a ta zgadza
+      się także wtedy, gdy udziały są ignorowane — pominięta pozycja wpada wtedy do puli
+      dzielonej po równo (45/45 zamiast 60/30). Rozstrzyga dopiero kwota **konkretnej**
+      grupy.
 - [x] **Limit kont personelu — egzekwowany** (2026-08-26). Menu 1, Starter 3,
       Pro i Enterprise bez limitu; wartość siedzi na abonamencie, więc zaplecze może
       ją podnieść pojedynczemu klientowi. Liczą się **konta czynne** — wyłączone
@@ -685,17 +712,24 @@ Z [product.md §7](product.md#7-wymagania-niefunkcjonalne-dotyczą-wszystkich-tr
       Przy okazji wyszło, że bramka jest **podwójna**: filtruje i zapytanie serwera,
       i grupowanie kolumn w panelu. Zepsucie samego zapytania nie zmienia tego,
       co widać.
-- [ ] **Niestabilny przebieg e2e — jeden test na przebieg pada z 60-sekundowym
-      timeoutem** (obserwowane 2026-08-27, dwa razy). **Za każdym razem inny test**
-      i za każdym razem taki, którego akurat nie zmienialiśmy — raz `session-orders`,
-      raz `password`. W drugim przypadku przeglądarka stała na ekranie logowania, choć
-      test był już zalogowany: sesja panelu zniknęła między `/queue` a `/password`.
-      W pojedynkę oba przechodzą.
+- [~] **Niestabilny pełny przebieg e2e — jeden test na przebieg** (obserwowane
+      2026-08-27, trzykrotnie). **Za każdym razem inny test** i za każdym razem taki,
+      którego akurat nie zmienialiśmy. Trzeci przypadek podał przyczynę wprost:
+      `deadlock detected` w **sprzątaniu po teście**, przy `DELETE FROM table_session` —
+      test przeszedł, przewróciło go dopiero porządkowanie danych. Fixture kasuje
+      wiersze, które żyjąca obok aplikacja akurat czyta.
 
-      Wygląda na wyścig przy zapisie tokenu do pamięci przeglądarki, ujawniany dopiero
-      pod obciążeniem całego przebiegu — plik `password.spec.ts` ma zresztą komentarz
-      o dokładnie tym wyścigu. **Do potwierdzenia na CI**, gdzie obciążenie jest
-      powtarzalne; do tego czasu zielony przebieg wymaga czasem powtórzenia.
+      **Dwie przyczyny domknięte, jedna otwarta.** Sprzątanie fixture'ów ponawia się
+      po zakleszczeniu (trzy próby, potem błąd leci dalej — utrzymujące się zakleszczenie
+      znaczy coś innego niż zbieg okoliczności). Osobno wyszła **losowa** wpadka
+      w `waiter-ordering`: asercja `getByText('2')` na liczniku ilości trafiała czasem
+      w nazwę dania, bo ta jest losowa i bywa z dwójką („Danie b227"). Naprawione
+      przez `exact`.
+
+      Zostają dwa 60-sekundowe timeouty z 2026-08-27 (`session-orders`, `password`),
+      których **nie odtworzyłem i nie wyjaśniłem**. Mogą mieć wspólną przyczynę
+      z zakleszczeniem — rywalizację o blokady w bazie — ale to hipoteza. Do obserwacji
+      na CI, gdzie obciążenie jest powtarzalne.
 - [ ] **Dostępność WCAG 2.1 AA** w aplikacji gościa — używa jej przypadkowa publiczność.
 - [x] ~~**Buforowanie offline w panelu.**~~ **Skreślone 2026-08-26** (§5f). kelbroo
       wymaga połączenia i mówi o tym wprost na stronie i w bazie wiedzy.

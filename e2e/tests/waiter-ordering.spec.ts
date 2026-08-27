@@ -47,7 +47,9 @@ test.describe('zamawianie przez kelnera', () => {
       // 5. Edycja ilości.
       const pozycja = page.locator('li').filter({ hasText: fixture.dishName }).first();
       await pozycja.getByRole('button', { name: 'Więcej' }).click();
-      await expect(pozycja.getByText('2')).toBeVisible();
+      // `exact`, bo nazwa dania jest losowa: „Danie b227" zawiera dwójkę i bez tego
+      // asercja trafiała raz w licznik, a raz w nazwę albo w cenę — zależnie od losu.
+      await expect(pozycja.getByText('2', { exact: true })).toBeVisible();
 
       // 6. Historia jest append-only i pokazuje, kto zmieniał.
       await page.getByRole('button', { name: 'Pokaż historię zmian' }).click();

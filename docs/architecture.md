@@ -653,7 +653,7 @@ Każda osoba skanująca kod QR przy tym samym stoliku dołącza do tej samej wiz
 |---|---|---|
 | `none` | Jeden wspólny rachunek, jedna płatność | Domyślny; para, rodzina |
 | `per_person` | Każdy uczestnik płaci za pozycje przypisane do siebie (`for_participant_id`) | Znajomi, lunch w pracy — **domyślny i jedyny tryb w `prepaid`** |
-| `per_item` | Pozycje przypisywane ręcznie do osób, z możliwością dzielenia jednej pozycji między kilka osób (`OrderItemShare`) | Wspólna butelka wina, przystawki na środek stołu |
+| `per_item` | Pozycje przypisywane ręcznie do osób, z możliwością dzielenia jednej pozycji między kilka osób (`OrderItemShare`). **Nie jest osobną strukturą płatności** — grupy powstają jak przy `per_person`, zmienia się wyłącznie źródło kwoty uczestnika | Wspólna butelka wina, przystawki na środek stołu |
 | `equal` | Suma dzielona równo przez liczbę uczestników | Szybkie rozliczenie bez liczenia kto co jadł |
 | `groups` | Uczestnicy grupowani w `SettlementGroup`, każda grupa płaci osobno | Dwie pary, dwie firmy, stół firmowy + goście prywatni |
 

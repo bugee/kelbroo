@@ -57,7 +57,7 @@ const PLANY: Plan[] = [
     cechy: [
       'Do 40 stolików, 6 języków, karta bez limitu',
       'Zdjęcia dań w karcie',
-      'Pełny podział rachunku i grupy',
+      'Podział rachunku po pozycjach i grupami',
       'Oceny dań i feedback do managera',
       'Analityka i eksport raportów',
       'Konta personelu bez limitu',

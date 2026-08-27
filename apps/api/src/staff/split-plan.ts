@@ -31,9 +31,15 @@ export interface SplitPlanEntry {
  * Rozkłada rachunek wizyty na grupy rozliczeniowe.
  *
  * Grupa jest jednostką płatności we wszystkich trybach poza `none`; `per_person`
- * to po prostu grupy jednoosobowe. Reguła jest jedna dla `per_person` i `groups`:
- * grupa płaci za to, co zamówiono dla jej uczestników, plus równą część pozycji
- * bez adresata. Tryb `equal` ignoruje przypisania i dzieli całość po równo.
+ * to po prostu grupy jednoosobowe. Reguła jest jedna dla `per_person`, `per_item`
+ * i `groups`: grupa płaci za to, co zamówiono dla jej uczestników, plus równą część
+ * pozycji bez adresata. Tryb `equal` ignoruje przypisania i dzieli całość po równo.
+ *
+ * **`per_item` nie ma tu osobnej gałęzi i to jest sedno tego trybu:** nie jest nową
+ * strukturą płatności, tylko doprecyzowaniem atrybucji. Kwoty uczestników przychodzą
+ * już rozdzielone — z `OrderItemShare` zamiast z samego `for_participant_id` — a stąd
+ * dalej liczy się dokładnie tak samo. Osobna gałąź znaczyłaby drugie miejsce, w którym
+ * rachunek może przestać się sumować.
  *
  * Niezmiennik pilnowany na wyjściu: suma grup równa się kwocie rachunku co do
  * grosza. Podział, który się nie sumuje, nie ma prawa trafić do bazy.
@@ -43,11 +49,6 @@ export function planSplit(input: SplitPlanInput): SplitPlanEntry[] {
 
   if (mode === 'none') {
     throw new MoneySplitError('Tryb `none` nie tworzy grup rozliczeniowych.');
-  }
-  if (mode === 'per_item') {
-    // OrderItemShare należy do etapu 2 — dzielenie jednej pozycji między gości
-    // jest najbardziej złożoną arytmetycznie częścią i świadomie czeka.
-    throw new MoneySplitError('Podział po pozycjach będzie dostępny z płatnościami online.');
   }
   if (groups.length === 0) {
     throw new MoneySplitError('Brak grup do podziału rachunku.');

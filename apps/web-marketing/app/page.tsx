@@ -367,7 +367,8 @@ export default async function LandingPage() {
               <p className="lede" style={{ marginBottom: '22px' }}>
                 Goście przy jednym stoliku dołączają do wspólnej wizyty — każdy dostaje nick i znak
                 rozpoznawczy, a kto chce, wpisuje własną nazwę. Bez zakładania konta. Potem
-                rozliczają się osobno, w grupach albo po równo.
+                rozliczają się osobno, po pozycjach, w grupach albo po równo — wspólną butelkę
+                kelner dzieli na części jednym stuknięciem.
               </p>
               <p className="lede" style={{ marginBottom: '26px' }}>
                 Gdy płaci jedna osoba, każdy może wysłać sobie na e-mail zestawienie „kto co

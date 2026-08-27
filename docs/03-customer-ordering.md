@@ -157,7 +157,7 @@ Model i arytmetyka: [architecture.md §14](architecture.md#14-podział-rachunku)
 - **Jak dzielimy?** — cztery kafle z podglądem kwoty:
   - `Każdy za siebie` — pozycje już przypisane do uczestników (domyślne).
   - `Po równo` — suma dzielona przez liczbę osób.
-  - `Po pozycjach` — ręczne przypisanie, z możliwością podzielenia jednej pozycji między kilka osób.
+  - `Po pozycjach` — ręczne przypisanie, z możliwością podzielenia jednej pozycji między kilka osób. **Od 2026-08-27 przypisuje kelner z panelu**, nie gość: rozmowa „kto brał wino?” toczy się przy stoliku, a układanie dwudziestu pozycji palcem na telefonie, przez kilka osób naraz i na wspólnym stanie, byłoby najgorszym możliwym pierwszym wariantem. Ekran gościa da się dołożyć później bez zmiany modelu.
   - `Grupami` — łączenie uczestników w grupy płatnicze („dwie pary, dwa rachunki").
   - `Jedna osoba płaci za wszystkich` — patrz niżej.
 - Wybór podziału jest **wspólny dla stolika** — zmiana przez jedną osobę jest natychmiast widoczna na wszystkich telefonach. Wymaga to jasnej informacji, kto zmienił tryb, żeby uniknąć przeciągania liny między gośćmi.
@@ -258,7 +258,7 @@ kelbroo nie chce mieć. Skan kodu QR otwierający stronę zostaje jedyną ście�
 - [ ] W trybie `prepaid` każdy uczestnik płaci wyłącznie za własne pozycje, bez ekranu podziału.
 - [ ] Zmiana trybu podziału przez jednego gościa jest natychmiast widoczna na pozostałych telefonach.
 - [ ] Podział z groszową resztą sumuje się dokładnie do kwoty rachunku (weryfikacja na kwotach niepodzielnych przez liczbę osób).
-- [ ] Pozycje nieprzypisane do uczestnika blokują rozliczenie w trybie „po pozycjach".
+- [x] Pozycje nieprzypisane do uczestnika blokują rozliczenie w trybie „po pozycjach". *(2026-08-27; przypisuje kelner z panelu — ekran gościa zostaje na później)*
 - [ ] Pozycja dodana przez kelnera jest w aplikacji gościa oznaczona jako dodana przez obsługę.
 - [ ] Gość nie może edytować pozycji zamówionej przez inną osobę przy stoliku.
 - [x] Każdy uczestnik może wysłać sobie własne zestawienie na e-mail, niezależnie od tego, kto zapłacił. *(2026-08-27)*

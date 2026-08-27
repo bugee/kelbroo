@@ -162,12 +162,12 @@ Kelner musi móc złożyć zamówienie w imieniu gościa (gość woli zamówić 
 Świadomie startujemy od trybu **bez płatności online**. Eliminuje to z pierwszego wydania zarówno integrację płatniczą, jak i fiskalizację — czyli dwie najbardziej ryzykowne i najdłuższe zależności. Produkt daje realną wartość (cyfrowe menu wielojęzyczne + zamawianie do stolika + KDS) już w tym kształcie i można go wdrożyć u pilotażowego klienta w kilka tygodni.
 
 - System 1: strona z cennikiem, rejestracja, zakup abonamentu (Starter + Pro wystarczą na start).
-- System 2: 1 lokal, stoliki + generowanie QR, menu w min. 2 językach, role Manager/Kelner/Kuchnia, panel realizacji zamówień + ekran „Powiadomienia", **składanie i edycja zamówień przez kelnera z pełną historią zmian**, rachunek stolika z podziałem (każdy za siebie / po równo / grupami) i jego zamykanie przez kelnera.
+- System 2: 1 lokal, stoliki + generowanie QR, menu w min. 2 językach, role Manager/Kelner/Kuchnia, panel realizacji zamówień + ekran „Powiadomienia", **składanie i edycja zamówień przez kelnera z pełną historią zmian**, rachunek stolika z podziałem (każdy za siebie / po pozycjach / po równo / grupami) i jego zamykanie przez kelnera.
 - System 3: aplikacja gościa w przeglądarce — menu, koszyk, **uczestnicy wizyty (nick + awatar)**, zamówienie na rachunek stolika, status zamówienia live, prośba o rachunek z wyborem podziału, zestawienie na e-mail, ocena dania po posiłku.
 
 **MVP — etap 2 (płatności online):**
 - Tryby `prepaid` i `guest_choice`, integracja BLIK/karta/Apple Pay/Google Pay, napiwki.
-- Podział „po pozycjach" z dzieleniem pojedynczej pozycji między uczestników (`OrderItemShare`) — najbardziej złożona arytmetycznie część podziału, świadomie odłożona za etap 1.
+- ~~Podział „po pozycjach" z dzieleniem pojedynczej pozycji między uczestników (`OrderItemShare`).~~ **Zbudowany w etapie 1 (2026-08-27)** — okazał się nie nową strukturą płatności, tylko doprecyzowaniem atrybucji: kwoty uczestników przychodzą z `OrderItemShare` zamiast z samego `for_participant_id`, a dalej liczy się tak samo. Arytmetyka (największe reszty, deterministyczna kolejność, niezmiennik) była już gotowa i przetestowana, więc powód odłożenia — „najbardziej złożona arytmetycznie część" — przestał obowiązywać. Przypisuje **kelner z panelu**; ekran gościa zostaje na później.
 - Rozwiązanie fiskalizacji (decyzja: integracja z kasą lokalu lub kasa wirtualna — [architecture.md §12](architecture.md#12-fiskalizacja-i-paragony-polska)).
 
 **Faza 2:**

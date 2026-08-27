@@ -411,3 +411,173 @@ describe('nieaktywny abonament a rozliczenie', () => {
     expect(po.paidCents).toBeGreaterThan(0);
   });
 });
+
+/**
+ * Podział po pozycjach.
+ *
+ * Ten tryb nie jest nową strukturą płatności, tylko doprecyzowaniem atrybucji:
+ * kwoty uczestników przychodzą z `OrderItemShare` zamiast z samego
+ * `for_participant_id`, a dalej liczy się dokładnie tak samo. Dlatego niezmiennik
+ * ma tu dwa piętra: suma udziałów pozycji równa się jej wartości, a suma grup —
+ * kwocie rachunku.
+ */
+describe('podział po pozycjach', () => {
+  it('dzieli pozycję między dwie osoby i sumuje do wartości pozycji', async () => {
+    const { session, participants, order } = await visit(
+      [{ name: 'Ala', isHost: true }, { name: 'Bo' }],
+      [{ amountCents: 9000 }],
+    );
+    const pozycja = await direct.orderItem.findFirstOrThrow({ where: { orderId: order.id } });
+
+    await split.setMode(waiter, session.id, { splitMode: 'per_item' });
+    const plan = await split.setItemShares(waiter, session.id, pozycja.id, [
+      { participantId: participants[0]!.id, units: 2 },
+      { participantId: participants[1]!.id, units: 1 },
+    ]);
+
+    const udzialy = await direct.orderItemShare.findMany({ where: { orderItemId: pozycja.id } });
+    expect(udzialy.reduce((suma, udzial) => suma + udzial.amountCents, 0)).toBe(9000);
+    // Dwie części z trzech to 60,00 zł z 90,00 zł.
+    expect(udzialy.find((u) => u.participantId === participants[0]!.id)?.amountCents).toBe(6000);
+
+    /**
+     * Kwoty **grup**, nie tylko ich suma.
+     *
+     * Sama suma niczego tu nie dowodzi: pozycja pominięta w atrybucji wpada do
+     * puli dzielonej po równo i rachunek nadal zgadza się co do grosza — tyle że
+     * 45/45 zamiast 60/30. Pierwsza wersja tego testu przechodziła z całkowicie
+     * wyłączonym czytaniem udziałów.
+     */
+    const kwota = (participantId: string) =>
+      plan.groups.find((grupa) => grupa.members.some((czlonek) => czlonek.id === participantId))
+        ?.totalCents;
+
+    expect(kwota(participants[0]!.id)).toBe(6000);
+    expect(kwota(participants[1]!.id)).toBe(3000);
+    expect(plan.groups.reduce((suma, grupa) => suma + grupa.totalCents, 0)).toBe(9000);
+  });
+
+  it('rozdziela niepodzielną kwotę bez gubienia grosza, resztę do hosta', async () => {
+    // 10,00 zł na trzy części — 333,33 grosza, czyli grosz do rozdania.
+    const { session, participants, order } = await visit(
+      [{ name: 'Ala', isHost: true }, { name: 'Bo' }, { name: 'Cyd' }],
+      [{ amountCents: 1000 }],
+    );
+    const pozycja = await direct.orderItem.findFirstOrThrow({ where: { orderId: order.id } });
+
+    await split.setMode(waiter, session.id, { splitMode: 'per_item' });
+    await split.setItemShares(
+      waiter,
+      session.id,
+      pozycja.id,
+      participants.map((uczestnik) => ({ participantId: uczestnik.id, units: 1 })),
+    );
+
+    const udzialy = await direct.orderItemShare.findMany({ where: { orderItemId: pozycja.id } });
+    expect(udzialy.reduce((suma, udzial) => suma + udzial.amountCents, 0)).toBe(1000);
+    expect(udzialy.find((u) => u.participantId === participants[0]!.id)?.amountCents).toBe(334);
+  });
+
+  it('pozycja jednej osoby nie zakłada wierszy udziału', async () => {
+    const { session, participants, order } = await visit(
+      [{ name: 'Ala', isHost: true }, { name: 'Bo' }],
+      [{ amountCents: 4000 }],
+    );
+    const pozycja = await direct.orderItem.findFirstOrThrow({ where: { orderId: order.id } });
+
+    await split.setItemShares(waiter, session.id, pozycja.id, [
+      { participantId: participants[1]!.id, units: 1 },
+    ]);
+
+    // Niedzielona pozycja nie ma powodu nieść udziałów — im mniej wierszy,
+    // tym mniej miejsc, w których podział może się rozjechać.
+    expect(await direct.orderItemShare.count({ where: { orderItemId: pozycja.id } })).toBe(0);
+    const po = await direct.orderItem.findUniqueOrThrow({ where: { id: pozycja.id } });
+    expect(po.forParticipantId).toBe(participants[1]!.id);
+    expect(po.isShared).toBe(false);
+  });
+
+  it('pusta lista odpina pozycję i zostawia ją do przypisania', async () => {
+    const { session, participants, order } = await visit(
+      [{ name: 'Ala', isHost: true }, { name: 'Bo' }],
+      [{ forGuest: 0, amountCents: 4000 }],
+    );
+    const pozycja = await direct.orderItem.findFirstOrThrow({ where: { orderId: order.id } });
+
+    await split.setMode(waiter, session.id, { splitMode: 'per_item' });
+    const plan = await split.setItemShares(waiter, session.id, pozycja.id, []);
+
+    expect(plan.unassignedItemIds).toContain(pozycja.id);
+    expect(participants).toHaveLength(2);
+  });
+
+  it('nie rozlicza grupy, dopóki jakaś pozycja nie ma adresata', async () => {
+    const { session, participants, order } = await visit(
+      [{ name: 'Ala', isHost: true }, { name: 'Bo' }],
+      [{ forGuest: 0, amountCents: 4000 }, { amountCents: 1000 }],
+    );
+
+    const plan = await split.setMode(waiter, session.id, { splitMode: 'per_item' });
+
+    // Ciche doliczenie pominiętej pozycji hostowi to błąd, którego nikt nie
+    // zauważy przed zamknięciem zmiany. Dlatego zamiast tego odmawiamy.
+    await expect(split.settleGroup(waiter, session.id, plan.groups[0]!.id, 'cash')).rejects.toThrow(
+      /Nieprzypisane pozycje/,
+    );
+    expect(order.id).toBeTruthy();
+    expect(participants).toHaveLength(2);
+  });
+
+  it('udziały przeżywają dokładkę do zamówienia', async () => {
+    const { session, participants, order } = await visit(
+      [{ name: 'Ala', isHost: true }, { name: 'Bo' }],
+      [{ amountCents: 6000 }],
+    );
+    const pozycja = await direct.orderItem.findFirstOrThrow({ where: { orderId: order.id } });
+
+    await split.setMode(waiter, session.id, { splitMode: 'per_item' });
+    await split.setItemShares(waiter, session.id, pozycja.id, [
+      { participantId: participants[0]!.id, units: 1 },
+      { participantId: participants[1]!.id, units: 1 },
+    ]);
+
+    // Deser dołożony po ustaleniu podziału. Gdyby kasował ręczną pracę kelnera,
+    // tryb byłby bezużyteczny przy prawdziwym stoliku.
+    await direct.orderItem.create({
+      data: {
+        organizationId,
+        orderId: order.id,
+        nameSnapshot: 'Deser',
+        quantity: 1,
+        unitPriceCents: 2000,
+        vatRate: new Prisma.Decimal('0.0800'),
+        addedBy: 'staff',
+      },
+    });
+    await direct.tableSession.update({
+      where: { id: session.id },
+      data: { subtotalCents: 8000, totalCents: 8000 },
+    });
+
+    const plan = await split.get(waiter, session.id);
+    const udzialy = await direct.orderItemShare.findMany({ where: { orderItemId: pozycja.id } });
+
+    expect(udzialy).toHaveLength(2);
+    // Nowa pozycja wchodzi jako nieprzypisana i blokuje, zamiast wpaść komuś po cichu.
+    expect(plan.unassignedItemIds).toHaveLength(1);
+  });
+
+  it('odmawia przypisania do gościa spoza stolika', async () => {
+    const { session, order } = await visit(
+      [{ name: 'Ala', isHost: true }],
+      [{ amountCents: 3000 }],
+    );
+    const pozycja = await direct.orderItem.findFirstOrThrow({ where: { orderId: order.id } });
+
+    await expect(
+      split.setItemShares(waiter, session.id, pozycja.id, [
+        { participantId: randomUUID(), units: 1 },
+      ]),
+    ).rejects.toThrow(/nie siedzi przy tym stoliku/);
+  });
+});

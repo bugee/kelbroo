@@ -29,6 +29,29 @@ export interface Account {
   name: string;
 }
 
+/**
+ * Sprzątanie po teście, odporne na zakleszczenie z aplikacją.
+ *
+ * Kasujemy wiersze, które żyjąca obok aplikacja może akurat czytać — przy pełnym
+ * przebiegu kończy się to czasem `deadlock detected` i **przewraca test, który
+ * przeszedł**. Kolejność blokad jest tu nie do uzgodnienia z aplikacją, bo to ona
+ * decyduje, co czyta; jedyne, co możemy zrobić, to spróbować ponownie.
+ *
+ * Po trzech próbach błąd leci dalej — utrzymujące się zakleszczenie znaczy coś
+ * innego niż zbieg okoliczności i nie ma go co zamiatać.
+ */
+async function withRetryOnDeadlock<T>(run: () => Promise<T>): Promise<T> {
+  for (let proba = 1; ; proba += 1) {
+    try {
+      return await run();
+    } catch (przyczyna) {
+      const deadlock = przyczyna instanceof Error && /deadlock/i.test(przyczyna.message);
+      if (!deadlock || proba >= 3) throw przyczyna;
+      await new Promise((gotowe) => setTimeout(gotowe, 200 * proba));
+    }
+  }
+}
+
 async function withClient<T>(run: (client: Client) => Promise<T>): Promise<T> {
   if (!connectionString) {
     throw new Error(
@@ -232,21 +255,23 @@ export async function seedMenuAndTable(): Promise<{
       qrToken,
       dishName,
       cleanup: async () => {
-        await withClient(async (inner) => {
-          // Kolejność jest istotna i wynika z kluczy RESTRICT, nie z wygody:
-          // `payment` trzyma wizytę, `table_session` trzyma stolik, `menu_item`
-          // trzyma kategorię. Kasowanie od góry pada na każdym z nich po kolei.
-          // Zamówienia, pozycje i grupy rozliczeniowe znikają kaskadą po wizycie.
-          await inner.query(
-            `DELETE FROM payment
+        await withRetryOnDeadlock(() =>
+          withClient(async (inner) => {
+            // Kolejność jest istotna i wynika z kluczy RESTRICT, nie z wygody:
+            // `payment` trzyma wizytę, `table_session` trzyma stolik, `menu_item`
+            // trzyma kategorię. Kasowanie od góry pada na każdym z nich po kolei.
+            // Zamówienia, pozycje i grupy rozliczeniowe znikają kaskadą po wizycie.
+            await inner.query(
+              `DELETE FROM payment
               WHERE table_session_id IN (SELECT id FROM table_session WHERE table_id = $1)`,
-            [tableId],
-          );
-          await inner.query('DELETE FROM table_session WHERE table_id = $1', [tableId]);
-          await inner.query('DELETE FROM restaurant_table WHERE id = $1', [tableId]);
-          await inner.query('DELETE FROM menu_item WHERE category_id = $1', [categoryId]);
-          await inner.query('DELETE FROM menu_category WHERE id = $1', [categoryId]);
-        });
+              [tableId],
+            );
+            await inner.query('DELETE FROM table_session WHERE table_id = $1', [tableId]);
+            await inner.query('DELETE FROM restaurant_table WHERE id = $1', [tableId]);
+            await inner.query('DELETE FROM menu_item WHERE category_id = $1', [categoryId]);
+            await inner.query('DELETE FROM menu_category WHERE id = $1', [categoryId]);
+          }),
+        );
       },
     };
   });
@@ -290,15 +315,17 @@ export async function seedTable(): Promise<{
       tableLabel,
       qrToken,
       cleanup: async () => {
-        await withClient(async (inner) => {
-          await inner.query(
-            `DELETE FROM payment
-              WHERE table_session_id IN (SELECT id FROM table_session WHERE table_id = $1)`,
-            [tableId],
-          );
-          await inner.query('DELETE FROM table_session WHERE table_id = $1', [tableId]);
-          await inner.query('DELETE FROM restaurant_table WHERE id = $1', [tableId]);
-        });
+        await withRetryOnDeadlock(() =>
+          withClient(async (inner) => {
+            await inner.query(
+              `DELETE FROM payment
+                WHERE table_session_id IN (SELECT id FROM table_session WHERE table_id = $1)`,
+              [tableId],
+            );
+            await inner.query('DELETE FROM table_session WHERE table_id = $1', [tableId]);
+            await inner.query('DELETE FROM restaurant_table WHERE id = $1', [tableId]);
+          }),
+        );
       },
     };
   });

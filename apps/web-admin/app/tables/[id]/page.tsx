@@ -7,6 +7,7 @@ import { StaffShell } from '@/components/StaffShell';
 import {
   fetchSplit,
   money,
+  setItemShares,
   setSplitMode,
   settleSplitGroup,
   type SplitMode,
@@ -16,12 +17,12 @@ import {
 const MODE_LABEL: Record<SplitMode, string> = {
   none: 'Jeden rachunek',
   per_person: 'Każdy za siebie',
+  per_item: 'Po pozycjach',
   equal: 'Po równo',
   groups: 'Grupami',
 };
 
-/** `per_item` należy do etapu 2 — dzielenie jednej pozycji czeka na płatności online. */
-const MODES: SplitMode[] = ['none', 'per_person', 'equal', 'groups'];
+const MODES: SplitMode[] = ['none', 'per_person', 'per_item', 'equal', 'groups'];
 
 export default function SessionPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -126,6 +127,14 @@ function Split({ sessionId }: { sessionId: string }) {
         />
       )}
 
+      {plan.splitMode === 'per_item' && !plan.locked && (
+        <ItemAssignment
+          plan={plan}
+          busy={busy}
+          onAssign={(itemId, shares) => void run(() => setItemShares(sessionId, itemId, shares))}
+        />
+      )}
+
       {plan.groups.length > 0 && (
         <>
           <h2 className="mt-8 font-[family-name:var(--font-display)] font-bold">Do zapłaty</h2>
@@ -209,6 +218,153 @@ function Split({ sessionId }: { sessionId: string }) {
 }
 
 /** Ręczny skład grup: kto z kim płaci, wie wyłącznie kelner przy stoliku. */
+/**
+ * Przypisywanie pozycji do gości.
+ *
+ * Jedno stuknięcie w gościa przy pozycji dokłada mu część, drugie ją odbiera —
+ * bez okien dialogowych i bez trybu edycji. Kelner robi to przy stoliku, na stojąco,
+ * w trakcie rozmowy „kto brał wino?", więc każdy dodatkowy krok kosztuje realny czas.
+ *
+ * Liczba przy znaku gościa to **części, nie złotówki**: dwie części z trzech przy
+ * butelce wina znaczą dwie trzecie ceny. Kwota pod spodem pokazuje, ile z tego wyszło,
+ * żeby nikt nie musiał tego przeliczać w głowie.
+ */
+function ItemAssignment({
+  plan,
+  busy,
+  onAssign,
+}: {
+  plan: SplitPlan;
+  busy: boolean;
+  onAssign: (itemId: string, shares: { participantId: string; units: number }[]) => void;
+}) {
+  const przelicz = (
+    item: SplitPlan['items'][number],
+    participantId: string,
+  ): { participantId: string; units: number }[] => {
+    const biezace = item.shares.map((share) => ({
+      participantId: share.participantId,
+      units: share.units,
+    }));
+    const ma = biezace.some((share) => share.participantId === participantId);
+    return ma
+      ? biezace.filter((share) => share.participantId !== participantId)
+      : [...biezace, { participantId, units: 1 }];
+  };
+
+  const zmienCzesci = (
+    item: SplitPlan['items'][number],
+    participantId: string,
+    delta: number,
+  ): { participantId: string; units: number }[] =>
+    item.shares
+      .map((share) => ({
+        participantId: share.participantId,
+        units: share.participantId === participantId ? share.units + delta : share.units,
+      }))
+      .filter((share) => share.units > 0);
+
+  return (
+    <section className="mt-8">
+      <h2 className="font-[family-name:var(--font-display)] font-bold">Kto co zamówił</h2>
+      <p className="mt-1 text-sm text-[var(--muted)]">
+        Stuknij gościa, żeby przypisać mu pozycję. Kilku gości przy jednej pozycji dzieli ją na
+        części — plusem zwiększysz czyjś udział, np. dwie trzecie butelki.
+      </p>
+
+      {plan.unassignedItemIds.length > 0 && (
+        <p className="mono mt-3 rounded-[var(--radius-control)] bg-[var(--orange-wash)] p-3 text-sm">
+          Do przypisania: {plan.unassignedItemIds.length}. Dopóki któraś pozycja nie ma adresata,
+          rachunku nie da się rozliczyć — nie doliczamy jej po cichu gospodarzowi.
+        </p>
+      )}
+
+      <ul className="mt-3 flex flex-col gap-2">
+        {plan.items.map((item) => {
+          const nieprzypisana = item.shares.length === 0;
+          const czesciRazem = item.shares.reduce((suma, share) => suma + share.units, 0);
+
+          return (
+            <li
+              key={item.id}
+              className={`rounded-[var(--radius-card)] border p-3 ${
+                nieprzypisana
+                  ? 'border-[var(--orange)] bg-[var(--orange-wash)]'
+                  : 'border-[var(--line)] bg-[var(--surface)]'
+              }`}
+            >
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <span className="font-semibold">
+                  {item.quantity}× {item.name}
+                </span>
+                <span className="mono text-sm">{money(item.lineCents, plan.currency)}</span>
+              </div>
+
+              <div className="mt-2 flex flex-wrap gap-2">
+                {plan.participants.map((participant) => {
+                  const share = item.shares.find((wpis) => wpis.participantId === participant.id);
+
+                  return (
+                    <div key={participant.id} className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => onAssign(item.id, przelicz(item, participant.id))}
+                        className={`flex min-h-11 items-center gap-1.5 rounded-full border px-3 text-xs disabled:opacity-40 ${
+                          share
+                            ? 'border-[var(--teal)] bg-[var(--teal-wash)] text-[var(--teal)]'
+                            : 'border-[var(--line)] text-[var(--muted)]'
+                        }`}
+                      >
+                        <GuestMark
+                          symbol={participant.symbol}
+                          color={participant.color}
+                          size={14}
+                        />
+                        {participant.displayName}
+                        {share && czesciRazem > 1 && (
+                          <span className="mono">
+                            {share.units}/{czesciRazem} · {money(share.amountCents, plan.currency)}
+                          </span>
+                        )}
+                      </button>
+
+                      {/* Plus i minus pojawiają się dopiero przy pozycji dzielonej —
+                          przy jednym właścicielu nie ma czego ważyć. */}
+                      {share && item.shares.length > 1 && (
+                        <span className="flex flex-col">
+                          <button
+                            type="button"
+                            aria-label={`Więcej dla ${participant.displayName}`}
+                            disabled={busy}
+                            onClick={() => onAssign(item.id, zmienCzesci(item, participant.id, 1))}
+                            className="mono min-h-6 px-1.5 text-xs text-[var(--teal)] disabled:opacity-40"
+                          >
+                            +
+                          </button>
+                          <button
+                            type="button"
+                            aria-label={`Mniej dla ${participant.displayName}`}
+                            disabled={busy || share.units <= 1}
+                            onClick={() => onAssign(item.id, zmienCzesci(item, participant.id, -1))}
+                            className="mono min-h-6 px-1.5 text-xs text-[var(--muted)] disabled:opacity-30"
+                          >
+                            −
+                          </button>
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
 function GroupBuilder({
   plan,
   draft,
