@@ -53,8 +53,8 @@ na e-mail z sekcji 4. `Review` przestał być pustym modelem 2026-08-27.
    Zostaje dziura, której z definicji nie da się zatkać od środka: **martwy proces
    nie wyśle wiadomości o własnej śmierci**. Potrzebny monitor spoza maszyny.
 2. **Dwie obietnice ze strony produktowej nie mają pokrycia w kodzie** (§5f,
-   przeliczone 2026-08-27; z pierwotnych ośmiu trzy zamknięto skreśleniem obietnicy,
-   trzy dopisaniem kodu). Zostają: analityka i podział po pozycjach.
+   przeliczone 2026-08-27; z dziewięciu trzy zamknięto skreśleniem obietnicy,
+   cztery dopisaniem kodu). Zostają: analityka i podział po pozycjach.
 
 Ścieżka gościa ma od 2026-08-27 test e2e (§7) — zamawianie, kolejka potwierdzeń,
 obie strony bramki kuchennej i rozliczenie stolika. Regresja nie wróci już
@@ -89,9 +89,30 @@ Modele są w schemacie od pierwszej migracji i nie mają ani jednego odwołania 
       **Nie zbudowane z docs/03 §3.8:** odnośnik do opinii w Google przy ocenie 4–5
       (wymaga adresu per lokal), średnia ocena na karcie dania i pokazywanie ocen
       innych gości (to decyzja restauracji, więc osobny przełącznik).
-- [ ] **Zestawienie rachunku na e-mail** — **warstwa poczty już jest** (`MailService`,
-      §5a), zostaje treść wiadomości i miejsce, w którym gość podaje adres. Adres
-      wykorzystujemy jednorazowo i nie zapisujemy — tak mówi polityka prywatności §9.
+- [x] **Zestawienie rachunku na e-mail** (2026-08-27) — „kto co zamówił", pogrupowane
+      po uczestnikach, z sumą, nazwą lokalu, numerem stolika i datą. **Każdy przy stoliku
+      wysyła sobie własną kopię**, niezależnie od tego, kto zapłacił: to jego rozliczenie
+      delegacji, nie przywilej płatnika.
+
+      Formularz stoi w dwóch miejscach, bo gość trafia tu dwiema drogami: przy rachunku
+      (nie zamykał karty) i na ekranie „Rachunek rozliczony" (odświeżył po zapłacie
+      u kelnera). Ta druga jest częstsza.
+
+      **Adresu nie zapisujemy nigdzie** — ani w bazie, ani w dzienniku, ani w logu, ani
+      w pamięci przeglądarki. Tak opisuje to polityka prywatności §9 ust. 1 i tak ma
+      zostać: zapamiętanie adresu zamieniłoby wysyłkę zestawienia w zbieranie bazy
+      adresowej. Dokument mówi wprost, że **nie jest paragonem fiskalnym**.
+
+      Dwie rzeczy warte zapamiętania. Nick i nazwa dania pochodzą **od gościa**, a szablon
+      poczty wstawia akapity surowo — bez ucieczki byłby to zastrzyk znaczników do
+      wiadomości wychodzącej z naszego adresu; `escapeHtml` jest teraz wyeksportowany
+      i wołany po stronie serwisu. Limit wysyłek liczy się **na sesję gościa, nie na adres
+      IP**: cały lokal wychodzi jednym łączem, więc limit po IP dławiłby dwudziestu gości
+      z powodu pierwszego.
+
+      **Zamyka obietnicę stojącą na stronie głównej** („każdy może wysłać sobie na e-mail
+      zestawienie »kto co zamówił«"), której rejestr §5f nie miał — była sprzedawana bez
+      pokrycia i bez policzenia.
 - [x] **Wpisanie własnego nicku przez gościa** (2026-08-26) — propozycja pokazuje się
       **obok menu, nie przed nim**: gość siada do stolika, żeby zamówić, a nie wypełnić
       formularz. Zmiana jest możliwa **raz na wizytę**, bo nick jest podpisem pod
@@ -387,10 +408,16 @@ co człowiek** — automat, któremu powiemy „odrzucono", spróbuje inaczej.
 ### 5f. Obietnice ze strony bez pokrycia w kodzie
 
 Rejestr sporządzony 2026-08-26 przez porównanie cennika, siatki funkcji i FAQ ze
-stanem kodu. **Osiem pozycji, z czego sześć zamkniętych:** trzy
+stanem kodu. **Dziewięć pozycji, z czego siedem zamkniętych:** trzy
 skreśleniem obietnicy (praca offline, instalacja, płatność gościa w aplikacji —
-ta ostatnia wraca razem z kodem), trzy dopisaniem brakującego kodu (limit kont
-personelu, oceny dań, limit pozycji w karcie). Odpowiednik [§8 z docs/legal](legal/README.md), tyle
+ta ostatnia wraca razem z kodem), cztery dopisaniem brakującego kodu (limit kont
+personelu, oceny dań, limit pozycji w karcie, zestawienie rachunku na e-mail).
+
+**Dziewiąta pozycja doszła 2026-08-27 i warto wiedzieć dlaczego jej nie było.**
+Pierwszy audyt szedł po kaflach funkcji i po tabeli cennika — a obietnica
+zestawienia na e-mail siedzi w **prozie sekcji o podziale rachunku**, zdaniem
+w środku akapitu. Następny przegląd strony ma czytać także zdania, nie tylko
+listy i nagłówki. Odpowiednik [§8 z docs/legal](legal/README.md), tyle
 że dla obietnic handlowych: strona sprzedaje za prawdziwe pieniądze, więc każda
 z tych pozycji jest albo zadaniem do zrobienia, albo zdaniem do skreślenia.
 
@@ -416,6 +443,10 @@ Kolejność według tego, ile kosztuje odkrycie braku przez klienta, który już
       a definiowanie różnicy po to, żeby ją sprzedać, byłoby wymyślaniem ograniczenia.
       Jedna wersja, w Pro i wyżej; w niższych planach domyślnie wyłączona i nieopisana
       w cenniku, z możliwością ręcznego włączenia z zaplecza (§6c).
+- [x] **„Zestawienie »kto co zamówił« na e-mail" — zbudowane** (2026-08-27).
+      Obietnica z sekcji o podziale rachunku, w czasie teraźniejszym, sprzedawana
+      od pierwszej wersji strony i **pominięta przez pierwszy audyt** (patrz wyżej).
+      Szczegóły w §4.
 - [ ] **Pro: „Analityka i eksport raportów".**
       Zero kodu, także w panelu. Obiecane kafelkiem „Raporty i analityka".
       To najbardziej rozbudowana pozycja z całej listy.
@@ -654,6 +685,17 @@ Z [product.md §7](product.md#7-wymagania-niefunkcjonalne-dotyczą-wszystkich-tr
       Przy okazji wyszło, że bramka jest **podwójna**: filtruje i zapytanie serwera,
       i grupowanie kolumn w panelu. Zepsucie samego zapytania nie zmienia tego,
       co widać.
+- [ ] **Niestabilny przebieg e2e — jeden test na przebieg pada z 60-sekundowym
+      timeoutem** (obserwowane 2026-08-27, dwa razy). **Za każdym razem inny test**
+      i za każdym razem taki, którego akurat nie zmienialiśmy — raz `session-orders`,
+      raz `password`. W drugim przypadku przeglądarka stała na ekranie logowania, choć
+      test był już zalogowany: sesja panelu zniknęła między `/queue` a `/password`.
+      W pojedynkę oba przechodzą.
+
+      Wygląda na wyścig przy zapisie tokenu do pamięci przeglądarki, ujawniany dopiero
+      pod obciążeniem całego przebiegu — plik `password.spec.ts` ma zresztą komentarz
+      o dokładnie tym wyścigu. **Do potwierdzenia na CI**, gdzie obciążenie jest
+      powtarzalne; do tego czasu zielony przebieg wymaga czasem powtórzenia.
 - [ ] **Dostępność WCAG 2.1 AA** w aplikacji gościa — używa jej przypadkowa publiczność.
 - [x] ~~**Buforowanie offline w panelu.**~~ **Skreślone 2026-08-26** (§5f). kelbroo
       wymaga połączenia i mówi o tym wprost na stronie i w bazie wiedzy.

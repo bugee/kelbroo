@@ -41,7 +41,16 @@ export class MailService {
     return process.env.PUBLIC_SITE_URL ?? 'https://kelbroo.com';
   }
 
-  private get skonfigurowana(): boolean {
+  /**
+   * Czy poczta w ogóle ma dokąd wyjść.
+   *
+   * Publiczne, bo `send` zwraca `false` w dwóch **różnych** sytuacjach: gdy
+   * serwera poczty nie skonfigurowano (lokalnie i w testach — wtedy to normalny
+   * stan) i gdy wysyłka poległa (na produkcji — wtedy to awaria). Wołający,
+   * dla którego wiadomość **jest** operacją, musi umieć je rozróżnić: pierwsze
+   * przemilczeć, o drugim powiedzieć wprost.
+   */
+  get skonfigurowana(): boolean {
     return Boolean(process.env.SMTP_HOST);
   }
 

@@ -81,6 +81,24 @@ Czego przesiadka **nie** zrobi: nie połączy dwóch rachunków. Jeśli przy doc
 stoliku trwa inna wizyta, kelbroo odmówi — dwa rachunki przy jednym stole to
 osobna decyzja, a nie skutek uboczny przesiadki.
 
+## Zestawienie na e-mail dla gościa
+
+Gość może wysłać sobie na e-mail zestawienie **kto co zamówił** — z podziałem na
+osoby przy stoliku, sumą, nazwą lokalu, numerem stolika i datą. Robi to sam
+w aplikacji: przy rachunku albo po jego rozliczeniu.
+
+Po co: kolację służbową płaci jedna osoba, a rozliczyć trzeba całą delegację.
+Dlatego **każdy przy stoliku wysyła sobie własną kopię**, niezależnie od tego, kto
+zapłacił.
+
+Nie musisz nic robić i nic nie ustawiasz. Warto natomiast wiedzieć dwie rzeczy,
+bo goście o nie pytają:
+
+- **Zestawienie nie jest paragonem fiskalnym** i mówi to wprost w treści. Paragon
+  wystawia kasa lokalu.
+- **Adresu nie zapisujemy** — ani my, ani aplikacja w telefonie gościa. Idzie
+  jednorazowo do wysłania wiadomości i znika. Nie trafia do żadnej listy mailowej.
+
 ## Paragon i kasa fiskalna
 
 kelbroo **nie wystawia paragonów i nie zastępuje kasy fiskalnej**. Na ekranie Sala

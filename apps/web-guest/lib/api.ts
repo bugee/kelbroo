@@ -457,6 +457,26 @@ export function connectVisit(
 }
 
 /**
+ * Zestawienie „kto co zamówił" na e-mail.
+ *
+ * Adres jest jednorazowy: idzie do serwera, ląduje w wiadomości i nigdzie nie
+ * zostaje. Aplikacja też go nie zapamiętuje — pole startuje puste za każdym razem,
+ * bo zapamiętany adres byłby przechowywaniem danych osobowych w telefonie gościa,
+ * którego nikt o to nie prosił.
+ */
+export async function sendBillSummary(qrToken: string, email: string): Promise<void> {
+  const token = readToken(qrToken);
+  if (!token) throw new Error('Sesja wygasła — zeskanuj kod QR ponownie.');
+
+  const response = await fetch(`${API}/guest/bill-summary`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-guest-token': token },
+    body: JSON.stringify({ email }),
+  });
+  await parse<{ sent: boolean }>(response);
+}
+
+/**
  * Prośba o otwarcie zablokowanego stolika.
  *
  * Bez tokenu gościa — przy zablokowanym stoliku żadnej sesji nie ma i mieć nie

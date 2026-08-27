@@ -261,7 +261,7 @@ kelbroo nie chce mieć. Skan kodu QR otwierający stronę zostaje jedyną ście�
 - [ ] Pozycje nieprzypisane do uczestnika blokują rozliczenie w trybie „po pozycjach".
 - [ ] Pozycja dodana przez kelnera jest w aplikacji gościa oznaczona jako dodana przez obsługę.
 - [ ] Gość nie może edytować pozycji zamówionej przez inną osobę przy stoliku.
-- [ ] Każdy uczestnik może wysłać sobie własne zestawienie na e-mail, niezależnie od tego, kto zapłacił.
-- [ ] Zestawienie e-mail zawiera adnotację, że nie jest paragonem fiskalnym.
+- [x] Każdy uczestnik może wysłać sobie własne zestawienie na e-mail, niezależnie od tego, kto zapłacił. *(2026-08-27)*
+- [x] Zestawienie e-mail zawiera adnotację, że nie jest paragonem fiskalnym. *(2026-08-27)*
 - [ ] Ocena z niską notą (1–2) generuje natychmiastowe powiadomienie dla managera.
 - [ ] Aplikacja przechodzi audyt dostępności WCAG 2.1 AA.

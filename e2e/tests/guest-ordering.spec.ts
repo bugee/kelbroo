@@ -193,6 +193,22 @@ test('kelner rozlicza stolik i wizyta się zamyka', async ({ browser }) => {
 
     // Po rozliczeniu stolik nie ma już nic do zapłaty.
     await expect(panel.getByText('Do zapłaty')).toHaveCount(0, { timeout: 20_000 });
+
+    /**
+     * Zestawienie na e-mail — moment, w którym gość go potrzebuje.
+     *
+     * Rachunek jest zapłacony, gość odświeża stronę i widzi ekran rozliczenia.
+     * Formularz musi tam być: to najczęstsza chwila na „prześlij mi to, muszę
+     * rozliczyć delegację", a token wizyty jest jeszcze ważny.
+     *
+     * SMTP w testach nie istnieje, więc sprawdzamy potwierdzenie w aplikacji —
+     * treść wiadomości pokrywają testy jednostkowe.
+     */
+    await gosc.reload();
+    await expect(gosc.getByText('Rachunek rozliczony')).toBeVisible({ timeout: 20_000 });
+    await gosc.getByPlaceholder('twoj@adres.pl').fill('delegacja@firma.test');
+    await gosc.getByRole('button', { name: 'Wyślij zestawienie' }).click();
+    await expect(gosc.getByText('Zestawienie wysłane')).toBeVisible({ timeout: 20_000 });
   } finally {
     await setStaffConfirmation(true);
     await goscContext.close();

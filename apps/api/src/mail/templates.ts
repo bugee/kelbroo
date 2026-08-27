@@ -29,7 +29,15 @@ export interface Ramka {
   stopka?: string[];
 }
 
-const escape = (tekst: string): string =>
+/**
+ * Ucieczka dla tekstu wstawianego w HTML wiadomości.
+ *
+ * Wyeksportowana, bo `akapity` trafiają do szablonu **surowo** — niosą własne
+ * `<strong>` i `<code>`. Wszystko, co pochodzi od gościa albo klienta (nick,
+ * nazwa dania, notatka do zamówienia), musi przejść przez to wywołanie po
+ * stronie wołającego; szablon już tego nie zrobi.
+ */
+export const escapeHtml = (tekst: string): string =>
   tekst.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 /**
@@ -49,9 +57,9 @@ export function ramka(dane: Ramka): string {
   const przycisk = dane.przycisk
     ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:24px 0">
          <tr><td style="border-radius:11px;background:${ORANGE}">
-           <a href="${escape(dane.przycisk.href)}"
+           <a href="${escapeHtml(dane.przycisk.href)}"
               style="display:inline-block;padding:15px 28px;font-family:${FONT};font-size:16px;
-                     font-weight:700;color:#FFFFFF;text-decoration:none">${escape(dane.przycisk.etykieta)}</a>
+                     font-weight:700;color:#FFFFFF;text-decoration:none">${escapeHtml(dane.przycisk.etykieta)}</a>
          </td></tr>
        </table>
        <!-- Przycisk bywa niedostępny: obrazy zablokowane, klient tekstowy, przekleja
@@ -60,7 +68,7 @@ export function ramka(dane: Ramka): string {
          Gdyby przycisk nie działał, skopiuj ten adres do przeglądarki:
        </p>
        <p style="margin:0 0 20px;font-size:13px;line-height:1.5;word-break:break-all">
-         <a href="${escape(dane.przycisk.href)}" style="color:${TEAL}">${escape(dane.przycisk.href)}</a>
+         <a href="${escapeHtml(dane.przycisk.href)}" style="color:${TEAL}">${escapeHtml(dane.przycisk.href)}</a>
        </p>`
     : '';
 
@@ -80,12 +88,12 @@ export function ramka(dane: Ramka): string {
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
              style="max-width:560px;background:#FFFFFF;border:1px solid ${LINE};border-radius:18px">
         <tr><td style="padding:32px 32px 0">
-          <img src="${escape(dane.adresStrony)}/kelbroo-logo.png" alt="kelbroo"
+          <img src="${escapeHtml(dane.adresStrony)}/kelbroo-logo.png" alt="kelbroo"
                width="150" style="display:block;border:0;height:auto">
         </td></tr>
         <tr><td style="padding:24px 32px 32px">
           <h1 style="margin:0 0 16px;font-size:24px;line-height:1.25;font-weight:800;color:${INK}">
-            ${escape(dane.naglowek)}
+            ${escapeHtml(dane.naglowek)}
           </h1>
           ${akapity}
           ${przycisk}
@@ -93,7 +101,7 @@ export function ramka(dane: Ramka): string {
         </td></tr>
       </table>
       <p style="margin:18px 0 0;font-size:12px;color:${MUTED}">
-        kelbroo — self-service dining · <a href="${escape(dane.adresStrony)}" style="color:${MUTED}">kelbroo.com</a>
+        kelbroo — self-service dining · <a href="${escapeHtml(dane.adresStrony)}" style="color:${MUTED}">kelbroo.com</a>
       </p>
     </td></tr>
   </table>

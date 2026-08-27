@@ -12,6 +12,7 @@ import {
   ArrayMaxSize,
   IsArray,
   IsBoolean,
+  IsEmail,
   IsIn,
   IsInt,
   IsOptional,
@@ -31,6 +32,7 @@ import { GuestSignalsService, type CallReason } from './guest-signals.service';
 import { GuestNameService } from './guest-name.service';
 import { GuestResumeService } from './guest-resume.service';
 import { ReviewsService } from './reviews.service';
+import { BillSummaryService } from './bill-summary.service';
 
 class ResumeDto {
   @IsString()
@@ -108,6 +110,19 @@ class AccessDecisionDto {
   decision!: 'approve' | 'reject';
 }
 
+class BillSummaryDto {
+  /**
+   * Adres podawany doraźnie, wyłącznie do tej wysyłki.
+   *
+   * Nigdzie go nie zapisujemy — ani w bazie, ani w logu (docs/legal, Polityka §9).
+   * Górna granica długości jest po to, żeby polem nie dało się przemycić treści
+   * do wiadomości.
+   */
+  @IsEmail()
+  @MaxLength(160)
+  email!: string;
+}
+
 class BillRequestDto {
   /**
    * `groups` celowo poza listą — kto z kim płaci, ustala kelner przy stoliku.
@@ -163,6 +178,7 @@ export class GuestController {
     private readonly access: TableAccessService,
     private readonly names: GuestNameService,
     private readonly reviews: ReviewsService,
+    private readonly billSummary: BillSummaryService,
   ) {}
 
   /** Co gość może ocenić: jego wydane dania i to, czy już oceniał. */
@@ -233,5 +249,23 @@ export class GuestController {
       dto.payment,
       dto.invoiceRequested,
     );
+  }
+
+  /**
+   * Zestawienie „kto co zamówił" na e-mail.
+   *
+   * Każdy uczestnik wysyła sobie własną kopię, niezależnie od tego, kto zapłacił —
+   * to jego rozliczenie delegacji, nie przywilej płatnika. Adres jest jednorazowy
+   * i nie zostaje po nim ślad.
+   *
+   * Bez `ThrottlerGuard`: cały lokal wychodzi zwykle jednym łączem, więc limit
+   * po adresie IP dławiłby dwudziestu gości z powodu pierwszego. Limit siedzi
+   * w serwisie i liczy się **na sesję gościa**.
+   */
+  @Post('bill-summary')
+  @HttpCode(HttpStatus.OK)
+  async sendBillSummary(@Guest() guest: ResolvedGuest, @Body() dto: BillSummaryDto) {
+    await this.billSummary.send(guest.organizationId, guest.guestSessionId, dto.email);
+    return { sent: true };
   }
 }
