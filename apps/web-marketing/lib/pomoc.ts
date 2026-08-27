@@ -37,6 +37,11 @@ export const ARTYKULY: Artykul[] = [
     opis: 'Trzy ekrany pracy: Powiadomienia, Kuchnia i Sala — co robi każdy z nich.',
   },
   {
+    slug: 'opinie',
+    tytul: 'Opinie gości',
+    opis: 'Jak gość ocenia dania i wizytę, co z tego widzisz i dlaczego warto to czytać.',
+  },
+  {
     slug: 'zespol',
     tytul: 'Konta pracowników',
     opis: 'Cztery role i ich zakresy, zakładanie kont, odejście pracownika, reset hasła.',

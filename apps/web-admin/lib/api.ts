@@ -768,6 +768,29 @@ export async function uploadItemImage(itemId: string, plik: Blob): Promise<{ ima
 export const removeItemImage = (itemId: string) =>
   authorized<{ removed: boolean }>(`/management/menu/items/${itemId}/image`, { method: 'DELETE' });
 
+// ---------------------------------------------------------------- opinie
+
+export interface GuestReview {
+  id: string;
+  rating: number;
+  comment: string | null;
+  /** `dish` — o konkretnym daniu; `kitchen` / `service` — o całej wizycie. */
+  target: string;
+  isRead: boolean;
+  createdAt: string;
+  dishName: string | null;
+  guestName: string | null;
+  guestSymbol: string | null;
+  guestColor: string | null;
+  tableLabel: string | null;
+  sessionNumber: number | null;
+}
+
+export const fetchReviews = () => authorized<GuestReview[]>('/management/reviews');
+
+export const markReviewRead = (id: string) =>
+  authorized<{ id: string; isRead: boolean }>(`/management/reviews/${id}/read`, { method: 'POST' });
+
 export const money = (cents: number, currency: string) =>
   new Intl.NumberFormat('pl-PL', { style: 'currency', currency }).format(cents / 100);
 

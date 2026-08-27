@@ -64,7 +64,23 @@ etapu 2) — oraz czterech funkcji gościa z sekcji 4.
 
 Modele są w schemacie od pierwszej migracji i nie mają ani jednego odwołania w kodzie.
 
-- [ ] **Ocena dania po posiłku** (`Review`).
+- [x] **Ocena dania po posiłku** (2026-08-27) — gość ocenia **swoje wydane dania**
+      (1–5) i całą wizytę, wskazując, czy mówi o jedzeniu, czy o obsłudze, plus
+      wiadomość do managera. Pytanie stoi przy rachunku, bo to jedyny moment,
+      w którym „jak było?" nie przerywa posiłku.
+
+      **Jedno zgłoszenie na gościa, nie na stolik.** Limit per stolik oddałby głos
+      wyłącznie temu, kto zdążył pierwszy — stąd nowa kolumna `Review.participantId`.
+      Nie ocenia się cudzych dań: rachunek jest wspólny, smak już nie.
+
+      Przy niskiej ocenie **nie ma zachęty do publicznej recenzji** — jest zapewnienie,
+      że wiadomość trafiła do managera. W tym leży cała funkcja: niezadowolony gość
+      ma powiedzieć restauracji, zanim powie internetowi. Dlatego w panelu
+      nieprzeczytane stoją na górze — bez czytania mechanizm jest pozorny.
+
+      **Nie zbudowane z docs/03 §3.8:** odnośnik do opinii w Google przy ocenie 4–5
+      (wymaga adresu per lokal), średnia ocena na karcie dania i pokazywanie ocen
+      innych gości (to decyzja restauracji, więc osobny przełącznik).
 - [ ] **Zestawienie rachunku na e-mail** — **warstwa poczty już jest** (`MailService`,
       §5a), zostaje treść wiadomości i miejsce, w którym gość podaje adres. Adres
       wykorzystujemy jednorazowo i nie zapisujemy — tak mówi polityka prywatności §9.
@@ -334,10 +350,12 @@ Kolejność według tego, ile kosztuje odkrycie braku przez klienta, który już
       poprawiony nagłówek sekcji, cecha planu Starter w cenniku i odpowiedź w FAQ.
       W miejscu karty stoi zdanie, że przygotowujemy tę płatność — bo pytają o nią
       klienci i milczenie byłoby gorsze niż „jeszcze nie".
-- [ ] **Pro: „Oceny dań i feedback do managera".**
-      Model `Review` jest w schemacie od pierwszej migracji i **nie ma ani jednego
-      odwołania w kodzie** (§4). Obiecane też kafelkiem „Oceny dań i feedback"
-      w siatce funkcji na stronie głównej.
+- [x] **„Oceny dań i feedback do managera" — zbudowane** (2026-08-27, §4), z jedną
+      rozbieżnością do rozstrzygnięcia: `product.md` §5.1 dzieli tę funkcję na
+      „podstawowe" (Starter) i „pełne" (Pro), a my zbudowaliśmy **jedną wersję dla
+      wszystkich planów** — nie ma zdefiniowanego kryterium tego podziału i nie ma
+      go w kodzie. Do decyzji: skreślić podział z cennika czy dopisać, co odróżnia
+      wersje. Kafelek na stronie głównej ma teraz pokrycie.
 - [ ] **Pro: „Analityka i eksport raportów".**
       Zero kodu, także w panelu. Obiecane kafelkiem „Raporty i analityka".
       To najbardziej rozbudowana pozycja z całej listy.

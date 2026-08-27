@@ -15,6 +15,7 @@ import { MenuAdminService } from './menu.admin.service';
 import { TablesAdminService } from './tables.admin.service';
 import { RestaurantAdminService } from './restaurant.admin.service';
 import { StaffAdminService } from './staff.admin.service';
+import { ReviewsAdminService } from './reviews.admin.service';
 import {
   AvailabilityDto,
   CategoryDto,
@@ -49,7 +50,19 @@ export class ManagementController {
     private readonly tables: TablesAdminService,
     private readonly restaurant: RestaurantAdminService,
     private readonly staffAdmin: StaffAdminService,
+    private readonly reviews: ReviewsAdminService,
   ) {}
+
+  /** Opinie gości. Nieprzeczytane na górze — inaczej mechanizm jest pozorny. */
+  @Get('reviews')
+  listReviews(@Staff() staff: StaffContext) {
+    return this.reviews.list(staff);
+  }
+
+  @Post('reviews/:id/read')
+  markReviewRead(@Staff() staff: StaffContext, @Param('id', ParseUUIDPipe) id: string) {
+    return this.reviews.markRead(staff, id);
+  }
 
   @Get('menu')
   fullMenu(@Staff() staff: StaffContext) {

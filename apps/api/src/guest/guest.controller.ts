@@ -8,7 +8,21 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { IsBoolean, IsIn, IsString, MaxLength } from 'class-validator';
+import {
+  ArrayMaxSize,
+  IsArray,
+  IsBoolean,
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Max,
+  MaxLength,
+  Min,
+  ValidateNested,
+} from 'class-validator';
+import { Type } from 'class-transformer';
 import { TableAccessService } from './table-access.service';
 import type { SplitMode } from '@kelbroo/types';
 import { Guest, GuestAuthGuard } from './guest.guard';
@@ -16,6 +30,7 @@ import type { ResolvedGuest } from './guest-session.service';
 import { GuestSignalsService, type CallReason } from './guest-signals.service';
 import { GuestNameService } from './guest-name.service';
 import { GuestResumeService } from './guest-resume.service';
+import { ReviewsService } from './reviews.service';
 
 class ResumeDto {
   @IsString()
@@ -25,6 +40,51 @@ class ResumeDto {
   @IsString()
   @MaxLength(400)
   guestToken!: string;
+}
+
+class OcenaDaniaDto {
+  @IsUUID()
+  menuItemId!: string;
+
+  @IsInt()
+  @Min(1)
+  @Max(5)
+  rating!: number;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  comment?: string;
+}
+
+class OcenaWizytyDto {
+  @IsInt()
+  @Min(1)
+  @Max(5)
+  rating!: number;
+
+  /** Do kogo gość mówi. `dish` i `manager` nie są wyborem gościa. */
+  @IsIn(['kitchen', 'service'])
+  target!: 'kitchen' | 'service';
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  comment?: string;
+}
+
+class ReviewDto {
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(50)
+  @ValidateNested({ each: true })
+  @Type(() => OcenaDaniaDto)
+  dishes?: OcenaDaniaDto[];
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => OcenaWizytyDto)
+  visit?: OcenaWizytyDto;
 }
 
 class NameDto {
@@ -102,7 +162,20 @@ export class GuestController {
     private readonly signals: GuestSignalsService,
     private readonly access: TableAccessService,
     private readonly names: GuestNameService,
+    private readonly reviews: ReviewsService,
   ) {}
+
+  /** Co gość może ocenić: jego wydane dania i to, czy już oceniał. */
+  @Get('reviewable')
+  reviewable(@Guest() guest: ResolvedGuest) {
+    return this.reviews.reviewable(guest.organizationId, guest.guestSessionId);
+  }
+
+  @Post('reviews')
+  @HttpCode(HttpStatus.OK)
+  submitReview(@Guest() guest: ResolvedGuest, @Body() dto: ReviewDto) {
+    return this.reviews.submit(guest.organizationId, guest.guestSessionId, dto);
+  }
 
   /**
    * Własna nazwa zamiast wylosowanej. Działa **raz na wizytę** — nick jest

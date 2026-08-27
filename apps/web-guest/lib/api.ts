@@ -313,6 +313,30 @@ export async function setMyName(
   return request<{ id: string; displayName: string }>(qrToken, '/guest/me/name', { displayName });
 }
 
+export interface Reviewable {
+  dishes: { menuItemId: string; name: string }[];
+  alreadySubmitted: boolean;
+}
+
+/** Co gość może ocenić: jego **wydane** dania i czy już oceniał tę wizytę. */
+export async function fetchReviewable(qrToken: string): Promise<Reviewable> {
+  const token = readToken(qrToken);
+  const response = await fetch(`${API}/guest/reviewable`, {
+    headers: token ? { 'x-guest-token': token } : undefined,
+    cache: 'no-store',
+  });
+  return parse<Reviewable>(response);
+}
+
+export interface ReviewSubmission {
+  dishes?: { menuItemId: string; rating: number; comment?: string }[];
+  visit?: { rating: number; target: 'kitchen' | 'service'; comment?: string };
+}
+
+/** Jedno zgłoszenie na wizytę — serwer odmówi drugiego. */
+export const submitReview = (qrToken: string, zgloszenie: ReviewSubmission) =>
+  request<{ saved: number }>(qrToken, '/guest/reviews', zgloszenie);
+
 export async function callWaiter(qrToken: string, reason: CallReason): Promise<ActiveCall> {
   return request<ActiveCall>(qrToken, '/guest/calls', { reason });
 }

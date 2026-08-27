@@ -40,6 +40,7 @@ const NAV: NavItem[] = [
 const SETTINGS_NAV: NavItem[] = [
   { href: '/menu', label: 'Menu', roles: ['owner', 'manager'] },
   { href: '/qr', label: 'Stoliki i QR', roles: ['owner', 'manager'] },
+  { href: '/opinie', label: 'Opinie gości', roles: ['owner', 'manager'] },
   { href: '/staff', label: 'Zespół', roles: ['owner', 'manager'] },
   { href: '/password', label: 'Zmień hasło', roles: ['owner', 'manager', 'waiter', 'kitchen'] },
   { href: '/settings', label: 'Lokal', roles: ['owner', 'manager'] },

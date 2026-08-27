@@ -185,6 +185,13 @@ Scenariusz kolacji służbowej i spotkania rodzinnego: płaci jedna osoba, ale p
 
 ### 3.8 Ocena dań i feedback
 
+> **Stan na 2026-08-27:** zbudowane — ocena dań i wizyty, adresat (kuchnia/obsługa),
+> wiadomość do managera, jedno zgłoszenie na gościa, panel z nieprzeczytanymi na górze.
+> Pytanie pojawia się **na ekranie rachunku**, gdy gość ma wydane danie, a nie
+> automatycznie po 15 minutach — timer wymagałby powiadomień push, których nie mamy.
+> **Nie zbudowane:** odnośnik do Google przy ocenie 4–5, średnia ocena na karcie dania,
+> pokazywanie ocen innych gości.
+
 Wywoływana automatycznie po statusie `wydane` (z opóźnieniem ~15 min, by gość zdążył zjeść) oraz dostępna z menu w dowolnym momencie.
 
 - **Ocena poszczególnych dań:** skala 1–5 gwiazdek dla każdej zamówionej pozycji, opcjonalny komentarz.

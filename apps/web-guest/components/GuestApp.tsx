@@ -19,8 +19,10 @@ import {
   type ActiveCall,
   type BillRequestResult,
   type CartLine,
+  fetchReviewable,
   imageSrc,
   type Dish,
+  type Reviewable,
   type GuestSplitMode,
   type PaymentPreference,
   type PendingGuest,
@@ -31,6 +33,7 @@ import { guestStatusLabel } from '@kelbroo/types';
 import { ThemeToggle } from '@kelbroo/ui/theme';
 import { GuestMark } from '@kelbroo/ui/guest-mark';
 import { NameChoice } from './NameChoice';
+import { ReviewSheet } from './ReviewSheet';
 import { DishSheet } from './DishSheet';
 
 type View = 'menu' | 'cart' | 'status';
@@ -41,6 +44,10 @@ export function GuestApp({ qrToken }: { qrToken: string }) {
   const [view, setView] = useState<View>('menu');
   const [cart, setCart] = useState<CartLine[]>([]);
   const [openDish, setOpenDish] = useState<Dish | null>(null);
+  // Co gość może ocenić. Pytamy dopiero, gdy wejdzie na rachunek — na ekranie
+  // menu ta informacja jest bez znaczenia, a zapytanie zbędne.
+  const [reviewable, setReviewable] = useState<Reviewable | null>(null);
+  const [reviewOpen, setReviewOpen] = useState(false);
   const [orders, setOrders] = useState<SessionOrders | null>(null);
   // Licznik zmian z kanału wizyty. Przycisk kelnera nasłuchuje go bez własnego
   // połączenia — jedno gniazdo na kartę, tak jak w panelu.
@@ -89,6 +96,15 @@ export function GuestApp({ qrToken }: { qrToken: string }) {
       /* brak kolejki znaczy tyle, że nie ma kogo wpuszczać */
     }
   }, [qrToken]);
+
+  useEffect(() => {
+    if (view !== 'status' || !entry?.participant.approved) return;
+    fetchReviewable(qrToken)
+      .then(setReviewable)
+      // Brak odpowiedzi nie może zepsuć ekranu rachunku — po prostu nie pytamy
+      // wtedy o ocenę.
+      .catch(() => setReviewable(null));
+  }, [view, qrToken, entry?.participant.approved]);
 
   useEffect(() => {
     if (!entry?.participant.isHost) return;
@@ -291,7 +307,40 @@ export function GuestApp({ qrToken }: { qrToken: string }) {
           onRemove={(index) => setCart((c) => c.filter((_, i) => i !== index))}
         />
       )}
-      {view === 'status' && <StatusView orders={orders} currency={currency} qrToken={qrToken} />}
+      {view === 'status' && (
+        <>
+          <StatusView orders={orders} currency={currency} qrToken={qrToken} />
+          {/*
+            Zaproszenie do oceny stoi przy rachunku, a nie w osobnej zakładce:
+            gość zagląda tu po posiłku, żeby sprawdzić, ile płaci — to jedyny
+            moment, w którym pytanie „jak było?" nie jest przerywaniem posiłku.
+          */}
+          {reviewable && !reviewable.alreadySubmitted && reviewable.dishes.length > 0 && (
+            <section className="mx-4 mt-4 rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface)] p-4">
+              <p className="text-sm font-semibold">Jak było?</p>
+              <p className="mt-1 text-xs text-[var(--muted)]">
+                Ocena zostaje w lokalu — nie publikujemy jej nigdzie.
+              </p>
+              <button
+                type="button"
+                onClick={() => setReviewOpen(true)}
+                className="mono mt-3 min-h-11 w-full rounded-[var(--radius-control)] bg-[var(--teal-wash)] text-sm font-semibold text-[var(--teal)]"
+              >
+                Oceń wizytę
+              </button>
+            </section>
+          )}
+        </>
+      )}
+
+      {reviewOpen && reviewable && (
+        <ReviewSheet
+          qrToken={qrToken}
+          reviewable={reviewable}
+          onClose={() => setReviewOpen(false)}
+          onDone={() => setReviewable({ ...reviewable, alreadySubmitted: true })}
+        />
+      )}
 
       {openDish && (
         <DishSheet

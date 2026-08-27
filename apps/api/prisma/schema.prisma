@@ -843,6 +843,8 @@ model TableParticipant {
 
   settlementGroupId String? @map("settlement_group_id") @db.Uuid
 
+  reviews Review[]
+
   /// Moment wpuszczenia do wizyty. `null` znaczy: czeka na zgodę hosta.
   /// Osobna kolumna zamiast flagi, bo „kiedy wpuszczono" jest częścią historii
   /// rachunku — kto przy nim siedział i od kiedy.
@@ -1114,6 +1116,13 @@ model Review {
   orderId        String? @map("order_id") @db.Uuid
   /// null = ocena ogólna wizyty, nie konkretnego dania
   menuItemId     String? @map("menu_item_id") @db.Uuid
+  /// Kto ocenił — tożsamość na czas wizyty, nie konto.
+  ///
+  /// Potrzebna z dwóch powodów: przyjmujemy **jedno zgłoszenie na gościa**
+  /// (bez tego przy stoliku oceniłaby tylko pierwsza osoba), a manager widzi,
+  /// czyja to opinia w obrębie stolika. Uczestnik znika razem z wizytą i wtedy
+  /// zostaje sama treść — dlatego pole jest opcjonalne.
+  participantId  String? @map("participant_id") @db.Uuid
 
   rating  Int
   comment String?
@@ -1122,10 +1131,11 @@ model Review {
 
   createdAt DateTime @default(now()) @map("created_at")
 
-  restaurant   Restaurant    @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  tableSession TableSession? @relation(fields: [tableSessionId], references: [id], onDelete: SetNull)
-  order        Order?        @relation(fields: [orderId], references: [id], onDelete: SetNull)
-  menuItem     MenuItem?     @relation(fields: [menuItemId], references: [id], onDelete: SetNull)
+  restaurant   Restaurant        @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  tableSession TableSession?     @relation(fields: [tableSessionId], references: [id], onDelete: SetNull)
+  order        Order?            @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  menuItem     MenuItem?         @relation(fields: [menuItemId], references: [id], onDelete: SetNull)
+  participant  TableParticipant? @relation(fields: [participantId], references: [id], onDelete: SetNull)
 
   @@index([restaurantId, createdAt])
   @@index([organizationId])
