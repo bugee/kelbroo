@@ -1,6 +1,6 @@
 # Regulamin świadczenia usługi SaaS „kelbroo.com”
 
-_Wersja 2026-08-24_
+_Wersja 2026-08-27_
 
 Niniejszy Regulamin określa zasady i warunki świadczenia usług drogą elektroniczną w ramach platformy SaaS kelbroo, przeznaczonej do obsługi zamówień w lokalach gastronomicznych.
 
@@ -17,7 +17,7 @@ Ilekroć w niniejszym Regulaminie użyte są poniższe pojęcia, należy je rozu
 5. **Pracownik** – osoba fizyczna (niezależnie od podstawy zatrudnienia), której Klient nadał uprawnienia i dostęp do panelu obsługi w ramach swojego Konta.
 6. **Gość** – osoba fizyczna przebywająca w lokalu Klienta, składająca zamówienie poprzez aplikację webową po zeskanowaniu kodu QR. **Gość nie zakłada Konta i nie zawiera umowy o świadczenie usług z Usługodawcą.**
 7. **Okres próbny** – darmowy, 14-dniowy okres korzystania z Usługi w planie Pro, niewymagający podpięcia karty płatniczej.
-8. **Okres rozliczeniowy** – miesiąc kalendarzowy, za który naliczana jest z góry opłata abonamentowa za korzystanie z Usługi.
+8. **Okres rozliczeniowy** – okres, za który naliczana jest z góry opłata abonamentowa za korzystanie z Usługi. Klient wybiera przy zakupie okres **miesięczny albo roczny**. Okres liczy się **od dnia dokonania zakupu**, a nie od pierwszego dnia miesiąca kalendarzowego, i kończy się z upływem odpowiednio jednego miesiąca albo dwunastu miesięcy. Jeżeli w miesiącu, w którym okres upływa, brak jest dnia odpowiadającego dniowi zakupu, okres kończy się **z ostatnim dniem tego miesiąca** (zakup dokonany 31 stycznia kończy się ostatniego dnia lutego). Zakup dokonany w trakcie trwającego, opłaconego Okresu rozliczeniowego **dolicza się do jego końca** — Klient płacący z wyprzedzeniem nie traci opłaconych dni.
 
 ## §2. Charakter usługi i wyłączenie konsumentów
 
@@ -47,12 +47,16 @@ Ilekroć w niniejszym Regulaminie użyte są poniższe pojęcia, należy je rozu
 1. Korzystanie z Usługi po zakończeniu Okresu próbnego jest odpłatne.
 2. Ceny za poszczególne pakiety są cenami netto (należy do nich doliczyć podatek VAT w obowiązującej stawce). Zestawienie planów:
 
-| Plan | Cena netto / miesiąc |
-| --- | --- |
-| **Menu** | 0 zł |
-| **Starter** | 159 zł |
-| **Pro** | 349 zł |
-| **Enterprise** | od 899 zł |
+| Plan | Cena netto / miesiąc | Cena netto / rok |
+| --- | --- | --- |
+| **Menu** | 0 zł | 0 zł |
+| **Starter** | 159 zł | 1 590 zł |
+| **Pro** | 349 zł | 3 490 zł |
+| **Enterprise** | od 899 zł | wycena indywidualna |
+
+2a. Opłata za Okres rozliczeniowy roczny odpowiada dziesięciokrotności opłaty miesięcznej, co stanowi obniżenie ceny o około 17% względem dwunastu opłat miesięcznych.
+
+2b. Samodzielny zakup w panelu obejmuje plany **Starter i Pro**. Plan Enterprise wymaga indywidualnych ustaleń z Usługodawcą, a plan Menu jest udostępniany bez opłaty.
 
 3. Opłaty abonamentowe pobierane są z góry za każdy Okres rozliczeniowy. W przypadku rezygnacji z Usługi w trakcie trwania Okresu rozliczeniowego, pobrana opłata za ten okres **nie podlega zwrotowi** (brak zwrotu proporcjonalnego).
 4. **Brak prowizji:** Usługodawca nie pobiera od Klienta ani od Gości żadnych dodatkowych prowizji od wartości złożonych zamówień.

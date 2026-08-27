@@ -34,8 +34,9 @@ rzeczy. Faktury VAT wystawiamy ręcznie po powiadomieniu na `kontakt@kelbroo.com
 (termin liczy się od sprzedaży, nie od zajrzenia do skrzynki). Zwroty robione
 w panelu PayU nie cofają abonamentu — trzeba go skrócić z zaplecza. Trzecia,
 najpilniejsza — brak PayU wśród odbiorców danych w polityce prywatności — została
-**domknięta 2026-08-27** ([docs/legal §8](legal/README.md)); zostaje z niej
-zawiadomienie klientów o nowej wersji dokumentu.
+**domknięta 2026-08-27** razem z regulaminem, który nie znał płatności rocznej
+([docs/legal §8](legal/README.md)). Zostaje z nich zawiadomienie klientów
+o nowych wersjach obu dokumentów.
 
 **System 4 — zaplecze kelbroo** stoi i ma logowanie dwuskładnikowe, listę klientów,
 kartę klienta oraz operacje na abonamencie z dziennikiem. Obsługa klienta nie
@@ -283,13 +284,20 @@ co człowiek** — automat, któremu powiemy „odrzucono", spróbuje inaczej.
       **nie zapisujemy w bazie**, a pola na imię i nazwisko w wywołaniu zostają puste.
       Poprawiony też §9 ust. 3, który mówił o bramce płatności jako o funkcji przyszłej.
 
-      **Zostaje czynność poza kodem:** §10 polityki obiecuje zawiadomienie klientów
-      o istotnej zmianie z 14-dniowym wyprzedzeniem. Dziś tanie, bo klient jest jeden.
-- [ ] **Regulamin: okres rozliczeniowy nie zna płatności rocznej** —
-      [legal/README.md §8 poz. 5](legal/README.md). §1 ust. 8 mówi „miesiąc kalendarzowy",
-      a sprzedajemy też rok i liczymy okres **od dnia zakupu**. Rozbieżność jest po
-      stronie dokumentu, nie kodu — sposób liczenia jest uczciwszy dla klienta niż
-      rozliczanie od pierwszego dnia miesiąca.
+      **Zostaje czynność poza kodem:** §10 polityki i §10 regulaminu obiecują
+      zawiadomienie klientów o zmianie z 14-dniowym wyprzedzeniem — jedno pismo obejmuje
+      obie zmiany. Dziś tanie, bo klient jest jeden.
+- [x] **Regulamin: okres rozliczeniowy obejmuje płatność roczną** (2026-08-27) —
+      §1 ust. 8 mówił „miesiąc kalendarzowy", a sprzedajemy też rok i liczymy okres
+      **od dnia zakupu**, z przycięciem dnia do długości krótszego miesiąca. Poprawka
+      poszła po stronie dokumentu, nie kodu: sposób liczenia jest uczciwszy dla klienta
+      niż rozliczanie od pierwszego dnia miesiąca. Tabela w §5 ust. 2 ma kolumnę cen
+      rocznych, a ust. 2a i 2b podają rabat i zakres samoobsługowego zakupu.
+
+      **Ustępy 3–5 zostały nietknięte celowo** — stąd 2a i 2b zamiast przenumerowania:
+      istniejące odwołania do §5 ust. 3 nie mogą zacząć wskazywać czego innego.
+      Zrobione tym samym przeglądem co poprawka polityki, bo dwa osobne zawiadomienia
+      klientów kosztowałyby dwa razy więcej niż jedno.
 - [ ] **Domknąć pozostałe obietnice bez pokrycia w kodzie** — spis w
       [docs/legal/README.md §8](legal/README.md): usunięcie danych po 6 miesiącach
       (żadnego mechanizmu retencji nie ma) i wypowiedzenie umowy z poziomu panelu.

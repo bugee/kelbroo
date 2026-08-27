@@ -30,8 +30,8 @@ Obowiązujące dokumenty: **Regulamin** i **Polityka prywatności** (w tym katal
 
 **Zmiana od poprzedniej wersji tych dokumentów:** od 26 sierpnia 2026 przyjmujemy
 płatności za abonament online, przez PayU. To źródło dwóch pierwszych pozycji poniżej.
-Pierwsza z nich (PayU w Polityce §6) została 27 sierpnia **domknięta zapisem** i czeka
-już tylko na weryfikację; druga pozostaje otwarta.
+Obie zostały 27 sierpnia **domknięte zapisem** i czekają już tylko na weryfikację —
+Polityka i Regulamin mają wersję z tego dnia.
 
 ---
 
@@ -67,10 +67,26 @@ płatności.
    umieścić w dokumencie prawnym danych, których sami nie zweryfikowaliśmy. Jeśli
    pełna identyfikacja jest potrzebna, prosimy o właściwe brzmienie.
 
-### A2. Regulamin nie zna płatności rocznej ani sposobu liczenia okresu
+### A2. Okres rozliczeniowy w Regulaminie — zapis poprawiony, prosimy o weryfikację
 
-**Co mówi dokument.** §1 ust. 8 definiuje okres rozliczeniowy jako **miesiąc
-kalendarzowy**. Tabela w §5 ust. 2 podaje wyłącznie ceny miesięczne.
+**Zmiana statusu 27 sierpnia 2026:** i tę pozycję **domknęliśmy zapisem**
+(Regulamin w wersji z 27 sierpnia), razem z A1 — jednym przeglądem obu dokumentów,
+bo dwa osobne zawiadomienia klientów o zmianie kosztowałyby dwa razy więcej niż
+jedno. Zostaje do sprawdzenia brzmienie, nie brak.
+
+**Co mówił dokument.** §1 ust. 8 definiował okres rozliczeniowy jako **miesiąc
+kalendarzowy**. Tabela w §5 ust. 2 podawała wyłącznie ceny miesięczne.
+
+**Co mówi teraz.** §1 ust. 8 obejmuje okres **miesięczny albo roczny**, liczony
+**od dnia zakupu**, z zastrzeżeniem, że przy braku odpowiadającego dnia okres kończy
+się ostatniego dnia miesiąca, oraz z doliczaniem zakupu do końca trwającego okresu.
+Tabela w §5 ust. 2 ma drugą kolumnę z cenami rocznymi; dodane ust. 2a i 2b podają
+wysokość rabatu i mówią, że samoobsługowo kupuje się Starter i Pro.
+
+**Dlaczego 2a i 2b, a nie przenumerowanie.** Ustępy 3–5 §5 zostały nietknięte
+celowo — przenumerowanie sprawiłoby, że istniejące odwołania do „§5 ust. 3"
+(brak zwrotu proporcjonalnego) zaczęłyby wskazywać co innego. Jeśli wolisz
+przenumerować, powiedz — to zmiana redakcyjna, nie merytoryczna.
 
 **Co robi system.** Sprzedajemy dwa okresy:
 
@@ -87,8 +103,9 @@ płacący z wyprzedzeniem nie traci opłaconych dni.
 Uważamy ten sposób za korzystniejszy dla klienta niż rozliczanie od pierwszego dnia
 miesiąca, więc naszym zdaniem poprawka należy się dokumentowi, nie systemowi.
 
-**Czego potrzebujemy:** poszerzenia definicji okresu rozliczeniowego o wariant
-roczny i o liczenie od dnia zakupu, oraz dopisania cen rocznych do §5 ust. 2.
+**Czego potrzebujemy:** potwierdzenia, że nowe brzmienie §1 ust. 8 oraz ust. 2a i 2b
+w §5 są wystarczające i poprawne — w szczególności czy zastrzeżenie o przycięciu dnia
+do długości krótszego miesiąca jest sformułowane dość jednoznacznie.
 
 ### A3. Regulamin §7 ust. 1 — „panel obsługi pozostaje w trybie do odczytu"
 

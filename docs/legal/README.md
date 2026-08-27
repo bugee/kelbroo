@@ -162,15 +162,18 @@ przez gości zostaje wyłączone, ale **dane restauracji nie są kasowane**.
 ## 8. Rozbieżności między dokumentami a działającym systemem
 
 Sprawdzone z kodem 2026-08-24, zweryfikowane ponownie po dodaniu rejestracji,
-a 2026-08-26 po uruchomieniu sprzedaży abonamentów przez PayU. **Cztery pozycje są
+a 2026-08-26 po uruchomieniu sprzedaży abonamentów przez PayU. **Trzy pozycje są
 otwarte** (pierwsza z nich jest domknięta kodem i czeka wyłącznie na poprawkę
-w treści regulaminu), dwie zamknięte. Nie unieważnia to dokumentów, ale każdą
+w treści regulaminu), trzy zamknięte. Nie unieważnia to dokumentów, ale każdą
 trzeba zamknąć kodem albo poprawką w treści.
 
 Pozycje 4 i 5 powstały **dopiero wraz z przyjmowaniem pieniędzy** — wcześniej
-dokumenty opisywały rzeczywistość poprawnie. Pozycja 4 (PayU wśród odbiorców danych)
-została domknięta 2026-08-27; **pozycja 5 — okres rozliczeniowy w regulaminie —
-zostaje otwarta**.
+dokumenty opisywały rzeczywistość poprawnie. **Obie zostały domknięte 2026-08-27**,
+jednym przeglądem obu dokumentów: to tańsze niż dwa osobne zawiadomienia klientów
+o zmianie (§10 Polityki, §10 Regulaminu).
+
+Trzy pozycje, które zostają, łączy to, że **żadna nie powstała z powodu płatności** —
+wszystkie trzy dotyczą obietnic złożonych przed uruchomieniem sprzedaży.
 
 ### Otwarte
 
@@ -202,20 +205,20 @@ zostaje otwarta**.
    też drogę mailową i klient nie zostaje bez wyjścia. *Domknięcie:* przycisk
    w ustawieniach albo skreślenie tych czterech słów z regulaminu.
 
-5. **Regulamin §1 ust. 8 i §5 ust. 2 — okres rozliczeniowy i cennik nie obejmują
-   płatności rocznej.**
-   Definicja mówi „miesiąc kalendarzowy", a tabela podaje wyłącznie ceny
-   miesięczne. Sprzedajemy tymczasem **także rok** (1 590 zł Starter, 3 490 zł Pro,
-   −17%), a miesiąc liczymy **od dnia zakupu**, z przycięciem dnia do długości
-   krótszego miesiąca — zakup 31 stycznia kończy się ostatniego lutego. To nie jest
-   miesiąc kalendarzowy w rozumieniu definicji.
-
-   Rozbieżność jest po stronie dokumentu, nie kodu: sposób liczenia okresu jest
-   uczciwszy dla klienta niż rozliczanie od pierwszego dnia miesiąca. *Domknięcie:*
-   poszerzenie definicji o okres roczny i o liczenie od dnia zakupu oraz dopisanie
-   cen rocznych do tabeli.
-
 ### Domknięte
+
+5. ~~**Regulamin §1 ust. 8 i §5 ust. 2 — okres rozliczeniowy i cennik nie obejmują
+   płatności rocznej.**~~ **Domknięte 2026-08-27** (Regulamin w wersji z tego dnia).
+   §1 ust. 8 mówi teraz o okresie **miesięcznym albo rocznym**, liczonym **od dnia
+   zakupu**, z przycięciem dnia do długości krótszego miesiąca i z doliczaniem zakupu
+   do końca trwającego okresu. Tabela w §5 ust. 2 ma drugą kolumnę z cenami rocznymi,
+   a nowe ust. 2a i 2b podają wysokość rabatu rocznego i mówią, że samoobsługowo
+   kupuje się **Starter i Pro**.
+
+   Poprawka poszła po stronie dokumentu, nie kodu — sposób liczenia okresu jest
+   uczciwszy dla klienta niż rozliczanie od pierwszego dnia miesiąca. Numeracja
+   ustępów 3–5 **została nienaruszona** (stąd 2a i 2b zamiast przenumerowania):
+   istniejące odwołania do §5 ust. 3 nie mogą zacząć wskazywać czego innego.
 
 4. ~~**Polityka §6 — PayU nie jest wymienione wśród odbiorców danych.**~~
    **Domknięte 2026-08-27** (Polityka w wersji z tego dnia). §6 wymienia teraz PayU
