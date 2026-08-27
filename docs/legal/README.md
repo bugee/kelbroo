@@ -162,13 +162,15 @@ przez gości zostaje wyłączone, ale **dane restauracji nie są kasowane**.
 ## 8. Rozbieżności między dokumentami a działającym systemem
 
 Sprawdzone z kodem 2026-08-24, zweryfikowane ponownie po dodaniu rejestracji,
-a 2026-08-26 po uruchomieniu sprzedaży abonamentów przez PayU. **Pięć pozycji jest
-otwartych** (pierwsza z nich jest domknięta kodem i czeka wyłącznie na poprawkę
-w treści regulaminu), jedna zamknięta. Nie unieważnia to dokumentów, ale każdą
+a 2026-08-26 po uruchomieniu sprzedaży abonamentów przez PayU. **Cztery pozycje są
+otwarte** (pierwsza z nich jest domknięta kodem i czeka wyłącznie na poprawkę
+w treści regulaminu), dwie zamknięte. Nie unieważnia to dokumentów, ale każdą
 trzeba zamknąć kodem albo poprawką w treści.
 
-Dwie ostatnie pozycje (4 i 5) powstały **dopiero wraz z przyjmowaniem pieniędzy** —
-wcześniej dokumenty opisywały rzeczywistość poprawnie.
+Pozycje 4 i 5 powstały **dopiero wraz z przyjmowaniem pieniędzy** — wcześniej
+dokumenty opisywały rzeczywistość poprawnie. Pozycja 4 (PayU wśród odbiorców danych)
+została domknięta 2026-08-27; **pozycja 5 — okres rozliczeniowy w regulaminie —
+zostaje otwarta**.
 
 ### Otwarte
 
@@ -200,21 +202,6 @@ wcześniej dokumenty opisywały rzeczywistość poprawnie.
    też drogę mailową i klient nie zostaje bez wyjścia. *Domknięcie:* przycisk
    w ustawieniach albo skreślenie tych czterech słów z regulaminu.
 
-4. **Polityka §6 — PayU nie jest wymienione wśród odbiorców danych. Najpilniejsze
-   z całej listy, bo dotyczy stanu faktycznego od 2026-08-26.**
-   Paragraf wymienia wyłącznie Hostingera. Od uruchomienia sprzedaży przy każdym
-   zakupie wysyłamy do PayU **adres e-mail nabywcy i jego adres IP** — to są dane
-   osobowe, a PayU jest ich odbiorcą.
-
-   Uwaga na fałszywy trop: §9 ust. 3 mówi o bramce płatności, ale dotyczy
-   **przyszłych płatności gości** („po udostępnieniu rozliczeń online"), a nie
-   restauratora płacącego nam za abonament. Ta druga sytuacja dzieje się już dziś
-   i nie jest opisana nigdzie.
-
-   *Domknięcie:* dopisanie PayU do §6 wraz z zakresem danych. Wymaga też
-   sprawdzenia, czy potrzebna jest umowa powierzenia — PayU bywa w tej relacji
-   odrębnym administratorem, nie procesorem, co zmienia podstawę i treść zapisu.
-
 5. **Regulamin §1 ust. 8 i §5 ust. 2 — okres rozliczeniowy i cennik nie obejmują
    płatności rocznej.**
    Definicja mówi „miesiąc kalendarzowy", a tabela podaje wyłącznie ceny
@@ -229,6 +216,26 @@ wcześniej dokumenty opisywały rzeczywistość poprawnie.
    cen rocznych do tabeli.
 
 ### Domknięte
+
+4. ~~**Polityka §6 — PayU nie jest wymienione wśród odbiorców danych.**~~
+   **Domknięte 2026-08-27** (Polityka w wersji z tego dnia). §6 wymienia teraz PayU
+   wraz z zakresem przekazywanych danych: adres e-mail Klienta do rozliczeń, adres IP
+   osoby kupującej, kwota, waluta, opis i numer zamówienia.
+
+   Zapis rozstrzyga przy okazji rolę operatora: **PayU jest odrębnym administratorem**,
+   nie podmiotem przetwarzającym na nasze polecenie — przetwarza dane transakcji na
+   podstawie własnych obowiązków instytucji płatniczej. **Umowa powierzenia nie jest
+   więc właściwym instrumentem** i dlatego jej nie ma; to do potwierdzenia przez
+   prawnika ([pytania-do-prawnika.md](pytania-do-prawnika.md)).
+
+   Sprawdzone z kodem, nie z pamięci: adresu IP **nie zapisujemy w bazie** — idzie
+   wyłącznie w wywołaniu tworzącym płatność, bo wymaga go operator
+   ([payu.provider.ts](../../apps/api/src/billing/payu.provider.ts)). Pola `firstName`
+   i `lastName` w wywołaniu zostają puste, więc imienia ani nazwiska nie przekazujemy.
+
+   Poprawiony został też §9 ust. 3, który mówił o bramce płatności jako o funkcji
+   przyszłej — teraz mówi wprost, że dotyczy **płatności Gościa**, a płatności
+   abonamentowe już działają.
 
 6. ~~**Polityka §5 — NIP i adres działalności.**~~ NIP zbieramy od 2026-08-24
    ze sprawdzeniem sumy kontrolnej, a **adres firmy od 2026-08-26** — jest polem

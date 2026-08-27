@@ -7,7 +7,7 @@ tryb `pay_at_table`, bez płatności online i bez fiskalizacji.
 Zadania są ułożone w kolejności realizacji — wcześniejsze odblokowują późniejsze.
 Listę aktualizuję na bieżąco przy każdej zmianie w projekcie.
 
-*Ostatnia aktualizacja: 2026-08-24*
+*Ostatnia aktualizacja: 2026-08-27*
 
 ---
 
@@ -29,33 +29,35 @@ kartą. Wpłaty uzgadniamy z operatorem co dziesięć minut, więc zgubione powi
 odnajduje się samo i zgłasza. Klient dostaje trzy przypomnienia o kończącym się
 okresie; poczta wychodząca też działa.
 
-Wraz z tym **kelbroo przetwarza prawdziwe pieniądze**, a to zmienia wagę trzech
+Wraz z tym **kelbroo przetwarza prawdziwe pieniądze**, a to zmienia wagę dwóch
 rzeczy. Faktury VAT wystawiamy ręcznie po powiadomieniu na `kontakt@kelbroo.com`
 (termin liczy się od sprzedaży, nie od zajrzenia do skrzynki). Zwroty robione
-w panelu PayU nie cofają abonamentu — trzeba go skrócić z zaplecza. I najpilniejsze:
-**polityka prywatności nie wymienia PayU wśród odbiorców danych**, choć przy każdym
-zakupie trafia tam adres e-mail i IP nabywcy ([docs/legal §8 poz. 4](legal/README.md)).
+w panelu PayU nie cofają abonamentu — trzeba go skrócić z zaplecza. Trzecia,
+najpilniejsza — brak PayU wśród odbiorców danych w polityce prywatności — została
+**domknięta 2026-08-27** ([docs/legal §8](legal/README.md)); zostaje z niej
+zawiadomienie klientów o nowej wersji dokumentu.
 
 **System 4 — zaplecze kelbroo** stoi i ma logowanie dwuskładnikowe, listę klientów,
 kartę klienta oraz operacje na abonamencie z dziennikiem. Obsługa klienta nie
 wymaga już `psql` ani ręcznej edycji `.env.prod`.
 
-Czego brakuje do pełnego zakresu etapu 1: dwóch modeli, które wciąż nie mają ani
-linii kodu — `Review` (ocena dania) i `OrderItemShare` (podział `per_item`, zakres
-etapu 2) — oraz czterech funkcji gościa z sekcji 4.
+Czego brakuje do pełnego zakresu etapu 1: modelu `OrderItemShare` (podział
+`per_item`, zakres etapu 2, bez ani jednej linii kodu) oraz zestawienia rachunku
+na e-mail z sekcji 4. `Review` przestał być pustym modelem 2026-08-27.
 
-**Trzy rzeczy ciążą dziś najbardziej i żadna nie jest funkcją:**
+**Dwie rzeczy ciążą dziś najbardziej i żadna nie jest funkcją:**
 
-1. **Ścieżka gościa jest potwierdzona ręcznie, jednorazowo.** Zamawianie, koszyk
-   i prośba o rachunek nie mają testu e2e (§7). To najkrótsza droga do tego, żeby
-   regresja nie wróciła niezauważona.
-2. **Awarię widać dopiero wtedy, gdy ktoś zadzwoni** (§7) — z jednym wyjątkiem:
+1. **Awarię widać dopiero wtedy, gdy ktoś zadzwoni** (§7) — z jednym wyjątkiem:
    płatności mają od 2026-08-26 własne uzgadnianie z operatorem, więc wpłata
    bez powiadomienia sama się odnajduje i zgłasza. Reszta systemu takiego
-   czujnika nie ma.
-3. **Dwie obietnice ze strony produktowej nie mają pokrycia w kodzie** (§5f,
+   czujnika nie ma. **To jest dziś pozycja numer jeden.**
+2. **Dwie obietnice ze strony produktowej nie mają pokrycia w kodzie** (§5f,
    przeliczone 2026-08-27; z pierwotnych ośmiu trzy zamknięto skreśleniem obietnicy,
    trzy dopisaniem kodu). Zostają: analityka i podział po pozycjach.
+
+Ścieżka gościa ma od 2026-08-27 test e2e (§7) — zamawianie, kolejka potwierdzeń,
+obie strony bramki kuchennej i rozliczenie stolika. Regresja nie wróci już
+niezauważona tą drogą.
 
 ---
 
@@ -269,6 +271,25 @@ co człowiek** — automat, któremu powiemy „odrzucono", spróbuje inaczej.
       Rozliczanie otwartych rachunków zostaje dostępne, a panel mówi o tym paskiem.
       **Zostaje poprawka w regulaminie:** „tryb do odczytu" jest za mocny wobec tego,
       co robimy — proponowane brzmienie w [legal/README.md §8](legal/README.md).
+- [x] **PayU wśród odbiorców danych w polityce prywatności** (2026-08-27) — luka
+      opisana w [legal/README.md §8](legal/README.md) jako najpilniejsza, bo dotyczyła
+      **stanu faktycznego od uruchomienia sprzedaży**: przy każdym zakupie szedł do
+      operatora adres e-mail i IP nabywcy, a §6 wymieniał wyłącznie Hostingera.
+
+      §6 podaje teraz zakres przekazywanych danych i rozstrzyga rolę operatora:
+      **PayU jest odrębnym administratorem**, nie procesorem, więc umowa powierzenia
+      nie jest właściwym instrumentem. To nasze rozumienie, oznaczone jako do
+      potwierdzenia przez prawnika. Sprawdzone przy okazji w kodzie: adresu IP
+      **nie zapisujemy w bazie**, a pola na imię i nazwisko w wywołaniu zostają puste.
+      Poprawiony też §9 ust. 3, który mówił o bramce płatności jako o funkcji przyszłej.
+
+      **Zostaje czynność poza kodem:** §10 polityki obiecuje zawiadomienie klientów
+      o istotnej zmianie z 14-dniowym wyprzedzeniem. Dziś tanie, bo klient jest jeden.
+- [ ] **Regulamin: okres rozliczeniowy nie zna płatności rocznej** —
+      [legal/README.md §8 poz. 5](legal/README.md). §1 ust. 8 mówi „miesiąc kalendarzowy",
+      a sprzedajemy też rok i liczymy okres **od dnia zakupu**. Rozbieżność jest po
+      stronie dokumentu, nie kodu — sposób liczenia jest uczciwszy dla klienta niż
+      rozliczanie od pierwszego dnia miesiąca.
 - [ ] **Domknąć pozostałe obietnice bez pokrycia w kodzie** — spis w
       [docs/legal/README.md §8](legal/README.md): usunięcie danych po 6 miesiącach
       (żadnego mechanizmu retencji nie ma) i wypowiedzenie umowy z poziomu panelu.

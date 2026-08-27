@@ -1,6 +1,6 @@
 # kelbroo — pytania i decyzje dla prawnika
 
-Stan na **26 sierpnia 2026**.
+Stan na **27 sierpnia 2026**.
 
 Ten dokument jest samodzielny: nie trzeba do niego czytać kodu ani pozostałych
 plików. Zawiera **wyłącznie rzeczy wymagające decyzji prawnej** — wyciąg z naszego
@@ -30,31 +30,42 @@ Obowiązujące dokumenty: **Regulamin** i **Polityka prywatności** (w tym katal
 
 **Zmiana od poprzedniej wersji tych dokumentów:** od 26 sierpnia 2026 przyjmujemy
 płatności za abonament online, przez PayU. To źródło dwóch pierwszych pozycji poniżej.
+Pierwsza z nich (PayU w Polityce §6) została 27 sierpnia **domknięta zapisem** i czeka
+już tylko na weryfikację; druga pozostaje otwarta.
 
 ---
 
 ## Część A. Zapisy rozjeżdżające się ze stanem faktycznym
 
-### A1. Polityka §6 nie wymienia PayU wśród odbiorców danych — najpilniejsze
+### A1. PayU w Polityce §6 — zapis dopisany, prosimy o weryfikację
 
-**Co mówi dokument.** §6 („Odbiorcy danych i zasady transferu") wymienia jako
-odbiorcę wyłącznie Hostinger (infrastruktura i poczta) i stwierdza, że dane nie
-opuszczają EOG.
+**Zmiana statusu 27 sierpnia 2026:** luka była opisana jako najpilniejsza z całej
+listy i **została zamknięta zapisem w Polityce** (wersja z 27 sierpnia). Nie jest to
+już brak w dokumencie, tylko zapis do sprawdzenia — dlatego zostaje w części A.
 
-**Co robi system.** Przy każdym zakupie abonamentu przekazujemy do PayU **adres
-e-mail nabywcy i jego adres IP**. Numerów kart nie widzimy ani nie przechowujemy —
-dane karty gość wprowadza po stronie PayU.
+**Co teraz mówi dokument.** §6 wymienia PayU S.A. z siedzibą w Poznaniu jako odbiorcę
+danych i podaje zakres: adres e-mail wskazany przez Klienta do rozliczeń, adres IP
+osoby dokonującej zakupu, kwota, waluta, opis i numer zamówienia. Osobny punkt mówi,
+że dane karty i kodu BLIK nie trafiają do naszych systemów. Poprawiliśmy też §9 ust. 3,
+który wspominał o bramce płatności jako o funkcji przyszłej — teraz mówi wprost, że
+dotyczy **płatności Gościa**, bo płatności abonamentowe Klienta już działają.
 
-**Uwaga na fałszywy trop.** §9 ust. 3 wspomina o bramce płatności, ale mówi
-o **przyszłych płatnościach gości w restauracji** („po udostępnieniu rozliczeń
-online"). Sytuacja, o którą tu chodzi, jest inna: to restaurator płacący nam za
-abonament, i ona dzieje się już dziś. Nie jest opisana nigdzie.
+**Co dokładnie robi system** (sprawdzone w kodzie, nie z pamięci): adresu IP
+**nie zapisujemy w bazie** — przekazujemy go wyłącznie w wywołaniu tworzącym płatność,
+bo wymaga tego operator. Imienia i nazwiska nie przekazujemy: pola przewidziane na nie
+w wywołaniu zostają puste. Zwrotnie otrzymujemy identyfikator zamówienia PayU i wynik
+płatności.
 
-**Czego potrzebujemy:**
-1. Dopisania PayU do §6 wraz z zakresem przekazywanych danych.
-2. Rozstrzygnięcia, **czy PayU jest w tej relacji odrębnym administratorem, czy
-   podmiotem przetwarzającym** — od tego zależy, czy potrzebna jest umowa
-   powierzenia, czy wystarczy poinformowanie w polityce.
+**Czego potrzebujemy — dwie rzeczy, jedna z nich to decyzja:**
+1. **Potwierdzenia roli PayU.** Napisaliśmy, że wobec danych transakcji PayU jest
+   **odrębnym administratorem**, nie podmiotem przetwarzającym na nasze polecenie —
+   z czego wynika, że **umowa powierzenia nie jest właściwym instrumentem** i dlatego
+   jej nie zawieraliśmy. To nasze rozumienie, nie ustalenie prawne. Jeśli jest błędne,
+   zmienia się nie tylko brzmienie §6, ale i to, jaki dokument musimy z PayU podpisać.
+2. **Sprawdzenia danych rejestrowych PayU** przed publikacją — podaliśmy wyłącznie
+   nazwę i miasto siedziby, świadomie nie wpisując adresu ani numeru KRS, żeby nie
+   umieścić w dokumencie prawnym danych, których sami nie zweryfikowaliśmy. Jeśli
+   pełna identyfikacja jest potrzebna, prosimy o właściwe brzmienie.
 
 ### A2. Regulamin nie zna płatności rocznej ani sposobu liczenia okresu
 
@@ -165,7 +176,7 @@ Podajemy je, żeby nie trzeba było o nie pytać.
 | Transmisja | wyłącznie HTTPS |
 | Dostęp do zaplecza kelbroo | hasło **oraz kod jednorazowy wysyłany na e-mail** |
 | Poczta wychodząca | Hostinger, nadawca `kontakt@kelbroo.com` |
-| Operator płatności | **PayU**, od 26 sierpnia 2026 |
+| Operator płatności | **PayU S.A.**, od 26 sierpnia 2026; opisany w Polityce §6 od 27 sierpnia |
 | Faktury VAT | wystawiane ręcznie poza systemem, w programie księgowym |
 
 **Dwie rzeczy do potwierdzenia po naszej stronie**, zanim zostaną wpisane do

@@ -1,6 +1,6 @@
 # Polityka prywatności platformy kelbroo
 
-_Wersja 2026-08-24_
+_Wersja 2026-08-27_
 
 Niniejsza Polityka prywatności określa zasady przetwarzania danych osobowych w ramach systemu kelbroo. Została przygotowana z naciskiem na maksymalną przejrzystość i ochronę prywatności korzystających z niej osób.
 
@@ -65,6 +65,10 @@ Dane wprowadzane do Usługi są powierzane podmiotom trzecim wyłącznie w wymia
 
 * **Infrastruktura serwerowa i poczta wychodząca (SMTP):** Usługi świadczy firma **Hostinger.com**.
 
+* **Obsługa płatności za abonament:** Płatności za abonament (BLIK, przelew, karta, Apple Pay, Google Pay) obsługuje **PayU S.A. z siedzibą w Poznaniu**. Przy każdym zakupie przekazujemy operatorowi **adres e-mail wskazany przez Klienta do rozliczeń, adres IP osoby dokonującej zakupu**, kwotę, walutę, opis oraz nasz numer zamówienia. Adres IP przekazujemy wyłącznie w wywołaniu tworzącym płatność, ponieważ wymaga tego operator — **w naszej bazie go nie zapisujemy**.
+
+* **Rola PayU i dane karty:** Wobec danych transakcji płatniczej PayU jest **odrębnym administratorem danych**, a nie podmiotem przetwarzającym na nasze polecenie — przetwarza je na podstawie własnych obowiązków prawnych ciążących na instytucji płatniczej i na zasadach określonych we własnej polityce prywatności. **Dane karty płatniczej, kodu BLIK ani danych uwierzytelniających do bankowości nigdy nie trafiają do systemów kelbroo** — Klient podaje je bezpośrednio operatorowi, a my otrzymujemy wyłącznie informację o wyniku płatności.
+
 * **Lokalizacja i brak transferu:** Całość serwerów i macierzy bazodanowych zlokalizowana jest **we Frankfurcie na terenie Niemiec**. Oznacza to, że Usługodawca **nie przekazuje danych poza Europejski Obszar Gospodarczy (EOG)**.
 Usługodawca stanowczo oświadcza, że w żadnym wypadku nie odsprzedaje profili Klientów ani Gości w celach marketingowych.
 
@@ -99,7 +103,7 @@ Niniejsza Polityka obejmuje z góry również planowane moduły, które mogą wy
 
 2. **Komentarze do zamówień:** Moduł swobodnych tekstowo ocen pozostawia Gościowi pełną decyzyjność, czy zamieści w nich dane dobrowolne mogące prowadzić do identyfikacji.
 
-3. **Bramka płatności online:** Po udostępnieniu rozliczeń online (np. Apple Pay / BLIK), dostawcą technologii i jedynym powiernikiem danych transakcyjnych karty będzie dedykowany operator płatności. Kelbroo nie będzie przetwarzać ani archiwizować wrażliwych ciągów numerów kart płatniczych.
+3. **Bramka płatności online dla Gościa:** Punkt ten dotyczy **płatności Gościa za zamówienie**, która nie jest jeszcze udostępniona (płatności za abonament Klienta obsługuje już PayU — patrz §6). Po udostępnieniu rozliczeń online dla Gościa dostawcą technologii i jedynym powiernikiem danych transakcyjnych karty będzie operator płatności. Kelbroo nie będzie przetwarzać ani archiwizować wrażliwych ciągów numerów kart płatniczych.
 
 ## §10. Zmiany Polityki prywatności
 
