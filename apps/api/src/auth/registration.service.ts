@@ -161,6 +161,9 @@ export class RegistrationService {
           status: 'trialing',
           currentPeriodEnd: new Date(teraz.getTime() + TRIAL_DAYS * 24 * 60 * 60 * 1000),
           ...PRO_LIMITS,
+          // Okres próbny jest planem Pro, więc daje też jego funkcje — inaczej
+          // klient testowałby coś innego, niż potem kupi.
+          menuPhotosEnabled: PLANS.pro.features.menuPhotos,
         },
       });
 

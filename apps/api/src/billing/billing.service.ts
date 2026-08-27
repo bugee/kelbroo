@@ -445,7 +445,8 @@ export class BillingService {
           ? abonament.currentPeriodEnd
           : new Date();
       const doKiedy = addPeriod(podstawa, zamowienie.period as BillingPeriod);
-      const limity = PLANS[zamowienie.plan as PlanId].limits;
+      const plan = PLANS[zamowienie.plan as PlanId];
+      const limity = plan.limits;
 
       await tx.subscription.upsert({
         where: { organizationId: zamowienie.organizationId },
@@ -457,6 +458,7 @@ export class BillingService {
           tableLimit: limity.tableLimit,
           languageLimit: limity.languageLimit,
           staffLimit: limity.staffLimit,
+          menuPhotosEnabled: plan.features.menuPhotos,
         },
         update: {
           plan: zamowienie.plan,
@@ -465,6 +467,10 @@ export class BillingService {
           tableLimit: limity.tableLimit,
           languageLimit: limity.languageLimit,
           staffLimit: limity.staffLimit,
+          // Zakup planu ustawia funkcję na wartość z cennika. Ręczne włączenie
+          // zrobione wcześniej z zaplecza **przepada** — plan jest źródłem prawdy
+          // w chwili zakupu, a wyjątek trzeba wtedy nadać na nowo.
+          menuPhotosEnabled: plan.features.menuPhotos,
         },
       });
 

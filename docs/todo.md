@@ -112,6 +112,28 @@ Modele są w schemacie od pierwszej migracji i nie mają ani jednego odwołania 
       Host jest domyślnym płatnikiem i to do niego trafia nierozdzielony grosz przy
       podziale, więc pomyłka zostaje na rachunku.
 
+## 4a. Karta menu
+
+- [x] **Zdjęcia dań** (2026-08-27) — jedno na pozycję, w planie Pro i wyższych,
+      z możliwością ręcznego włączenia z zaplecza (§6c). Gość widzi miniaturę
+      w karcie i pełne zdjęcie w szczegółach dania, z powiększeniem na cały ekran.
+
+      **Jedno zdjęcie, nie galeria**: gość przegląda kartę, żeby wybrać, a nie
+      żeby oglądać album — druga fotografia tego samego dania wydłuża listę
+      i nie pomaga.
+
+      Zmniejszanie dzieje się **w przeglądarce** przed wysłaniem (dłuższy bok do
+      1400 px, JPEG): przeskalowanie po stronie API wymagałoby biblioteki
+      natywnej w obrazie Dockera, a zysk byłby ten sam. Serwer i tak sprawdza
+      rozmiar i **rzeczywisty typ pliku po zawartości**, nie po nagłówku.
+
+      Pliki leżą na dysku serwera (wolumen `media`) za abstrakcją
+      `MenuImageStorage` — docelowo S3/R2 z CDN-em, i wtedy zmienia się wyłącznie
+      implementacja. **Wolumen trzeba backupować razem z bazą**: wiersz bez pliku
+      to dziura w karcie, której nie da się odtworzyć.
+
+---
+
 ## 5. System 1 — strona produktowa i sprzedaż
 
 Pod `kelbroo.com` stoi `apps/web-marketing`. Rejestracja, sprzedaż abonamentu
@@ -407,8 +429,16 @@ Do rozstrzygnięcia **przed** napisaniem pierwszego ekranu:
 
 ### 6c. Parametryzacja klienta
 
+- [x] **Włączanie funkcji poza planem** (2026-08-27) — pierwsza taka funkcja to
+      zdjęcia dań. Wartość siedzi na abonamencie, więc zaplecze może ją nadać
+      lokalowi na Starterze na czas rozmowy o przejściu na Pro, nie ruszając
+      abonamentu. **Zmiana planu kasuje taki wyjątek** — plan jest wtedy świeżą
+      decyzją i ustawia funkcje na wartości z cennika; panel mówi o tym wprost
+      przy przycisku. Każde przełączenie wymaga powodu i trafia do dziennika.
+
 - [x] **Limity planu** (2026-08-26) — widoczne na karcie i przestawiane razem
-      ze zmianą planu. Osobnego nadpisania ponad plan wciąż nie ma.
+      ze zmianą planu. Osobnego nadpisania limitu ponad plan wciąż nie ma —
+      w odróżnieniu od funkcji, które da się już włączyć pojedynczo (wyżej).
 - [ ] **Ustawienia lokalu z poziomu wsparcia** — te same przełączniki, które ma manager
       (tryb zamawiania, potwierdzanie, zgoda hosta, rozliczanie po jednym).
 - [ ] **Przełączniki funkcji per klient** — pilotaż nowej funkcji u jednego lokalu bez

@@ -67,6 +67,7 @@ Szczegółowy diagram sekwencji: patrz [architecture.md §6](architecture.md#6-p
 | Płatność w aplikacji (BLIK/karta/Apple/Google Pay) — **etap 2, zdjęte ze strony 2026-08-26** | ❌ | 🕐 | 🕐 | 🕐 |
 | Panel kuchni (KDS) + panel kelnera | ❌ | ✅ | ✅ | ✅ |
 | Konta personelu *(egzekwowane od 2026-08-26)* | 1 | 3 | bez limitu | bez limitu |
+| Zdjęcia dań w karcie *(od 2026-08-27; zaplecze może włączyć w niższym planie)* | ❌ | ❌ | ✅ | ✅ |
 | Oceny dań i feedback do managera | ❌ | podstawowe | ✅ pełne | ✅ pełne |
 | Analityka i raporty | ❌ | podstawowy pulpit | ✅ pełna + eksport | ✅ + API raportowe |
 | Podział rachunku | ❌ | „każdy za siebie” | ✅ pełny (po pozycjach, grupami, po równo) | ✅ pełny |

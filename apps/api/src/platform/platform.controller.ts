@@ -10,6 +10,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import {
+  IsBoolean,
   IsEmail,
   IsIn,
   IsInt,
@@ -44,6 +45,15 @@ class ExtendDto extends PowodDto {
 class PlanDto extends PowodDto {
   @IsIn(['menu', 'starter', 'pro', 'enterprise'])
   plan!: SubscriptionPlan;
+}
+
+/** Włączenie funkcji poza planem — dziś jedna, ale lista z założenia urośnie. */
+class FeatureDto extends PowodDto {
+  @IsIn(['menuPhotos'])
+  feature!: 'menuPhotos';
+
+  @IsBoolean()
+  enabled!: boolean;
 }
 
 class VerifyCodeDto {
@@ -136,6 +146,17 @@ export class PlatformController {
     @Body() dto: PlanDto,
   ) {
     return this.client.changePlan(admin, id, dto.plan, dto.reason);
+  }
+
+  @Post('clients/:id/feature')
+  @UseGuards(PlatformAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  setFeature(
+    @Admin() admin: PlatformAdminContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: FeatureDto,
+  ) {
+    return this.client.setFeature(admin, id, dto.feature, dto.enabled, dto.reason);
   }
 
   @Post('clients/:id/block')

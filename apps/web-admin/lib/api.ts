@@ -419,7 +419,10 @@ async function authorized<T>(path: string, init: RequestInit = {}, retry = true)
     headers: {
       ...(init.headers ?? {}),
       ...(access ? { authorization: `Bearer ${access}` } : {}),
-      ...(init.body ? { 'content-type': 'application/json' } : {}),
+      // Tylko dla ciała tekstowego. Przy `FormData` przeglądarka musi ustawić
+      // nagłówek sama, bo dopisuje do niego granicę multipart — nadpisanie go
+      // sprawia, że serwer nie widzi w żądaniu żadnego pliku.
+      ...(typeof init.body === 'string' ? { 'content-type': 'application/json' } : {}),
     },
     cache: 'no-store',
   });
@@ -653,6 +656,8 @@ export interface SubscriptionState {
   /** Ujemne, gdy termin minął. */
   daysLeft: number | null;
   trial: boolean;
+  /** Czy plan obejmuje zdjęcia dań. Panel chowa po tym cały interfejs wgrywania. */
+  menuPhotosEnabled: boolean;
 }
 
 export const fetchSubscription = () => authorized<SubscriptionState>('/staff/subscription');
@@ -743,6 +748,26 @@ export const startCheckout = (plan: string, period: BillingPeriod, invoice: Invo
     }),
   });
 
+/** Adres zdjęcia dania. Nazwa pliku jest losowa i niezmienna, więc adres też. */
+export const imageSrc = (nazwa: string) => `${API}/media/menu/${nazwa}`;
+
+/**
+ * Wgranie zdjęcia. Wysyłamy `FormData`, więc **nie** ustawiamy `content-type` —
+ * przeglądarka musi dopisać do niego granicę multipart, a nadpisanie nagłówka
+ * odcięłoby ją i serwer nie rozpoznałby pliku.
+ */
+export async function uploadItemImage(itemId: string, plik: Blob): Promise<{ imageUrl: string }> {
+  const dane = new FormData();
+  dane.append('file', plik, 'danie.jpg');
+  return authorized<{ imageUrl: string }>(`/management/menu/items/${itemId}/image`, {
+    method: 'POST',
+    body: dane,
+  });
+}
+
+export const removeItemImage = (itemId: string) =>
+  authorized<{ removed: boolean }>(`/management/menu/items/${itemId}/image`, { method: 'DELETE' });
+
 export const money = (cents: number, currency: string) =>
   new Intl.NumberFormat('pl-PL', { style: 'currency', currency }).format(cents / 100);
 
@@ -781,6 +806,8 @@ export interface AdminItem {
   isAvailable: boolean;
   isArchived: boolean;
   isFeatured: boolean;
+  /** Nazwa pliku ze zdjęciem albo `null`. Adres składa `imageSrc`. */
+  imageUrl: string | null;
   allergens: string[];
   dietaryTags: string[];
   prepTimeMinutes: number | null;

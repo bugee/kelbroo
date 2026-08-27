@@ -179,7 +179,14 @@ export class PlatformClientService {
         where: { organizationId },
         // Limity idą razem z planem: zostawienie starych dałoby lokal na planie
         // Starter z limitami Pro i zdziwienie przy pierwszym rachunku.
-        data: { plan, status: 'active', ...LIMITY[plan] },
+        data: {
+          plan,
+          status: 'active',
+          ...LIMITY[plan],
+          // Funkcje też idą z planem. Ręczne włączenie zdjęć u kogoś na Starterze
+          // przepada przy zmianie planu — trzeba je wtedy nadać na nowo, świadomie.
+          menuPhotosEnabled: PLANS[plan].features.menuPhotos,
+        },
       });
     });
 
@@ -187,7 +194,49 @@ export class PlatformClientService {
       plan,
       poprzedni: plan,
     });
-    return { plan: wynik.plan, tableLimit: wynik.tableLimit, languageLimit: wynik.languageLimit };
+    return {
+      plan: wynik.plan,
+      tableLimit: wynik.tableLimit,
+      languageLimit: wynik.languageLimit,
+      menuPhotosEnabled: wynik.menuPhotosEnabled,
+    };
+  }
+
+  /**
+   * Włączenie albo wyłączenie funkcji pojedynczemu klientowi, bez zmiany planu.
+   *
+   * Powód istnienia: handel. Lokal na Starterze prosi o zdjęcia dań na czas
+   * rozmowy o przejściu na Pro — i nie ma sensu przepisywać mu abonamentu, żeby
+   * to sprawdzić. Zmiana planu **kasuje** taki wyjątek, bo plan jest wtedy
+   * świeżą decyzją.
+   */
+  async setFeature(
+    admin: PlatformAdminContext,
+    organizationId: string,
+    feature: 'menuPhotos',
+    enabled: boolean,
+    powod: string,
+  ) {
+    if (!powod.trim()) {
+      throw new BadRequestException('Zmiana funkcji wymaga podania powodu.');
+    }
+
+    const wynik = await this.prisma.withTenant(organizationId, async (tx) => {
+      const abonament = await tx.subscription.findUnique({ where: { organizationId } });
+      if (!abonament) {
+        throw new NotFoundException('Ten klient nie ma abonamentu.');
+      }
+      return tx.subscription.update({
+        where: { organizationId },
+        data: { menuPhotosEnabled: enabled },
+      });
+    });
+
+    await this.zapisz(admin, organizationId, 'subscription.feature_changed', powod, {
+      feature,
+      enabled,
+    });
+    return { menuPhotosEnabled: wynik.menuPhotosEnabled };
   }
 
   /**

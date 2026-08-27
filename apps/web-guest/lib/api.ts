@@ -41,6 +41,9 @@ export interface ModifierGroup {
   modifiers: Modifier[];
 }
 
+/** Adres zdjęcia dania. Nazwa pliku jest losowa i niezmienna, więc adres też. */
+export const imageSrc = (nazwa: string) => `${API}/media/menu/${nazwa}`;
+
 export interface Dish {
   id: string;
   name: string;
@@ -52,6 +55,8 @@ export interface Dish {
   dietaryTags: string[];
   prepTimeMinutes: number | null;
   isFeatured: boolean;
+  /** Nazwa pliku ze zdjęciem albo `null`. Adres składa `imageSrc`. */
+  imageUrl: string | null;
   modifierGroups: ModifierGroup[];
 }
 

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import {
   blockClient,
   changePlan,
+  setFeature,
   extendSubscription,
   unblockClient,
   type KartaKlienta,
@@ -120,8 +121,40 @@ export function Operacje({ karta, onZmiana }: { karta: KartaKlienta; onZmiana: (
       </div>
 
       <p className="text-xs text-[var(--muted)]">
-        Zmiana planu przestawia też limity stolików i języków.
+        Zmiana planu przestawia też limity stolików, języków i kont personelu — oraz{' '}
+        <strong>kasuje ręcznie włączone funkcje</strong> poniżej.
       </p>
+
+      <hr className="border-[var(--line)]" />
+
+      {/*
+        Funkcja poza planem. Po co: lokal na Starterze prosi o zdjęcia dań na czas
+        rozmowy o przejściu na Pro — i nie ma sensu przepisywać mu abonamentu,
+        żeby to sprawdził.
+      */}
+      <div className="flex flex-wrap items-center gap-3">
+        <span className="mono text-sm">
+          Zdjęcia dań:{' '}
+          <strong className={karta.abonament.menuPhotosEnabled ? 'text-[var(--teal)]' : ''}>
+            {karta.abonament.menuPhotosEnabled ? 'włączone' : 'wyłączone'}
+          </strong>
+        </span>
+        <button
+          type="button"
+          disabled={pracuje || brakPowodu}
+          onClick={() =>
+            void wykonaj(
+              karta.abonament.menuPhotosEnabled
+                ? 'Zdjęcia dań wyłączone.'
+                : 'Zdjęcia dań włączone.',
+              () => setFeature(id, !karta.abonament.menuPhotosEnabled, powod),
+            )
+          }
+          className="min-h-10 rounded-[var(--radius-control)] border border-[var(--line-strong)] px-4 text-sm font-semibold disabled:opacity-40"
+        >
+          {karta.abonament.menuPhotosEnabled ? 'Wyłącz' : 'Włącz'}
+        </button>
+      </div>
 
       <hr className="border-[var(--line)]" />
 

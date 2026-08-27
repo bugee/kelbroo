@@ -48,6 +48,29 @@ domyślny pl`). Języki dodajesz w **Ustawienia → Lokal**; liczbę ogranicza p
 Każde danie ma osobną nazwę i opis w każdym języku. **Brak tłumaczenia nigdy nie daje
 pustego ekranu** — gość zobaczy wtedy wersję w języku domyślnym lokalu.
 
+## Zdjęcia dań
+
+Funkcja planu **Pro i wyższych**. Jeśli masz niższy plan, a chcesz ją wypróbować,
+napisz na kontakt@kelbroo.com — da się ją włączyć bez zmiany abonamentu.
+
+Zdjęcie dodajesz w **edytuj** przy daniu, przyciskiem **Dodaj zdjęcie**. Jedno na
+pozycję: wgranie kolejnego zastępuje poprzednie. Karta z dwudziestoma daniami ma
+dać się przewinąć wzrokiem, a nie zamienić w album.
+
+Zapisuje się od razu po wybraniu pliku — nie czeka na przycisk „Zapisz" i nie
+zamyka okna edycji. Dlatego zdjęcie da się dodać dopiero do pozycji już
+zapisanej.
+
+**Nie musisz nic zmniejszać przed wgraniem.** Zdjęcie prosto z telefonu jest
+przygotowywane w przeglądarce: skracamy dłuższy bok do 1400 pikseli i zapisujemy
+jako JPEG. Gość pobiera je potem na komórkowym internecie w lokalu, więc waga ma
+tu znaczenie większe niż zwykle.
+
+Gość widzi miniaturę przy daniu w karcie, a po stuknięciu — pełne zdjęcie
+w szczegółach, które może powiększyć na cały ekran.
+
+Przyjmujemy JPG, PNG i WebP, do 3 MB po zmniejszeniu.
+
 ## Alergeny
 
 Wpisujesz je przy daniu i gość widzi je pod nazwą. To jego jedyne źródło tej

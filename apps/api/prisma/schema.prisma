@@ -324,8 +324,13 @@ model Subscription {
   /// Ile kont personelu obejmuje plan. `9999` znaczy „bez limitu" — patrz
   /// `BEZ_LIMITU` w `packages/types/src/plans.ts`.
   staffLimit           Int                @default(9999) @map("staff_limit")
-  createdAt            DateTime           @default(now()) @map("created_at")
-  updatedAt            DateTime           @updatedAt @map("updated_at")
+
+  /// Zdjęcia dań w karcie. Domyślnie z planu (Pro i wyżej), ale zaplecze może
+  /// je włączyć pojedynczemu klientowi bez zmiany planu — stąd kolumna, a nie
+  /// wyliczanie z `plan` przy każdym pytaniu.
+  menuPhotosEnabled Boolean  @default(false) @map("menu_photos_enabled")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 

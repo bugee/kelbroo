@@ -19,6 +19,7 @@ import {
   type ActiveCall,
   type BillRequestResult,
   type CartLine,
+  imageSrc,
   type Dish,
   type GuestSplitMode,
   type PaymentPreference,
@@ -358,7 +359,22 @@ function MenuView({
                   onClick={() => onPick(dish)}
                   className="flex w-full items-start justify-between gap-4 rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface)] p-4 text-left disabled:opacity-45"
                 >
-                  <span className="min-w-0">
+                  {/*
+                    Miniatura, nie zdjęcie na całą szerokość: karta z dwudziestoma
+                    daniami musi dać się przewinąć wzrokiem, a zdjęcie w rozmiarze
+                    kafla robi z niej katalog. Pełny rozmiar czeka po stuknięciu.
+                    `alt` zostaje pusty — nazwa dania stoi obok, a jej powtórzenie
+                    czytnik ekranu przeczytałby dwa razy.
+                  */}
+                  {dish.imageUrl && (
+                    <img
+                      src={imageSrc(dish.imageUrl)}
+                      alt=""
+                      loading="lazy"
+                      className="size-16 shrink-0 rounded-[var(--radius-control)] object-cover"
+                    />
+                  )}
+                  <span className="min-w-0 flex-1">
                     <span className="block font-semibold">{dish.name}</span>
                     {dish.description && (
                       <span className="mt-0.5 block text-sm text-[var(--muted)]">

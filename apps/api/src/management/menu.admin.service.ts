@@ -71,6 +71,7 @@ export class MenuAdminService {
             isAvailable: item.isAvailable,
             isArchived: item.isArchived,
             isFeatured: item.isFeatured,
+            imageUrl: item.imageUrl,
             allergens: item.allergens,
             dietaryTags: item.dietaryTags,
             prepTimeMinutes: item.prepTimeMinutes,

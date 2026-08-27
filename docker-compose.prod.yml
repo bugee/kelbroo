@@ -128,9 +128,14 @@ services:
       # Drugi klucz (MD5) — służy **wyłącznie** do sprawdzania podpisu
       # powiadomień. To on decyduje, czy komuś przedłużyć abonament.
       PAYU_SECOND_KEY: ${PAYU_SECOND_KEY:-}
+      # Zdjęcia dań. Katalog musi być wolumenem — obraz jest przebudowywany przy
+      # każdym wdrożeniu, a pliki mają to przeżyć.
+      MEDIA_ROOT: /media
       # Za proxy przeglądarka i tak nie przekracza originu, ale nagłówek Origin
       # przychodzi — musi być na liście, inaczej API odrzuci własne aplikacje.
       CORS_ORIGINS: https://${GUEST_DOMAIN},https://${ADMIN_DOMAIN}
+    volumes:
+      - media:/media
     depends_on:
       postgres:
         condition: service_healthy
@@ -207,3 +212,6 @@ volumes:
   redis-data:
   caddy-data:
   caddy-config:
+  # Zdjęcia dań. **Trzeba je backupować razem z bazą** — wiersz w bazie bez
+  # pliku daje w karcie dziurę, której nie da się odtworzyć.
+  media:

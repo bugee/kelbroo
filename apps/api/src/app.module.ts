@@ -10,6 +10,9 @@ import { ContactController } from './contact/contact.controller';
 import { ContactService } from './contact/contact.service';
 import { PublicDemoService } from './demo/public-demo.service';
 import { GuestNameService } from './guest/guest-name.service';
+import { MenuImageAdminController, MenuImagePublicController } from './media/menu-image.controller';
+import { MenuImageService } from './media/menu-image.service';
+import { LocalDiskImageStorage, MenuImageStorage } from './media/menu-image.storage';
 import { BillingService } from './billing/billing.service';
 import { BillingReconciliationService } from './billing/billing-reconciliation.service';
 import { SubscriptionRemindersService } from './billing/subscription-reminders.service';
@@ -87,6 +90,8 @@ import { StaffAdminService } from './management/staff.admin.service';
     ManagementController,
     BillingController,
     ContactController,
+    MenuImagePublicController,
+    MenuImageAdminController,
   ],
   providers: [
     TableService,
@@ -125,6 +130,9 @@ import { StaffAdminService } from './management/staff.admin.service';
     ContactService,
     PublicDemoService,
     GuestNameService,
+    MenuImageService,
+    // Dziś dysk serwera; docelowo S3/R2 z CDN-em — wymiana to podmiana tej linii.
+    { provide: MenuImageStorage, useClass: LocalDiskImageStorage },
     // Operator płatności wchodzi przez token, nie przez import: wymiana PayU
     // na innego dostawcę to jedna linia, a nie przeszukiwanie serwisów.
     { provide: SubscriptionPaymentProvider, useClass: PayuProvider },

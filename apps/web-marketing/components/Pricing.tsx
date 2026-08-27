@@ -56,6 +56,7 @@ const PLANY: Plan[] = [
     podpis: { m: 'rozliczenie miesięczne', y: '3 490 zł rocznie' },
     cechy: [
       'Do 40 stolików, 6 języków',
+      'Zdjęcia dań w karcie',
       'Pełny podział rachunku i grupy',
       'Oceny dań i feedback do managera',
       'Analityka i eksport raportów',

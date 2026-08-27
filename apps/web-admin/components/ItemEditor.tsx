@@ -9,11 +9,14 @@ import {
   type AdminModifierGroup,
   type Translation,
 } from '@/lib/api';
+import { ItemImage } from './ItemImage';
 
 interface Props {
   menu: AdminMenu;
   categoryId: string;
   item: AdminItem | null;
+  /** Zdjęcia dań są funkcją planu — bez niej cała sekcja znika z formularza. */
+  photosEnabled: boolean;
   onClose: () => void;
   onSaved: () => void;
 }
@@ -26,7 +29,7 @@ const emptyGroup = (locales: string[]): AdminModifierGroup => ({
   modifiers: [],
 });
 
-export function ItemEditor({ menu, categoryId, item, onClose, onSaved }: Props) {
+export function ItemEditor({ menu, categoryId, item, photosEnabled, onClose, onSaved }: Props) {
   const locales = menu.supportedLocales;
 
   const [translations, setTranslations] = useState<Translation[]>(
@@ -159,6 +162,18 @@ export function ItemEditor({ menu, categoryId, item, onClose, onSaved }: Props) 
             />
           </Field>
         </div>
+
+        {/*
+          Zdjęcie zapisuje się osobnym żądaniem, od razu po wybraniu pliku —
+          nie czeka na „Zapisz". Inaczej formularz musiałby trzymać megabajty
+          w pamięci i wysyłać je razem z resztą. Stąd też dostępne dopiero dla
+          pozycji już zapisanej: bez identyfikatora nie ma czego opisać zdjęciem.
+        */}
+        {photosEnabled && item && (
+          <Field label="Zdjęcie dania">
+            <ItemImage itemId={item.id} imageUrl={item.imageUrl} />
+          </Field>
+        )}
 
         <Field label="Alergeny (po przecinku)">
           <input

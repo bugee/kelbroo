@@ -157,6 +157,9 @@ export interface KartaKlienta {
     plan: string | null;
     tableLimit: number | null;
     languageLimit: number | null;
+    staffLimit: number | null;
+    /** Zdjęcia dań. Domyślnie z planu, ale da się włączyć pojedynczemu klientowi. */
+    menuPhotosEnabled: boolean;
   };
   lokale: {
     id: string;
@@ -197,6 +200,19 @@ export const extendSubscription = (id: string, days: number, reason: string) =>
 
 export const changePlan = (id: string, plan: Plan, reason: string) =>
   operacja<{ plan: string }>(`/platform/clients/${id}/plan`, { plan, reason });
+
+/**
+ * Włączenie funkcji poza planem.
+ *
+ * **Zmiana planu kasuje taki wyjątek** — plan jest wtedy świeżą decyzją i ustawia
+ * funkcje na wartości z cennika. Trzeba go wtedy nadać na nowo.
+ */
+export const setFeature = (id: string, enabled: boolean, reason: string) =>
+  operacja<{ menuPhotosEnabled: boolean }>(`/platform/clients/${id}/feature`, {
+    feature: 'menuPhotos',
+    enabled,
+    reason,
+  });
 
 export const blockClient = (id: string, reason: string) =>
   operacja<{ zablokowane: boolean }>(`/platform/clients/${id}/block`, { reason });

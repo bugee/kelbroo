@@ -8,11 +8,13 @@ import {
   archiveItem,
   createCategory,
   fetchAdminMenu,
+  fetchSubscription,
   money,
   setItemAvailability,
   type AdminCategory,
   type AdminItem,
   type AdminMenu,
+  type SubscriptionState,
 } from '@/lib/api';
 
 export default function MenuPage() {
@@ -24,6 +26,9 @@ const nameIn = (translations: { locale: string; name: string }[], locale: string
 
 function MenuEditor() {
   const [menu, setMenu] = useState<AdminMenu | null>(null);
+  // Zdjęcia dań są funkcją planu. Pytamy o abonament raz przy wejściu na ekran —
+  // plan nie zmienia się w trakcie edytowania karty.
+  const [abonament, setAbonament] = useState<SubscriptionState | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState<{
     category: AdminCategory;
@@ -42,6 +47,11 @@ function MenuEditor() {
 
   useEffect(() => {
     void refresh();
+    fetchSubscription()
+      .then(setAbonament)
+      // Brak odpowiedzi o abonamencie nie ma blokować edycji karty — sekcja
+      // zdjęć po prostu się nie pokaże.
+      .catch(() => setAbonament(null));
   }, [refresh]);
 
   const run = async (action: () => Promise<unknown>) => {
@@ -187,6 +197,7 @@ function MenuEditor() {
           menu={menu}
           categoryId={editing.category.id}
           item={editing.item}
+          photosEnabled={abonament?.menuPhotosEnabled ?? false}
           onClose={() => setEditing(null)}
           onSaved={() => {
             setEditing(null);

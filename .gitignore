@@ -41,3 +41,4 @@ blob-report/
 # next
 .next/
 next-env.d.ts
+.media

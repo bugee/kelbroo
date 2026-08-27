@@ -23,6 +23,8 @@ export interface StanAbonamentu {
   tableLimit: number | null;
   languageLimit: number | null;
   staffLimit: number | null;
+  /** Czy lokal może dodawać zdjęcia dań. Panel chowa po tym cały interfejs wgrywania. */
+  menuPhotosEnabled: boolean;
   /** `null`, gdy abonament nie ma daty końca. */
   currentPeriodEnd: Date | null;
   /** Ile dni zostało; ujemne, gdy termin minął. `null` przy braku daty. */
@@ -45,6 +47,7 @@ export async function readSubscription(
     tableLimit: subscription?.tableLimit ?? null,
     languageLimit: subscription?.languageLimit ?? null,
     staffLimit: subscription?.staffLimit ?? null,
+    menuPhotosEnabled: subscription?.menuPhotosEnabled ?? false,
     currentPeriodEnd: subscription?.currentPeriodEnd ?? null,
     daysLeft: subscription?.currentPeriodEnd
       ? Math.ceil((subscription.currentPeriodEnd.getTime() - Date.now()) / DZIEN)

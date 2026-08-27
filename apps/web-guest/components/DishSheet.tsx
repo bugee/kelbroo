@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { formatMoney, type CartLine, type Dish, type Modifier } from '@/lib/api';
+import { formatMoney, imageSrc, type CartLine, type Dish, type Modifier } from '@/lib/api';
 
 interface Props {
   dish: Dish;
@@ -13,6 +13,7 @@ export function DishSheet({ dish, onAdd, onClose }: Props) {
   const [selected, setSelected] = useState<Modifier[]>([]);
   const [quantity, setQuantity] = useState(1);
   const [note, setNote] = useState('');
+  const [powiekszone, setPowiekszone] = useState(false);
 
   const unit = dish.priceCents + selected.reduce((sum, m) => sum + m.priceDeltaCents, 0);
 
@@ -40,6 +41,32 @@ export function DishSheet({ dish, onAdd, onClose }: Props) {
       !group.modifiers.some((modifier) => selected.some((m) => m.id === modifier.id)),
   );
 
+  if (powiekszone && dish.imageUrl) {
+    return (
+      // Pełny ekran i czarne tło: zdjęcie jedzenia ogląda się bez ramek, a każde
+      // stuknięcie zamyka — gość nie ma szukać krzyżyka jedną ręką.
+      <div
+        className="fixed inset-0 z-[60] flex items-center justify-center bg-black p-2"
+        onClick={() => setPowiekszone(false)}
+        role="dialog"
+        aria-label={`Zdjęcie: ${dish.name}`}
+      >
+        <img
+          src={imageSrc(dish.imageUrl)}
+          alt={dish.name}
+          className="max-h-full max-w-full object-contain"
+        />
+        <button
+          type="button"
+          onClick={() => setPowiekszone(false)}
+          className="mono absolute right-3 top-3 min-h-11 rounded-full bg-white/15 px-4 text-sm text-white"
+        >
+          Zamknij
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/40" onClick={onClose}>
       <div
@@ -47,6 +74,26 @@ export function DishSheet({ dish, onAdd, onClose }: Props) {
         onClick={(event) => event.stopPropagation()}
       >
         <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[var(--line-strong)]" />
+
+        {/*
+          Zdjęcie nad nazwą, bo po nie gość tu wszedł. Stały stosunek boków
+          zamiast wysokości z pliku: inaczej każde danie przesuwałoby zawartość
+          arkusza o inną wartość, a przy wolnym łączu skakałaby ona pod palcem.
+        */}
+        {dish.imageUrl && (
+          <button
+            type="button"
+            onClick={() => setPowiekszone(true)}
+            aria-label={`Powiększ zdjęcie: ${dish.name}`}
+            className="mb-4 block w-full overflow-hidden rounded-[var(--radius-card)]"
+          >
+            <img
+              src={imageSrc(dish.imageUrl)}
+              alt=""
+              className="aspect-[4/3] w-full object-cover"
+            />
+          </button>
+        )}
 
         <h2 className="text-xl">{dish.name}</h2>
         {dish.description && <p className="mt-1 text-sm text-[var(--muted)]">{dish.description}</p>}
