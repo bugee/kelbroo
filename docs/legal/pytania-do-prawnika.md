@@ -1,6 +1,6 @@
 # kelbroo — pytania i decyzje dla prawnika
 
-Stan na **27 sierpnia 2026**.
+Stan na **28 sierpnia 2026**.
 
 Ten dokument jest samodzielny: nie trzeba do niego czytać kodu ani pozostałych
 plików. Zawiera **wyłącznie rzeczy wymagające decyzji prawnej** — wyciąg z naszego
@@ -9,7 +9,9 @@ strona techniczna.
 
 Kolejność nie jest przypadkowa: część A to zapisy, które **już dziś nie opisują
 stanu faktycznego**, część B to decyzje potrzebne przed dopisaniem czegokolwiek,
-część C to fakty, którymi możemy uzupełnić luki w dokumentach.
+część D dotyczy funkcji jeszcze niezbudowanej — **płatności gości** — i jest pilna
+inaczej niż reszta: potrzebujemy jej **przed rozpoczęciem prac**. Część C to fakty,
+którymi możemy uzupełnić luki w dokumentach.
 
 ---
 
@@ -183,7 +185,7 @@ Podajemy je, żeby nie trzeba było o nie pytać.
 |---|---|
 | Rola wobec danych restauracji | podmiot przetwarzający; administratorem jest restauracja |
 | Rola wobec danych rozliczeniowych klienta | administrator |
-| Dane gościa | **żadne dane osobowe** — pseudonim i symbol losowane, bez konta i bez logowania |
+| Dane gościa | **żadne dane osobowe** — pseudonim i symbol losowane, bez konta i bez logowania. *Zmieni się to wraz z płatnościami gości: adres e-mail podawany jednorazowo do płatności, patrz D4* |
 | Dane pracownika restauracji | imię i nazwisko, e-mail, rola, skrót hasła |
 | Dane klienta (nabywcy) | nazwa firmy, NIP, adres, e-mail do faktur |
 | Okres próbny | 14 dni planu Pro, **bez podawania karty** |
@@ -204,3 +206,87 @@ potwierdziliśmy:
   tym mocne zdanie o braku transferu poza EOG),
 - częstotliwość i retencja kopii zapasowych oraz lista osób z dostępem do bazy
   produkcyjnej.
+
+---
+
+## Część D. Płatności gości — pytania przed rozpoczęciem prac
+
+Ta część dotyczy funkcji, której **jeszcze nie ma**: płatności gościa za zamówienie
+w restauracji. Prosimy o nią **zanim zaczniemy budować**, a nie przed uruchomieniem —
+odpowiedź „ta konstrukcja wymaga zezwolenia" po zbudowaniu funkcji znaczy wyrzucenie
+całej pracy. Analiza techniczna: [analiza-platnosci-gosci.md](../analiza-platnosci-gosci.md).
+
+### D1. Czy nasza konstrukcja wymaga zezwolenia — pytanie najważniejsze
+
+**Jak to ma działać.** Restauracja zakłada **własne konto** u operatora płatności
+(PayU i kolejni) i podaje nam do niego dane dostępowe. kelbroo **inicjuje płatność
+na tym koncie** i nasłuchuje potwierdzenia. Pieniądze gościa idą od operatora
+**wprost na konto restauracji** — nigdy przez nasze konto, nigdy przez nasz rachunek.
+
+**Nasze rozumienie:** nie mamy w żadnym momencie władztwa nad cudzymi środkami,
+więc nie świadczymy usługi płatniczej i nie potrzebujemy zezwolenia. Jesteśmy
+dostawcą oprogramowania, tak jak wtyczka płatnicza do sklepu internetowego albo
+system rezerwacyjny.
+
+**Sprawdzian, który sobie postawiliśmy:** gdyby kelbroo zniknęło w środku dnia,
+pieniądze zapłacone przez gości są u operatora i na koncie restauracji, a nie u nas.
+
+**Czego potrzebujemy:** potwierdzenia, że to rozumienie jest prawidłowe — oraz
+wskazania, co **zmieniłoby** tę ocenę. Interesuje nas zwłaszcza, czy zmienia coś
+fakt, że przechowujemy dane dostępowe do konta klienta u operatora (patrz D2).
+
+### D2. Przechowywanie danych dostępowych klienta
+
+Żeby zainicjować płatność na koncie restauracji, musimy trzymać jej klucze API.
+Będą szyfrowane i **świadomie wąskie**: nie będą obejmowały wywoływania zwrotów,
+bo zwroty restauracja robi sama w panelu operatora.
+
+**Pytanie:** czy przechowywanie i używanie cudzych danych dostępowych do konta
+płatniczego rodzi po naszej stronie obowiązki, których nie mamy jako zwykły dostawca
+oprogramowania — i czy potrzebujemy w umowie z klientem osobnego upoważnienia
+do działania na tym koncie w jego imieniu.
+
+### D3. Czy możemy negocjować zbiorczą stawkę prowizji
+
+Kusi nas wynegocjowanie u operatora lepszej stawki dla wszystkich klientów kelbroo —
+mały lokal sam wynegocjuje gorszą. **Na razie tego nie robimy**, właśnie z ostrożności.
+
+**Pytanie:** czy taka rola — polecanie operatora i uzyskiwanie z tego korzyści dla
+klientów albo dla siebie — zmienia naszą kwalifikację prawną. Czy różni się sytuacja,
+w której z tego nic nie mamy, od tej, w której dostajemy wynagrodzenie od operatora.
+
+### D4. Gość podaje adres e-mail — kolizja z Polityką §2
+
+Operator wymaga adresu e-mail nabywcy. Zamierzamy pytać o niego **na naszym ekranie**,
+przekazywać operatorowi i **nigdzie nie zapisywać** — tak samo jak przy zestawieniu
+rachunku (Polityka §9 ust. 1).
+
+**Problem:** Polityka §2 mówi dziś, że Gość **nie jest proszony** o podanie adresu
+e-mail. To zdanie przestanie być prawdziwe.
+
+**Czego potrzebujemy:** brzmienia, które obejmie sytuację „adres podawany jednorazowo,
+wyłącznie w celu wykonania płatności, nieprzechowywany", oraz rozstrzygnięcia, kto jest
+administratorem tych danych — my, restauracja czy operator. Alternatywa, którą
+rozważaliśmy: adres zbiera bramka operatora, a my nie widzimy go wcale. Prosimy
+o wskazanie, która droga jest czystsza.
+
+### D5. Kto odpowiada wobec gościa
+
+Sprzedawcą jest restauracja: wystawia paragon, przyjmuje reklamacje, robi zwroty.
+Gość ma jednak w ręce **naszą** aplikację i zamierzamy dać mu w niej osobną ścieżkę
+reklamacji do kelbroo, z kopią do restauracji.
+
+**Pytanie:** czy przyjmowanie takich zgłoszeń czyni nas stroną sporu o jakość cudzego
+jedzenia i jak sformułować ekran, żeby jasno mówił, że **przekazujemy, a nie
+rozstrzygamy**. Dotyczy to także sytuacji, w której gość zapłacił, a lokal nie
+zrealizował zamówienia.
+
+### D6. Zwrot, którego nie widzimy
+
+Zwroty robi restauracja w panelu operatora. W kelbroo zostaje **flaga** stawiana
+przez obsługę: „ta pozycja została zwrócona".
+
+**Pytanie:** czy taki zapis — nasza ewidencja oparta na oświadczeniu restauracji,
+bez potwierdzenia z systemu płatniczego — jest wystarczający, jeśli kiedyś stanie się
+dowodem w sporze. I czy powinniśmy w regulaminie wprost przypisać obowiązek zwrotu
+restauracji.
