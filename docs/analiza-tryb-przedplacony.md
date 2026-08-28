@@ -187,6 +187,10 @@ Ta decyzja domyka dwie rzeczy naraz i warto zobaczyć obie:
 | **Awaria jednego lokalu nie może dotknąć reszty** | Zły klucz albo zablokowane konto to problem tego lokalu, a nie całej platformy |
 | **Zwroty idą przez konto lokalu** | Nasze uprawnienia muszą je obejmować — do sprawdzenia przy konfiguracji, nie po pierwszym odrzuconym zamówieniu |
 
+**Potwierdzone prawnie 2026-08-28:** konstrukcja nie wymaga licencji KNF —
+świadczymy usługę techniczną, bo środki idą wprost na konto klienta. Regulamin §7
+zawiera upoważnienie do przechowywania jego kluczy API.
+
 Dług, który wraca przy okazji: `FiscalizationProvider` miał być abstrakcją od
 pierwszej linii kodu (CLAUDE.md), a w `apps/api/src` nie istnieje — jest wyłącznie
 pole w schemacie. Przy opcji A zostaje `Noop`, ale abstrakcja ma stanąć wcześniej,

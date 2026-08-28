@@ -1,17 +1,35 @@
 # kelbroo — pytania i decyzje dla prawnika
 
-Stan na **28 sierpnia 2026**.
+Stan na **28 sierpnia 2026** — **odpowiedzi otrzymane, dokument zamknięty.**
 
-Ten dokument jest samodzielny: nie trzeba do niego czytać kodu ani pozostałych
-plików. Zawiera **wyłącznie rzeczy wymagające decyzji prawnej** — wyciąg z naszego
-wewnętrznego rejestru rozbieżności ([README.md](README.md) §7–§8), gdzie zostaje
-strona techniczna.
+> **Wszystkie pytania z części A, B i D zostały rozstrzygnięte 28 sierpnia 2026.**
+> Prawnik dostarczył nowe brzmienia Regulaminu i Polityki prywatności; oba są
+> opublikowane w wersji z tego dnia. Podsumowanie rozstrzygnięć: [README.md §8](README.md).
+>
+> Dokument zostaje **jako zapis pytań i naszego rozumowania** — przy następnej zmianie
+> prawnej łatwiej wrócić do tego, co i dlaczego pytaliśmy, niż odtwarzać to z pamięci.
+> Treść poniżej opisuje stan **sprzed** odpowiedzi.
 
-Kolejność nie jest przypadkowa: część A to zapisy, które **już dziś nie opisują
-stanu faktycznego**, część B to decyzje potrzebne przed dopisaniem czegokolwiek,
-część D dotyczy funkcji jeszcze niezbudowanej — **płatności gości** — i jest pilna
-inaczej niż reszta: potrzebujemy jej **przed rozpoczęciem prac**. Część C to fakty,
-którymi możemy uzupełnić luki w dokumentach.
+**Co zostało rozstrzygnięte, w skrócie:**
+
+| | Rozstrzygnięcie |
+|---|---|
+| **A1** PayU | Odrębny administrator, bez umowy powierzenia. Dane rejestrowe uzupełnione |
+| **A2** Okres rozliczeniowy | Liczenie od dnia zakupu przyjęte bez zmian |
+| **A3** Tryb do odczytu | Zapis złagodzony — dokument dogonił kod |
+| **A4** Usuwanie danych | **Anonimizacja** zamiast usunięcia + **30-dniowe powiadomienie**. Kodu wciąż nie ma |
+| **A5** Wypowiedzenie | Opcja w panelu skreślona, zostaje droga mailowa |
+| **B3** SLA | Nie udzielamy — i jest to teraz napisane wprost |
+| **B4, B5** Odpowiedzialność | Za menu, alergeny, realizację i zwroty odpowiada **wyłącznie klient**. Osobnego regulaminu dla gościa **nie ma** |
+| **B6** Wsparcie techniczne | Dostęp **na żądanie klienta**, z zapisem w dzienniku |
+| **B7** DPA | Wbudowana w Regulamin §10, bez osobnego dokumentu |
+| **D1–D3** Płatności gości | **Bez licencji KNF** — środki idą wprost na konto klienta, świadczymy usługę techniczną. Zbiorczej stawki prowizji nadal nie negocjujemy |
+| **D4** E-mail gościa | Jednorazowy, przekazywany operatorowi, nietrwały. Wyjątek dopisany do Polityki §2 |
+| **D5, D6** Odpowiedzialność wobec gościa | Jesteśmy **wyłącznie przekaźnikiem** zgłoszenia. Zwroty i spory obciążają klienta |
+
+**Czego prawnik nie rozstrzygnął, bo to nie było pytanie do niego:** czy plan Menu
+(0 zł) wchodzi do oferty (B1) i jaki jest tryb wypowiedzenia po stronie produktu (B2).
+Nowy Regulamin zakłada, że plan Menu istnieje i jest bezpłatny.
 
 ---
 

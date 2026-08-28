@@ -185,21 +185,20 @@ Uporządkowane po tym, ile kosztuje ich zmaterializowanie się.
 | **Kompromitacja naszej bazy = dostęp do kont płatniczych klientów** | Trzymamy cudze klucze API. To **największe nowe ryzyko** tej funkcji i nie istniało wcześniej w żadnej postaci | Szyfrowanie, rotacja, dziennik użycia — oraz **wąskie uprawnienia klucza**: skoro zwroty idą poza nami (2026-08-28), klucz nie musi umieć rozporządzać pieniędzmi klienta |
 | **Gość zapłacił i nie dostał jedzenia** | Obwini kelbroo, nawet gdy zawinił lokal albo operator. Reputacyjnie najgorszy scenariusz | Uzgadnianie wpłat, alarmy, widoczny status u gościa, ścieżka zwrotu z alarmem przy niepowodzeniu |
 | **Sprzedaż niezafiskalizowana albo nabita dwa razy** | Problem podatkowy restauracji, którego narzędziem jesteśmy my | Wyraźne oznaczenie zamówień opłaconych online, dzienny raport do uzgodnienia z kasą |
-| **Nasza konstrukcja jednak wymaga zezwolenia** | Cała funkcja do wyrzucenia | **Do potwierdzenia przez prawnika przed budową.** Nasza teza: nie mamy władztwa nad środkami, więc nie |
+| ~~Nasza konstrukcja jednak wymaga zezwolenia~~ | — | **Zamknięte 2026-08-28:** bez licencji KNF, świadczymy usługę techniczną. Ryzyko zdjęte **przed** rozpoczęciem prac |
 | **Zwrot, o którym nikt nie pamiętał** | Pieniądze gościa zostają w restauracji, a my nie mamy jak tego wykryć — zwroty idą poza nami (decyzja 2026-08-28) | Kolejka „zwroty do załatwienia" jako **ewidencja**, nie automat. Do rozstrzygnięcia: czy nasłuchujemy powiadomień o zwrotach |
 | **Zależność od jednego operatora** | Lokal bez konta PayU nie kupi funkcji; awaria operatora zatrzymuje sprzedaż w lokalach, które nie mają kelnera | Abstrakcja dostawcy od pierwszej linii. Wyłącznik wracający lokal do modelu z kelnerem |
-| **Reklamacje i chargebacki** | Idą do restauracji, nie do nas — to dobrze, ale ona musi o tym wiedzieć **przed** podpisaniem | Jasno w regulaminie i w materiałach sprzedażowych |
+| **Reklamacje i chargebacki** | Idą do restauracji, nie do nas — to dobrze, ale ona musi o tym wiedzieć **przed** podpisaniem | **Zapisane w Regulaminie §4 ust. 2** (2026-08-28): roszczenia gości i zwroty obciążają wyłącznie klienta, my jesteśmy przekaźnikiem. Zostaje powtórzenie tego w materiałach sprzedażowych |
 | **Onboarding przestaje być samoobsługowy** | Obietnica „uruchom w kwadrans" przestaje obowiązywać dla tej funkcji | Powiedzieć to wprost na stronie, zamiast pozwolić klientowi odkryć to po zakupie |
 | ~~Przelew zwykły trwa dobę~~ | — | **Zamknięte 2026-08-28:** dopuszczamy wyłącznie metody natychmiastowe — BLIK, karta, Apple Pay, Google Pay. Do sprawdzenia u operatora, czy da się to **wymusić**, a nie tylko podpowiedzieć |
 
 ## 12. Rozstrzygnięcia z 28 sierpnia 2026
 
 **Adres e-mail gościa.** Pole na **naszym ekranie**, przekazywane operatorowi
-i **nigdzie niezapisywane** — ta sama zasada, co przy zestawieniu rachunku
-(Polityka §9 ust. 1). Wymaga to zmiany w dokumentach: Polityka §2 mówi dziś, że
-gość **nie jest proszony** o adres e-mail, a [docs/03 §3.3](03-customer-ordering.md)
-powtarza „bez konta, bez e-maila". Oba zdania przestają być prawdziwe w tym trybie
-i muszą zostać poprawione **zanim** funkcja ruszy.
+i **nigdzie niezapisywane**. **Polityka prywatności §2 ma od 2026-08-28 wyjątek
+opisujący dokładnie tę sytuację** — kolizja z dokumentem została domknięta przed
+budową, nie po. Zostaje poprawka w [docs/03 §3.3](03-customer-ordering.md), który
+wciąż powtarza „bez konta, bez e-maila".
 
 **Zwroty.** Poza kelbroo. W panelu zostaje **flaga** — kelner, manager albo
 właściciel oznacza pozycję jako zwróconą. To ewidencja, nie potwierdzenie: my nie
@@ -247,9 +246,11 @@ z operatorem sam.
 
 ## 13. Do rozstrzygnięcia przed budową
 
-1. **Potwierdzenie prawne konstrukcji** — czy inicjowanie płatności na cudzym
-   koncie, z przechowywaniem kluczy klienta, nie jest czynnością wymagającą
-   zezwolenia.
+1. ~~Potwierdzenie prawne konstrukcji~~ — **zamknięte 2026-08-28.** Środki trafiają
+   wprost na konto restauracji u operatora, więc kelbroo świadczy **usługę
+   techniczną** i nie jest dostawcą usług płatniczych w rozumieniu PSD2.
+   **Licencja KNF nie jest potrzebna.** Regulamin §7 zawiera upoważnienie klienta
+   do przechowywania jego kluczy API i inicjowania transakcji w jego imieniu.
 2. **Czy `guest_choice` zostaje skreślony** — wynika to z zasady „jeden model
    naraz" ([analiza trybu §6](analiza-tryb-przedplacony.md)).
 3. **Poprawka Polityki §2 i docs/03 §3.3** — oba mówią dziś, że gość nie podaje

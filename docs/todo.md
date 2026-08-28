@@ -34,9 +34,10 @@ rzeczy. Faktury VAT wystawiamy ręcznie po powiadomieniu na `kontakt@kelbroo.com
 (termin liczy się od sprzedaży, nie od zajrzenia do skrzynki). Zwroty robione
 w panelu PayU nie cofają abonamentu — trzeba go skrócić z zaplecza. Trzecia,
 najpilniejsza — brak PayU wśród odbiorców danych w polityce prywatności — została
-**domknięta 2026-08-27** razem z regulaminem, który nie znał płatności rocznej
-([docs/legal §8](legal/README.md)). Zostaje z nich zawiadomienie klientów
-o nowych wersjach obu dokumentów.
+domknięta 27 sierpnia. **Od 2026-08-28 oba dokumenty są w wersji od prawnika**,
+z kompletem odpowiedzi na pytania z briefu, a rejestr rozbieżności
+([docs/legal §8](legal/README.md)) jest zamknięty. Zostaje z nich zawiadomienie
+klientów o nowych wersjach — jedno pismo obejmuje obie zmiany.
 
 **System 4 — zaplecze kelbroo** stoi i ma logowanie dwuskładnikowe, listę klientów,
 kartę klienta oraz operacje na abonamencie z dziennikiem. Obsługa klienta nie
@@ -333,9 +334,7 @@ co człowiek** — automat, któremu powiemy „odrzucono", spróbuje inaczej.
       **nie zapisujemy w bazie**, a pola na imię i nazwisko w wywołaniu zostają puste.
       Poprawiony też §9 ust. 3, który mówił o bramce płatności jako o funkcji przyszłej.
 
-      **Zostaje czynność poza kodem:** §10 polityki i §10 regulaminu obiecują
-      zawiadomienie klientów o zmianie z 14-dniowym wyprzedzeniem — jedno pismo obejmuje
-      obie zmiany. Dziś tanie, bo klient jest jeden.
+      **Zastąpione 2026-08-28** wersją od prawnika — patrz pozycja niżej.
 - [x] **Regulamin: okres rozliczeniowy obejmuje płatność roczną** (2026-08-27) —
       §1 ust. 8 mówił „miesiąc kalendarzowy", a sprzedajemy też rok i liczymy okres
       **od dnia zakupu**, z przycięciem dnia do długości krótszego miesiąca. Poprawka
@@ -347,9 +346,44 @@ co człowiek** — automat, któremu powiemy „odrzucono", spróbuje inaczej.
       istniejące odwołania do §5 ust. 3 nie mogą zacząć wskazywać czego innego.
       Zrobione tym samym przeglądem co poprawka polityki, bo dwa osobne zawiadomienia
       klientów kosztowałyby dwa razy więcej niż jedno.
+- [x] **Regulamin i Polityka w wersji od prawnika** (2026-08-28) — komplet odpowiedzi
+      na pytania z części A–D [briefu](legal/pytania-do-prawnika.md) i nowe brzmienia obu
+      dokumentów. **Rejestr rozbieżności z [legal/README.md §8](legal/README.md) jest
+      zamknięty:** dokumenty opisują stan faktyczny.
+
+      Co się zmieniło merytorycznie: **SLA nie udzielamy** i jest to napisane wprost;
+      za kartę menu, alergeny, realizację zamówień i zwroty odpowiada **wyłącznie
+      klient**; umowa powierzenia (DPA) jest wbudowana w regulamin, bez osobnego
+      dokumentu do podpisu; wypowiedzenie idzie wyłącznie mailem; wsparcie techniczne
+      wchodzi na konto klienta **na jego żądanie** i zostawia ślad w dzienniku.
+
+      **Płatności gości dostały zielone światło przed budową, nie po** — środki idą
+      wprost na konto klienta u operatora, więc świadczymy usługę techniczną i **nie
+      potrzebujemy licencji KNF**. Regulamin §7 zawiera upoważnienie do przechowywania
+      kluczy API klienta, a Polityka §2 — wyjątek na jednorazowy adres e-mail gościa.
+      Obie kolizje domknięte, zanim powstała pierwsza linia kodu.
+
+      Przy okazji drobiazg, który łatwo przeoczyć: **numer paragrafu z prawami RODO
+      zmienił się z §8 na §7**, a odnośnik „RODO" w stopce prowadzi do kotwicy z numeru
+      w nagłówku. Skrócenie dokumentu potrafi cicho rozwiązać taki odnośnik.
+
+      **Zostaje czynność poza kodem:** zawiadomienie klientów z 14-dniowym wyprzedzeniem
+      (§11 regulaminu, §8 polityki). Jedno pismo obejmuje tę zmianę **i tę z 27 sierpnia**,
+      jeśli tamto jeszcze nie poszło.
+- [ ] **Anonimizacja konta po 6 miesiącach + powiadomienie 30 dni wcześniej** —
+      **nowe zobowiązanie z dokumentów 2026-08-28** i najpoważniejsza rzecz, jaką te
+      dokumenty zostawiły do zrobienia. Żaden mechanizm retencji nie istnieje.
+
+      Zmiana z „usuwamy" na „anonimizujemy" jest dla nas korzystniejsza — statystyki
+      zostają — ale **dokłada obowiązek**, którego wcześniej nie było: wysyłkę
+      powiadomienia z wyprzedzeniem. Pierwszy termin zapadnie sześć miesięcy po
+      pierwszym wygasłym koncie, więc czasu jest sporo, a przeoczyć go łatwo.
+- [ ] **Ślad w dzienniku przy wejściu wsparcia na konto klienta** — regulamin §3 ust. 3
+      to obiecuje. Funkcji „wejdź na konto klienta" **nie ma wcale**, więc dziś nikt nią
+      nie wchodzi i zapis jest prawdziwy. Ale gdy powstanie (§6 zaplecza), dziennik ma
+      powstać **razem z nią**, a nie po niej.
 - [ ] **Domknąć pozostałe obietnice bez pokrycia w kodzie** — spis w
-      [docs/legal/README.md §8](legal/README.md): usunięcie danych po 6 miesiącach
-      (żadnego mechanizmu retencji nie ma) i wypowiedzenie umowy z poziomu panelu.
+      [docs/legal/README.md §8](legal/README.md).
 - [x] **NIP przy rejestracji** (2026-08-24) — ze sprawdzeniem sumy kontrolnej po obu
       stronach. **Adres firmy zbieramy od 2026-08-26** — jest polem obowiązkowym przy
       zakupie abonamentu, bo faktura VAT bez adresu nabywcy nie jest fakturą.

@@ -161,90 +161,42 @@ przez gości zostaje wyłączone, ale **dane restauracji nie są kasowane**.
 
 ## 8. Rozbieżności między dokumentami a działającym systemem
 
-Sprawdzone z kodem 2026-08-24, zweryfikowane ponownie po dodaniu rejestracji,
-a 2026-08-26 po uruchomieniu sprzedaży abonamentów przez PayU. **Trzy pozycje są
-otwarte** (pierwsza z nich jest domknięta kodem i czeka wyłącznie na poprawkę
-w treści regulaminu), trzy zamknięte. Nie unieważnia to dokumentów, ale każdą
-trzeba zamknąć kodem albo poprawką w treści.
+**Rejestr zamknięty 2026-08-28.** Prawnik odpowiedział na komplet pytań z części A–D
+[briefu](pytania-do-prawnika.md) i dostarczył nowe brzmienia obu dokumentów. Regulamin
+i Polityka mają wersję z 28 sierpnia i **opisują stan faktyczny**.
 
-Pozycje 4 i 5 powstały **dopiero wraz z przyjmowaniem pieniędzy** — wcześniej
-dokumenty opisywały rzeczywistość poprawnie. **Obie zostały domknięte 2026-08-27**,
-jednym przeglądem obu dokumentów: to tańsze niż dwa osobne zawiadomienia klientów
-o zmianie (§10 Polityki, §10 Regulaminu).
+Historia tego rejestru jest warta zachowania, bo pokazuje, czym te rozbieżności były:
+pięć pozycji powstało z rozjazdu dokumentu z kodem, dwie **dopiero wraz z przyjmowaniem
+pieniędzy**, a żadna nie została zamknięta przez naginanie kodu do dokumentu.
 
-Trzy pozycje, które zostają, łączy to, że **żadna nie powstała z powodu płatności** —
-wszystkie trzy dotyczą obietnic złożonych przed uruchomieniem sprzedaży.
+### Jak zostały domknięte
 
-### Otwarte
+| Pozycja | Rozstrzygnięcie |
+|---|---|
+| **PayU wśród odbiorców danych** | Dopisane do Polityki 27.08, potwierdzone 28.08 wraz z pełnymi danymi rejestrowymi. PayU jest **odrębnym administratorem**; umowa powierzenia nie jest właściwym instrumentem i jej nie zawieramy |
+| **Okres rozliczeniowy i ceny roczne** | Poprawione 27.08, potwierdzone 28.08. Liczenie od dnia zakupu z przycięciem dnia zostało uznane za uczciwsze wobec klienta i zgodne z prawem B2B |
+| **„Tryb do odczytu" po wygaśnięciu** | Zapis złagodzony (Regulamin §6): zawieszenie blokuje **nowe** zamówienia, ale rozliczanie otwartych rachunków i wydawanie z kuchni zostaje. Dokument dogonił kod |
+| **Usuwanie danych po 6 miesiącach** | Zmienione na **anonimizację** z **30-dniowym powiadomieniem** (Regulamin §6 ust. 3, Polityka §5). **Kodu nadal nie ma** — patrz niżej |
+| **Wypowiedzenie „z poziomu panelu"** | Skreślone. Zostaje droga mailowa (Regulamin §9), czyli to, co faktycznie działa |
+| **Brak zapisu o SLA** | Regulamin §8 mówi wprost, że **SLA nie udzielamy** |
+| **Umowa powierzenia (DPA)** | Wbudowana w Regulamin §10 — bez osobnego dokumentu do podpisu przy rejestracji |
+| **Dostęp wsparcia do konta klienta** | Regulamin §3 ust. 3: wyłącznie **na żądanie klienta** i z zapisem w dzienniku. Funkcji nie ma — patrz niżej |
+| **Płatności gości** | Regulamin §7: środki idą wprost na konto klienta u operatora, my nie pośredniczymy. Klient upoważnia nas do przechowywania kluczy API i inicjowania transakcji. **Bez licencji KNF** — nie jesteśmy dostawcą usług płatniczych w rozumieniu PSD2 |
+| **Adres e-mail gościa przy płatności** | Polityka §2 ma wyjątek: adres jednorazowy, przekazywany operatorowi, **nietrwały** |
 
-1. **Regulamin §7 ust. 1 — „panel obsługi pozostaje w trybie do odczytu".**
-   **Kod domknięty 2026-08-24, treść wymaga poprawki.** Wygaśnięcie abonamentu
-   wstrzymuje teraz nowe zamówienia także w panelu (wcześniej blokowało wyłącznie
-   gościa, więc lokal bez abonamentu pracował dalej). Zostawiliśmy jednak dostępne
-   **rozliczanie otwartych rachunków, wydawanie z kuchni i zamykanie wizyt** —
-   dosłowny „tryb do odczytu" uwięziłby gotówkę w lokalu, któremu abonament
-   skończył się w środku serwisu, i zrobiłby z naszej awarii jego awarię.
+### Co z tego wynika dla kodu — dwa zobowiązania bez pokrycia
 
-   > **Do rozstrzygnięcia z prawnikiem:** zdanie w regulaminie jest przez to
-   > za mocne. Proponowane brzmienie: *„…skutkuje automatycznym zawieszeniem
-   > modułu zamawiania dla Gości oraz przyjmowania nowych zamówień w panelu.
-   > Rozliczenie otwartych rachunków, realizacja zamówień już przyjętych i wgląd
-   > w historię pozostają dostępne."* Zmiana treści oznacza **nową wersję
-   > dokumentu** i zawiadomienie klientów z 14-dniowym wyprzedzeniem (§10) —
-   > dziś tanie, bo klient jest jeden.
+Dokumenty są teraz zgodne ze stanem faktycznym **z dwoma wyjątkami**, które
+przestały być rozbieżnością tekstu, a stały się **zadaniem do wykonania**:
 
-2. **Regulamin §7 ust. 3 i Polityka §5 — usunięcie danych po 6 miesiącach.**
-   Żaden mechanizm retencji nie istnieje; nic się samo nie kasuje i nikt nie liczy
-   tych sześciu miesięcy. Deklarujemy w polityce prywatności usuwanie, którego
-   nie wykonujemy — to zobowiązanie wobec osób, których dane dotyczą, nie tylko
-   wobec klienta. *Domknięcie:* zadanie cykliczne plus decyzja, co dokładnie kasujemy
-   (całą organizację czy same dane osobowe, zostawiając statystyki).
+1. **Anonimizacja po 6 miesiącach i powiadomienie 30 dni wcześniej.** Żaden mechanizm
+   retencji nie istnieje. Zmiana z „usuwamy" na „anonimizujemy" jest dla nas
+   korzystniejsza (statystyki zostają), ale **dokłada** obowiązek: wysyłkę
+   powiadomienia z wyprzedzeniem. Pierwszy termin zapadnie sześć miesięcy po
+   pierwszym wygasłym koncie.
+2. **Rejestrowanie dostępu wsparcia.** Regulamin §3 ust. 3 obiecuje ślad w dzienniku.
+   Funkcji „wejdź na konto klienta" nie ma wcale, więc dziś nikt nią nie wchodzi —
+   ale jeśli powstanie, dziennik musi powstać razem z nią, a nie po niej.
 
-3. **Regulamin §7 ust. 2 — wypowiedzenie „z poziomu panelu Konta".**
-   W panelu nie ma takiej funkcji. Najłagodniejsza z trzech, bo dokument dopuszcza
-   też drogę mailową i klient nie zostaje bez wyjścia. *Domknięcie:* przycisk
-   w ustawieniach albo skreślenie tych czterech słów z regulaminu.
+Oba są zapisane w [docs/todo.md](../todo.md).
 
-### Domknięte
-
-5. ~~**Regulamin §1 ust. 8 i §5 ust. 2 — okres rozliczeniowy i cennik nie obejmują
-   płatności rocznej.**~~ **Domknięte 2026-08-27** (Regulamin w wersji z tego dnia).
-   §1 ust. 8 mówi teraz o okresie **miesięcznym albo rocznym**, liczonym **od dnia
-   zakupu**, z przycięciem dnia do długości krótszego miesiąca i z doliczaniem zakupu
-   do końca trwającego okresu. Tabela w §5 ust. 2 ma drugą kolumnę z cenami rocznymi,
-   a nowe ust. 2a i 2b podają wysokość rabatu rocznego i mówią, że samoobsługowo
-   kupuje się **Starter i Pro**.
-
-   Poprawka poszła po stronie dokumentu, nie kodu — sposób liczenia okresu jest
-   uczciwszy dla klienta niż rozliczanie od pierwszego dnia miesiąca. Numeracja
-   ustępów 3–5 **została nienaruszona** (stąd 2a i 2b zamiast przenumerowania):
-   istniejące odwołania do §5 ust. 3 nie mogą zacząć wskazywać czego innego.
-
-4. ~~**Polityka §6 — PayU nie jest wymienione wśród odbiorców danych.**~~
-   **Domknięte 2026-08-27** (Polityka w wersji z tego dnia). §6 wymienia teraz PayU
-   wraz z zakresem przekazywanych danych: adres e-mail Klienta do rozliczeń, adres IP
-   osoby kupującej, kwota, waluta, opis i numer zamówienia.
-
-   Zapis rozstrzyga przy okazji rolę operatora: **PayU jest odrębnym administratorem**,
-   nie podmiotem przetwarzającym na nasze polecenie — przetwarza dane transakcji na
-   podstawie własnych obowiązków instytucji płatniczej. **Umowa powierzenia nie jest
-   więc właściwym instrumentem** i dlatego jej nie ma; to do potwierdzenia przez
-   prawnika ([pytania-do-prawnika.md](pytania-do-prawnika.md)).
-
-   Sprawdzone z kodem, nie z pamięci: adresu IP **nie zapisujemy w bazie** — idzie
-   wyłącznie w wywołaniu tworzącym płatność, bo wymaga go operator
-   ([payu.provider.ts](../../apps/api/src/billing/payu.provider.ts)). Pola `firstName`
-   i `lastName` w wywołaniu zostają puste, więc imienia ani nazwiska nie przekazujemy.
-
-   Poprawiony został też §9 ust. 3, który mówił o bramce płatności jako o funkcji
-   przyszłej — teraz mówi wprost, że dotyczy **płatności Gościa**, a płatności
-   abonamentowe już działają.
-
-6. ~~**Polityka §5 — NIP i adres działalności.**~~ NIP zbieramy od 2026-08-24
-   ze sprawdzeniem sumy kontrolnej, a **adres firmy od 2026-08-26** — jest polem
-   obowiązkowym przy zakupie abonamentu, bo faktura VAT bez adresu nabywcy nie
-   jest fakturą.
-
-> Do potwierdzenia przez Ciebie, bo tego nie sprawdzę z kodu: czy infrastruktura
-> naprawdę stoi we **Frankfurcie** (Polityka §6) — dokument opiera na tym twierdzenie
-> o braku transferu poza EOG, a to jedno z mocniejszych zdań w całej polityce.

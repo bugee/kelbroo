@@ -14,8 +14,8 @@ const API = process.env.NEXT_PUBLIC_API_URL || '/api';
  * z wersją, a spór rozstrzyga to, co wtedy było napisane. Zmiana treści dokumentu
  * bez zmiany tej stałej daje zgody wskazujące na nieistniejące brzmienie.
  */
-export const TERMS_VERSION = '2026-08-27';
-export const PRIVACY_VERSION = '2026-08-27';
+export const TERMS_VERSION = '2026-08-28';
+export const PRIVACY_VERSION = '2026-08-28';
 
 export interface RegistrationResult {
   restaurantName: string;

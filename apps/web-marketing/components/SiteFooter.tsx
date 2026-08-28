@@ -130,11 +130,15 @@ export function SiteFooter() {
               </li>
               {/*
                 Obowiązek informacyjny RODO wypełnia polityka prywatności — §1
-                opisuje role, §8 prawa i drogę zgłaszania żądań. Osobny dokument
+                opisuje role, §7 prawa i drogę zgłaszania żądań. Osobny dokument
                 powtarzałby to samo i rozjechałby się przy pierwszej zmianie.
+
+                Numer paragrafu zmienił się z §8 na §7 przy przebudowie dokumentu
+                (2026-08-28). Kotwice powstają z numerów w nagłówkach, więc
+                skrócenie polityki potrafi cicho rozwiązać ten odnośnik.
               */}
               <li>
-                <a href="/prywatnosc#par-8">RODO</a>
+                <a href="/prywatnosc#par-7">RODO</a>
               </li>
             </ul>
           </div>
