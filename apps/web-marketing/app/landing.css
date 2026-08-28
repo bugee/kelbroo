@@ -1342,15 +1342,19 @@ svg {
   width: 100%;
   height: 100%;
 }
+/* Kolory na tej płytce są **wpisane wprost, nie z tokenów** — i to jest celowe.
+   Płytka jest zawsze biała (czytnik QR potrzebuje jasnego tła), a `--ink`
+   i `--muted` przełączają się z motywem. W ciemnym motywie dawało to jasny
+   tekst na białym tle, czyli napis, którego nie widać. */
 .demo-qr-label {
-  color: var(--ink);
+  color: #000000;
   font-size: var(--fs-sm);
   font-weight: 600;
   text-align: left;
   line-height: 1.5;
 }
 .demo-qr-tap {
-  color: var(--muted);
+  color: #6b807e;
   font-weight: 400;
 }
 @media (max-width: 560px) {
