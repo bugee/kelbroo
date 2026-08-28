@@ -370,6 +370,15 @@ co człowiek** — automat, któremu powiemy „odrzucono", spróbuje inaczej.
       **Zostaje czynność poza kodem:** zawiadomienie klientów z 14-dniowym wyprzedzeniem
       (§11 regulaminu, §8 polityki). Jedno pismo obejmuje tę zmianę **i tę z 27 sierpnia**,
       jeśli tamto jeszcze nie poszło.
+- [~] **⚠️ PRZYWRÓCIĆ zgodę przed analityką** — `POMIN_ZGODE` w
+      [Analytics.tsx](../apps/web-marketing/components/Analytics.tsx) jest od 2026-08-28
+      ustawione na `true`, żeby Google mogło zweryfikować znacznik przy zakładaniu
+      usługi GA4 (weryfikacja nie klika w banery). Przez ten czas **strona produktowa
+      zbiera statystyki bez zgody**, a baner jest ukryty — celowo, bo baner pytający
+      o zgodę i jej nieszanujący byłby gorszy od jego braku.
+
+      **Przywrócenie to jedna linia:** `POMIN_ZGODE = false`. Ma się to stać zaraz po
+      weryfikacji — ten stan liczony jest w godzinach, nie tygodniach.
 - [ ] **Polityka prywatności §3 wymaga jednego zdania o analityce** — od 2026-08-28
       strona produktowa ma **Google Analytics 4 za zgodą**, a §3 mówi wprost
       „Nie używamy narzędzi śledzących ani reklamowych". To zdanie przestało być
