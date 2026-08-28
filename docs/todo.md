@@ -370,6 +370,21 @@ co człowiek** — automat, któremu powiemy „odrzucono", spróbuje inaczej.
       **Zostaje czynność poza kodem:** zawiadomienie klientów z 14-dniowym wyprzedzeniem
       (§11 regulaminu, §8 polityki). Jedno pismo obejmuje tę zmianę **i tę z 27 sierpnia**,
       jeśli tamto jeszcze nie poszło.
+- [ ] **Polityka prywatności §3 wymaga jednego zdania o analityce** — od 2026-08-28
+      strona produktowa ma **Google Analytics 4 za zgodą**, a §3 mówi wprost
+      „Nie używamy narzędzi śledzących ani reklamowych". To zdanie przestało być
+      prawdziwe **dla strony produktowej** i musi zostać poprawione, **zanim analityka
+      trafi na produkcję**.
+
+      Dla aplikacji gościa zdanie zostaje prawdziwe i takie ma zostać — analityki tam
+      nie ma i nie będzie. Proponowane brzmienie do potwierdzenia u prawnika:
+      *„W aplikacji Gościa nie używamy narzędzi śledzących ani reklamowych. Na stronie
+      produktowej kelbroo.com korzystamy z Google Analytics wyłącznie po uzyskaniu
+      zgody odwiedzającego; bez zgody nie uruchamiamy żadnego skryptu analitycznego,
+      a zgodę można w każdej chwili wycofać."*
+
+      Zmiana treści to nowa wersja dokumentu i **kolejne 14-dniowe zawiadomienie** —
+      warto zgrać ją z niewysłanym jeszcze zawiadomieniem o wersjach z 27 i 28 sierpnia.
 - [ ] **Anonimizacja konta po 6 miesiącach + powiadomienie 30 dni wcześniej** —
       **nowe zobowiązanie z dokumentów 2026-08-28** i najpoważniejsza rzecz, jaką te
       dokumenty zostawiły do zrobienia. Żaden mechanizm retencji nie istnieje.

@@ -6,6 +6,8 @@
  * i nie rozprasza treści; ceną jest słabsze pozycjonowanie pod pojedyncze
  * hasła w wyszukiwarce.
  */
+import { PrivacySettings } from './PrivacySettings';
+
 export function SiteFooter() {
   return (
     <footer className="foot">
@@ -139,6 +141,10 @@ export function SiteFooter() {
               */}
               <li>
                 <a href="/prywatnosc#par-7">RODO</a>
+              </li>
+              {/* Zgodę trzeba dać się wycofać tak łatwo, jak się ją dało. */}
+              <li>
+                <PrivacySettings />
               </li>
             </ul>
           </div>

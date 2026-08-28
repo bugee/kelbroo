@@ -1190,6 +1190,22 @@ svg {
 .foot li a:hover {
   color: var(--teal);
 }
+/* Zmiana zgody jest przyciskiem, nie odnośnikiem — nie prowadzi pod żaden adres,
+   tylko otwiera baner z powrotem. Wygląda jak sąsiedzi z tej listy, bo dla
+   czytającego jest tym samym: pozycją w stopce. */
+.foot-link-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.foot-link-button:hover {
+  color: var(--teal);
+}
 .foot-base {
   margin-top: 44px;
   padding-top: 24px;
@@ -1365,5 +1381,61 @@ svg {
   }
   .demo-qr-label {
     text-align: center;
+  }
+}
+
+/* --- baner zgody na analitykę ----------------------------------------------
+   Stoi na dole, nie na środku: nie zasłania treści, po którą ktoś przyszedł,
+   i nie wymusza decyzji przed przeczytaniem czegokolwiek. Oba przyciski są
+   równorzędne — odmowa nie jest schowana ani trudniejsza od zgody. */
+.zgoda {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 60;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 18px 28px;
+  padding: 18px 22px;
+  background: var(--surface);
+  border-top: 1px solid var(--line-strong);
+  box-shadow: var(--shadow-md);
+}
+.zgoda-tresc {
+  max-width: 62ch;
+}
+.zgoda-tresc p {
+  margin: 0;
+  font-size: var(--fs-sm);
+  line-height: 1.55;
+  color: var(--ink);
+}
+.zgoda-drobne {
+  margin-top: 6px !important;
+  color: var(--muted) !important;
+  font-size: 13px !important;
+}
+.zgoda-drobne a {
+  color: var(--teal);
+}
+.zgoda-akcje {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.zgoda-akcje .btn {
+  min-height: 44px;
+}
+@media (max-width: 560px) {
+  .zgoda {
+    justify-content: stretch;
+  }
+  .zgoda-akcje {
+    width: 100%;
+  }
+  .zgoda-akcje .btn {
+    flex: 1;
   }
 }
