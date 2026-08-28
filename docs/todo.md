@@ -375,21 +375,19 @@ co człowiek** — automat, któremu powiemy „odrzucono", spróbuje inaczej.
       nie wyłączone. Sprawdzone ponownie w przeglądarce: zero żądań do Google przed
       zgodą i po odmowie, decyzja przeżywa odświeżenie, ruch rusza po zgodzie, a przycisk
       w stopce otwiera baner z powrotem.
-- [ ] **Polityka prywatności §3 wymaga jednego zdania o analityce** — od 2026-08-28
-      strona produktowa ma **Google Analytics 4 za zgodą**, a §3 mówi wprost
-      „Nie używamy narzędzi śledzących ani reklamowych". To zdanie przestało być
-      prawdziwe **dla strony produktowej** i musi zostać poprawione, **zanim analityka
-      trafi na produkcję**.
+- [x] **Polityka prywatności §3 rozdzielona** (2026-08-29) — zdanie „nie używamy
+      narzędzi śledzących ani reklamowych" mówiło o całej platformie, a od czasu
+      analityki na stronie produktowej przestało być prawdziwe.
 
-      Dla aplikacji gościa zdanie zostaje prawdziwe i takie ma zostać — analityki tam
-      nie ma i nie będzie. Proponowane brzmienie do potwierdzenia u prawnika:
-      *„W aplikacji Gościa nie używamy narzędzi śledzących ani reklamowych. Na stronie
-      produktowej kelbroo.com korzystamy z Google Analytics wyłącznie po uzyskaniu
-      zgody odwiedzającego; bez zgody nie uruchamiamy żadnego skryptu analitycznego,
-      a zgodę można w każdej chwili wycofać."*
+      §3 mówi teraz osobno o dwóch miejscach: **w aplikacji Gościa** narzędzi śledzących
+      nie ma i nie będzie, **na stronie produktowej** Google Analytics rusza wyłącznie
+      po zgodzie, którą da się wycofać ze stopki. Dopisane wprost, że bez zgody nie
+      ładujemy żadnego skryptu i nie wysyłamy niczego do Google — bo to właśnie
+      odróżnia nasze rozwiązanie od typowego banera, który jedynie blokuje ciasteczka.
 
-      Zmiana treści to nowa wersja dokumentu i **kolejne 14-dniowe zawiadomienie** —
-      warto zgrać ją z niewysłanym jeszcze zawiadomieniem o wersjach z 27 i 28 sierpnia.
+      Polityka ma wersję 2026-08-29; regulamin zostaje przy 2026-08-28.
+      **Zawiadomienie klientów obejmuje teraz trzy wersje naraz** (27, 28 i 29 sierpnia)
+      — jedno pismo, jeśli jeszcze nie poszło.
 - [ ] **Anonimizacja konta po 6 miesiącach + powiadomienie 30 dni wcześniej** —
       **nowe zobowiązanie z dokumentów 2026-08-28** i najpoważniejsza rzecz, jaką te
       dokumenty zostawiły do zrobienia. Żaden mechanizm retencji nie istnieje.

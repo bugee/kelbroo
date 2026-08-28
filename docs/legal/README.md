@@ -200,3 +200,15 @@ przestały być rozbieżnością tekstu, a stały się **zadaniem do wykonania**
 
 Oba są zapisane w [docs/todo.md](../todo.md).
 
+### Zmiana po zamknięciu rejestru
+
+**Polityka §3, wersja 2026-08-29.** Zdanie „nie używamy narzędzi śledzących ani
+reklamowych" dotyczyło całej platformy i przestało być prawdziwe, gdy strona
+produktowa dostała Google Analytics. Paragraf mówi teraz osobno o aplikacji Gościa
+(bez narzędzi śledzących, i tak ma zostać) i o `kelbroo.com` (analityka wyłącznie
+po zgodzie, do wycofania ze stopki).
+
+Warto zapamiętać wzorzec, bo powtórzył się w tej sekcji trzy razy: **funkcja
+dopisana do produktu potrafi unieważnić zdanie w dokumencie prawnym**, a zauważa się
+to dopiero wtedy, gdy ktoś czyta oba naraz. Regulamin zostaje przy wersji 2026-08-28.
+

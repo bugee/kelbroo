@@ -1,6 +1,6 @@
 # Polityka prywatności platformy kelbroo
 
-_Wersja 2026-08-28_
+_Wersja 2026-08-29_
 
 ## §1. Rola na gruncie RODO
 
@@ -13,9 +13,11 @@ Proces zamawiania nie wymaga zakładania konta. Przetwarzamy pseudonim (np. „C
 
 **Wyjątek (płatności online Gości):** Jeśli Gość korzysta z płatności online, może zostać poproszony na naszym ekranie o podanie adresu e-mail. Adres ten jest przekazywany w czasie rzeczywistym **wyłącznie w celu inicjacji płatności** u zewnętrznego operatora (np. PayU) i **nie jest trwale zapisywany ani przechowywany** w bazach Kelbroo.
 
-## §3. Identyfikator sesji (pamięć przeglądarki)
+## §3. Identyfikator sesji i statystyki
 
-W przeglądarce Gościa zapisywany jest jeden, ściśle techniczny token sesji. Jest on absolutnie niezbędny do działania Usługi na żądanie użytkownika (powiązanie z rachunkiem po odświeżeniu), dlatego nie wymaga banera zgody. Nie używamy narzędzi śledzących ani reklamowych.
+**W aplikacji Gościa** zapisywany jest jeden, ściśle techniczny token sesji. Jest on absolutnie niezbędny do działania Usługi na żądanie użytkownika (powiązanie z rachunkiem po odświeżeniu), dlatego nie wymaga banera zgody. **W aplikacji Gościa nie używamy narzędzi śledzących ani reklamowych** i nie planujemy tego zmieniać.
+
+**Na stronie produktowej `kelbroo.com`** korzystamy z narzędzia statystycznego Google Analytics, aby wiedzieć, które treści są czytane. Uruchamiamy je **wyłącznie po uzyskaniu zgody odwiedzającego**: bez zgody nie ładujemy żadnego skryptu analitycznego i nie wysyłamy żadnych danych do Google. Zgodę można w każdej chwili wycofać odnośnikiem w stopce strony. Odmowa nie ogranicza dostępu do żadnej części serwisu.
 
 ## §4. Dane Pracowników
 
