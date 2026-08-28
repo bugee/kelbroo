@@ -6,24 +6,6 @@ import Script from 'next/script';
 const GA_ID = 'G-95ZTN8BFXJ';
 const KLUCZ = 'kelbroo.zgoda.analityka';
 
-/**
- * ⚠️ TYMCZASOWE — do usunięcia po weryfikacji usługi w Google.
- *
- * Google przy zakładaniu usługi GA4 sprawdza, czy znacznik jest obecny na
- * stronie, i nie klika przy tym w żaden baner. Dopóki ta stała jest `true`,
- * analityka rusza **bez zgody**, a baner się nie pokazuje.
- *
- * **Baner znika razem z bramką i to jest celowe.** Baner, który pyta o zgodę,
- * a potem jej nie respektuje, jest gorszy od jego braku: mówi odwiedzającemu
- * nieprawdę i sam w sobie jest naruszeniem, przed którym miał chronić.
- *
- * **Ten stan ma trwać godziny, nie tygodnie.** Przez ten czas strona produktowa
- * zbiera statystyki bez zgody, a polityka prywatności §3 mówi, że nie używamy
- * narzędzi śledzących. Przywrócenie: `false` i tyle. Zadanie zapisane
- * w docs/todo.md, żeby nie zostało tu na stałe.
- */
-const POMIN_ZGODE = true;
-
 /** Zdarzenie, którym stopka otwiera baner ponownie. */
 export const ZDARZENIE_USTAWIENIA = 'kelbroo:ustawienia-prywatnosci';
 
@@ -87,10 +69,8 @@ export function Analytics() {
   if (!wczytane) return null;
 
   // Poza produkcją nie ładujemy nigdy — `next dev` i testy e2e nie mają czego
-  // dopisywać do statystyk. Weryfikacji Google to nie przeszkadza, bo ona
-  // odbywa się na żywej stronie.
-  const analitykaWlaczona =
-    process.env.NODE_ENV === 'production' && (POMIN_ZGODE || zgoda === 'tak');
+  // dopisywać do statystyk.
+  const analitykaWlaczona = process.env.NODE_ENV === 'production' && zgoda === 'tak';
 
   return (
     <>
@@ -109,7 +89,7 @@ gtag('config', '${GA_ID}');`}
         </>
       )}
 
-      {!POMIN_ZGODE && zgoda === null && (
+      {zgoda === null && (
         <div className="zgoda" role="dialog" aria-label="Zgoda na analitykę">
           <div className="zgoda-tresc">
             <p>
