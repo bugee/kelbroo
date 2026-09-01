@@ -522,6 +522,18 @@ model StaffMember {
   emailTokenHash      String?   @map("email_token_hash")
   emailTokenExpiresAt DateTime? @map("email_token_expires_at")
   mustChangePassword  Boolean   @default(true) @map("must_change_password")
+
+  /// Czy panel ma sygnalizować dźwiękiem nową pracę do podjęcia.
+  ///
+  /// Preferencja siedzi **na koncie, nie na urządzeniu**: kucharz staje przy tym
+  /// tablecie, przy którym akurat jest wolne miejsce, a kelner przechodzi między
+  /// nimi w trakcie zmiany. Ustawienie zapamiętane w przeglądarce trzeba by
+  /// odtwarzać na każdym z osobna.
+  ///
+  /// Domyślnie włączone: cichy ekran kuchni to zamówienie, którego nikt nie
+  /// zauważył. Wyciszenie jest jednym stuknięciem.
+  soundEnabled        Boolean   @default(true) @map("sound_enabled")
+
   lastLoginAt         DateTime? @map("last_login_at")
   createdAt           DateTime  @default(now()) @map("created_at")
   updatedAt           DateTime  @updatedAt @map("updated_at")

@@ -119,7 +119,25 @@ export class AuthService {
    * ruszyć samego siebie — bez tego zmiana własnego adresu wymagałaby wejścia
    * do bazy, czyli dokładnie tego, co ekran zespołu miał wyeliminować.
    */
-  async updateProfile(staffId: string, changes: { name?: string; email?: string }) {
+  /**
+   * Preferencje konta czytane przy wejściu do panelu.
+   *
+   * Osobno od tokenu: token żyje kwadransami, a przełącznik dźwięku ma działać
+   * od razu — także wtedy, gdy ktoś zmienił go na drugim urządzeniu.
+   */
+  async preferences(staffId: string): Promise<{ soundEnabled: boolean }> {
+    const staff = await this.directory.staffMember.findUnique({
+      where: { id: staffId },
+      select: { soundEnabled: true },
+    });
+    // Konto skasowane w trakcie sesji: nie wywracamy panelu z powodu dzwonka.
+    return { soundEnabled: staff?.soundEnabled ?? true };
+  }
+
+  async updateProfile(
+    staffId: string,
+    changes: { name?: string; email?: string; soundEnabled?: boolean },
+  ) {
     const staff = await this.directory.staffMember.findUnique({ where: { id: staffId } });
     if (!staff || !staff.isActive) {
       throw new UnauthorizedException('Konto jest nieaktywne.');
@@ -135,9 +153,10 @@ export class AuthService {
         data: {
           ...(email ? { email } : {}),
           ...(changes.name ? { name: changes.name.trim() } : {}),
+          ...(changes.soundEnabled === undefined ? {} : { soundEnabled: changes.soundEnabled }),
         },
       });
-      return { email: updated.email, name: updated.name };
+      return { email: updated.email, name: updated.name, soundEnabled: updated.soundEnabled };
     } catch (cause) {
       if (cause instanceof Prisma.PrismaClientKnownRequestError && cause.code === 'P2002') {
         throw new ConflictException('Konto z tym adresem e-mail już istnieje w tym lokalu.');

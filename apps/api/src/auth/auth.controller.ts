@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import {
   Equals,
+  IsBoolean,
   IsEmail,
   IsOptional,
   IsString,
@@ -100,6 +101,11 @@ class ProfileDto {
   @Length(1, 120)
   @IsOptional()
   name?: string;
+
+  /** Sygnał dźwiękowy przy nowej pracy. Preferencja konta, nie urządzenia. */
+  @IsBoolean()
+  @IsOptional()
+  soundEnabled?: boolean;
 }
 
 class ChangePasswordDto {
@@ -166,10 +172,17 @@ export class AuthController {
     return this.auth.refresh(dto.refreshToken);
   }
 
+  /**
+   * Kim jest zalogowany i co ma ustawione.
+   *
+   * Rola i przypisanie do lokalu pochodzą z tokenu; preferencje **z bazy**, bo
+   * zmienione w trakcie zmiany mają obowiązywać od razu, a nie po ponownym
+   * zalogowaniu. To jedno odczytanie po kluczu głównym, raz na wejście do panelu.
+   */
   @Get('me')
   @UseGuards(StaffAuthGuard)
-  me(@Staff() staff: StaffContext): StaffContext {
-    return staff;
+  async me(@Staff() staff: StaffContext) {
+    return { ...staff, ...(await this.auth.preferences(staff.staffId)) };
   }
 
   @Patch('profile')

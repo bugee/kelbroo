@@ -27,6 +27,8 @@ export interface Staff {
   restaurantId: string | null;
   role: StaffRole;
   name: string;
+  /** Sygnał dźwiękowy przy nowej pracy. Preferencja konta, nie urządzenia. */
+  soundEnabled: boolean;
 }
 
 export interface StaffOrder {
@@ -582,6 +584,18 @@ export const resetStaffPassword = (id: string, password: string) =>
   });
 
 export const me = () => authorized<Staff>('/auth/me');
+
+/**
+ * Zapisuje preferencję dźwięku na koncie.
+ *
+ * Na koncie, nie w przeglądarce: kucharz staje przy tym tablecie, przy którym
+ * jest wolne miejsce, a kelner przechodzi między nimi w trakcie zmiany.
+ */
+export const setSoundEnabled = (soundEnabled: boolean) =>
+  authorized<{ soundEnabled: boolean }>('/auth/profile', {
+    method: 'PATCH',
+    body: JSON.stringify({ soundEnabled }),
+  });
 
 /** Aktualne hasło jest wymagane mimo ważnej sesji — patrz komentarz w auth.service.ts. */
 export const changePassword = async (

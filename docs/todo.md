@@ -406,6 +406,30 @@ co człowiek** — automat, któremu powiemy „odrzucono", spróbuje inaczej.
       `{ month: 15_900, year: 159_000 }` i ceny wyświetlane w
       [Pricing.tsx](../apps/web-marketing/components/Pricing.tsx) na `159` / `132`
       oraz podpis „1 590 zł rocznie". Oba miejsca mają komentarz z docelowymi wartościami.
+- [x] **Sygnał dźwiękowy przy nowej pracy** (2026-09-01) — zamówienie do potwierdzenia,
+      wezwanie kelnera i nowy bon w kuchni. **Zamyka obietnicę ze strony produktowej**
+      („alarm dźwiękowy" na kaflu ekranu kuchni), której rejestr §5f nie miał — druga
+      taka po zestawieniu na e-mail, i znowu z prozy, nie z listy funkcji.
+
+      **Liczony w powłoce, nie na ekranach.** Źródłem sygnału jest przyrost licznika
+      przy pozycji menu, a te i tak żyją w powłoce — dzięki temu kelner na Sali słyszy
+      zamówienie czekające w Powiadomieniach, bez osobnego nasłuchiwania na każdym
+      ekranie. Gramy **wyłącznie przy wzroście**: spadek znaczy, że ktoś odebrał pracę,
+      a pierwszy odczyt po wejściu milczy — inaczej otwarcie ekranu z pięcioma
+      zamówieniami zaczynałoby się od dzwonka.
+
+      **Preferencja na koncie, nie na urządzeniu** — kucharz staje przy tym tablecie,
+      przy którym jest wolne miejsce. Odwrotnie niż paleta jasna/ciemna, która zostaje
+      na urządzeniu.
+
+      **Dźwięk jest generowany, nie odtwarzany z pliku.** Plik trzeba pobrać, a pierwsze
+      zamówienie zmiany bywa pierwszym żądaniem po włączeniu tabletu — w lokalu
+      z zawodnym wi-fi cisza wypadłaby dokładnie wtedy, gdy dźwięk jest najbardziej
+      potrzebny.
+
+      Przeglądarka nie zagra przed pierwszym dotknięciem ekranu i nie da się tego obejść.
+      Zamiast milczeć, dzwonek pokazuje wtedy **pomarańczową kropkę** i mówi „stuknij,
+      aby włączyć" — wymóg zapisany w [docs/02 §4](02-admin-panel.md).
 - [ ] **Anonimizacja konta po 6 miesiącach + powiadomienie 30 dni wcześniej** —
       **nowe zobowiązanie z dokumentów 2026-08-28** i najpoważniejsza rzecz, jaką te
       dokumenty zostawiły do zrobienia. Żaden mechanizm retencji nie istnieje.
@@ -479,11 +503,16 @@ co człowiek** — automat, któremu powiemy „odrzucono", spróbuje inaczej.
 ### 5f. Obietnice ze strony bez pokrycia w kodzie
 
 Rejestr sporządzony 2026-08-26 przez porównanie cennika, siatki funkcji i FAQ ze
-stanem kodu. **Dziewięć pozycji, z czego osiem zamkniętych:** trzy
+stanem kodu. **Dziesięć pozycji, z czego dziewięć zamkniętych:** trzy
 skreśleniem obietnicy (praca offline, instalacja, płatność gościa w aplikacji —
 ta ostatnia wraca razem z kodem), pięć dopisaniem brakującego kodu (limit kont
 personelu, oceny dań, limit pozycji w karcie, zestawienie rachunku na e-mail,
-podział po pozycjach).
+podział po pozycjach, sygnał dźwiękowy w kuchni).
+
+**Dziesiąta doszła 2026-09-01 i powtarza lekcję z dziewiątej.** „Alarm dźwiękowy"
+stoi na kaflu ekranu kuchni od pierwszej wersji strony, a audyt go nie policzył —
+bo szedł po nagłówkach kafli, nie po zdaniach w środku. Drugi raz z rzędu brakująca
+obietnica siedziała w prozie.
 
 **Dziewiąta pozycja doszła 2026-08-27 i warto wiedzieć dlaczego jej nie było.**
 Pierwszy audyt szedł po kaflach funkcji i po tabeli cennika — a obietnica

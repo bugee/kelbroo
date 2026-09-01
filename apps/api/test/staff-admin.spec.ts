@@ -347,3 +347,38 @@ describe('limit kont z planu', () => {
     await direct.staffMember.delete({ where: { id: utworzony.id } });
   });
 });
+
+/**
+ * Preferencja dźwięku.
+ *
+ * Siedzi **na koncie, nie na urządzeniu** i to jest cała jej wartość: kucharz
+ * staje przy tym tablecie, przy którym jest wolne miejsce, a kelner przechodzi
+ * między nimi w trakcie zmiany. Zapamiętana w przeglądarce musiałaby być
+ * odtwarzana na każdym z osobna.
+ */
+describe('sygnał dźwiękowy', () => {
+  it('nowe konto ma dźwięk włączony', async () => {
+    const konto = await direct.staffMember.findUniqueOrThrow({ where: { id: owner.staffId } });
+
+    // Cichy ekran kuchni to zamówienie, którego nikt nie zauważył — domyślnie gra.
+    expect(konto.soundEnabled).toBe(true);
+  });
+
+  it('wyciszenie zapisuje się na koncie i wraca przy następnym wejściu', async () => {
+    await auth.updateProfile(owner.staffId, { soundEnabled: false });
+
+    expect(await auth.preferences(owner.staffId)).toEqual({ soundEnabled: false });
+
+    await auth.updateProfile(owner.staffId, { soundEnabled: true });
+    expect(await auth.preferences(owner.staffId)).toEqual({ soundEnabled: true });
+  });
+
+  it('zmiana nazwy nie rusza ustawienia dźwięku', async () => {
+    await auth.updateProfile(owner.staffId, { soundEnabled: false });
+    await auth.updateProfile(owner.staffId, { name: 'Kierownik zmiany' });
+
+    // Pola opcjonalne, których nie podano, muszą zostać nietknięte — inaczej
+    // zmiana nazwiska włączałaby dźwięk komuś, kto go świadomie wyciszył.
+    expect(await auth.preferences(owner.staffId)).toEqual({ soundEnabled: false });
+  });
+});

@@ -5,6 +5,8 @@ import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { ThemeToggle } from '@kelbroo/ui/theme';
 import { useLiveData } from '@/components/useLiveData';
+import { SoundToggle } from '@/components/SoundToggle';
+import { zagrajSygnal } from '@/lib/sound';
 import {
   clearSession,
   fetchBadges,
@@ -89,7 +91,7 @@ export function StaffShell({ children }: { children: (staff: Staff) => React.Rea
   // w powłoce, bo pasek o wygaśnięciu ma być widoczny z każdego ekranu.
   const settings = SETTINGS_NAV.filter((item) => item.roles.includes(staff.role));
   return (
-    <Shell staff={staff} visible={visible} settings={settings}>
+    <Shell staff={staff} onStaffChange={setStaff} visible={visible} settings={settings}>
       {children}
     </Shell>
   );
@@ -97,11 +99,14 @@ export function StaffShell({ children }: { children: (staff: Staff) => React.Rea
 
 function Shell({
   staff,
+  onStaffChange,
   visible,
   settings,
   children,
 }: {
   staff: Staff;
+  /** Przełącznik dźwięku zmienia konto, więc powłoka musi o tym wiedzieć. */
+  onStaffChange: (staff: Staff) => void;
   visible: NavItem[];
   settings: NavItem[];
   children: (staff: Staff) => React.ReactNode;
@@ -113,6 +118,34 @@ function Shell({
   // gdy stoi na zupełnie innym ekranie.
   const loadBadges = useCallback(() => fetchBadges(), []);
   const { data: badges } = useLiveData(loadBadges);
+
+  /**
+   * Sygnał dźwiękowy przy nowej pracy — **liczony w powłoce, nie na ekranach**.
+   *
+   * Dzięki temu kelner stojący na Sali usłyszy zamówienie czekające w
+   * Powiadomieniach, a kuchnia usłyszy je niezależnie od tego, co ma otwarte.
+   * Liczniki i tak żyją tutaj, więc źródłem sygnału jest przyrost licznika,
+   * a nie osobne nasłuchiwanie na każdym ekranie z osobna.
+   *
+   * Gramy **wyłącznie przy wzroście**: spadek znaczy, że ktoś właśnie odebrał
+   * pracę, a to nie jest wezwanie. Pierwszy odczyt po wejściu do panelu też
+   * milczy — inaczej każde otwarcie ekranu z pięcioma zamówieniami w kolejce
+   * zaczynałoby się od dzwonka.
+   */
+  const poprzednieLiczniki = useRef<Record<string, number> | null>(null);
+
+  useEffect(() => {
+    if (!badges) return;
+    const poprzednie = poprzednieLiczniki.current;
+    poprzednieLiczniki.current = badges;
+
+    if (!poprzednie || !staff?.soundEnabled) return;
+
+    const przybylo = ['/queue', '/kds'].some(
+      (klucz) => (badges[klucz] ?? 0) > (poprzednie[klucz] ?? 0),
+    );
+    if (przybylo) zagrajSygnal();
+  }, [badges, staff?.soundEnabled]);
 
   // Stan abonamentu też mieszka w powłoce: ostrzeżenie ma być widoczne z każdego
   // ekranu, a nie dopiero wtedy, gdy kelner stuknie w „Złóż zamówienie".
@@ -158,6 +191,13 @@ function Shell({
           {widoczneUstawienia.length > 0 && (
             <SettingsMenu items={widoczneUstawienia} pathname={pathname} />
           )}
+
+          {/* W przeciwieństwie do palety dźwięk **zostaje na koncie**: kucharz
+              staje przy dowolnym tablecie, a wyciszenie ma iść za nim. */}
+          <SoundToggle
+            enabled={staff.soundEnabled}
+            onChange={(soundEnabled) => onStaffChange({ ...staff, soundEnabled })}
+          />
 
           {/* Kuchnia często pracuje przy słabym świetle — wybór palety
               zostaje na urządzeniu, nie na koncie pracownika. */}

@@ -81,6 +81,25 @@ Czego przesiadka **nie** zrobi: nie połączy dwóch rachunków. Jeśli przy doc
 stoliku trwa inna wizyta, kelbroo odmówi — dwa rachunki przy jednym stole to
 osobna decyzja, a nie skutek uboczny przesiadki.
 
+## Sygnał dźwiękowy
+
+Panel daje krótki sygnał, gdy pojawi się **nowa praca do podjęcia** — zamówienie
+do potwierdzenia, wezwanie kelnera albo nowy bon w kuchni. Sygnał gra niezależnie
+od tego, który ekran masz otwarty, więc kelner stojący na Sali usłyszy zamówienie
+czekające w Powiadomieniach.
+
+**Dzwonek w prawym górnym rogu** włącza go i wyłącza. Ustawienie zapamiętuje się
+**na Twoim koncie**, nie w przeglądarce — logując się na innym tablecie, masz je
+takie samo.
+
+**Pomarańczowa kropka przy dzwonku** znaczy: dźwięk jest włączony, ale przeglądarka
+czeka na pierwsze dotknięcie ekranu. Tak działają wszystkie przeglądarki i nie da
+się tego obejść — wystarczy stuknąć w cokolwiek na starcie zmiany, a kropka zniknie.
+**Zrób to, zanim zaczniesz przyjmować zamówienia**, bo do tego czasu panel milczy.
+
+Sygnał odzywa się tylko wtedy, gdy pracy **przybywa**. Odebranie zamówienia go nie
+uruchamia, a wejście na ekran z pięcioma zamówieniami w kolejce nie wita Cię dzwonkiem.
+
 ## Podział rachunku
 
 Na ekranie wizyty (**Podziel rachunek** przy stoliku) wybierasz sposób:

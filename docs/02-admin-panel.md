@@ -120,7 +120,7 @@ Ekran zaprojektowany pod tablet w orientacji poziomej, obsługę w rękawiczkach
 - Do KDS trafiają **wyłącznie zamówienia potwierdzone** — kuchnia nigdy nie widzi zamówień oczekujących na płatność ani na potwierdzenie kelnera. Bramkę opisuje [architecture.md §6.1](architecture.md#61-maszyna-stanów-zamówienia).
 - Karta zamówienia zawiera: numer zamówienia, numer stolika, czas od złożenia (licznik rosnący), listę pozycji z modyfikatorami i uwagami gościa.
 - **Kolorowanie po czasie:** zielony < 10 min, żółty 10–20 min, czerwony > 20 min (progi konfigurowalne) — natychmiastowa informacja, co się opóźnia.
-- **Sygnał dźwiękowy + wibracja** przy nowym zamówieniu (z regulacją głośności i możliwością wyciszenia).
+- **Sygnał dźwiękowy** przy nowej pracy do podjęcia *(2026-09-01)* — zamówienie do potwierdzenia, wezwanie kelnera, nowy bon w kuchni. Wyciszany dzwonkiem w nagłówku, preferencja zapisana **na koncie pracownika**, nie na urządzeniu. **Wibracji i regulacji głośności nie ma:** wibracja wymaga uprawnień, których przeglądarka nie daje bez instalacji, a głośnością steruje się na tablecie. Sygnał odzywa się wyłącznie przy **przyroście** pracy.
 - Akcje: `Przyjmij`, `Rozpocznij przygotowanie`, `Oznacz jako gotowe`, `Oznacz pozycję jako gotową` (dania mogą być gotowe pojedynczo), `Zgłoś problem` (brak składnika → automatyczne oznaczenie dania jako niedostępne + powiadomienie kelnera).
 - Duże pola dotykowe (min. 48×48px), wysoki kontrast, tryb ciemny do pracy przy słabym oświetleniu.
 - Ekran nie wygasza się podczas pracy (Wake Lock API).
