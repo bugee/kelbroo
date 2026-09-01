@@ -84,8 +84,19 @@ export const PLANS: Record<PlanId, Plan> = {
     name: 'Starter',
     limits: { tableLimit: 12, languageLimit: 2, staffLimit: 3, menuItemLimit: 50 },
     features: { menuPhotos: false, reviews: false },
-    // 159 zł/mies albo 1 590 zł/rok (132 zł/mies w przeliczeniu).
-    netCents: { month: 15_900, year: 159_000 },
+    /**
+     * ⚠️ CENA TESTOWA — do przywrócenia. Docelowo: 15_900 / 159_000
+     * (159 zł/mies albo 1 590 zł/rok, czyli 132 zł/mies w przeliczeniu).
+     *
+     * Obniżone 2026-09-01, żeby dało się przejść **prawdziwą** płatność przez
+     * PayU za drobne. Rok obniżony razem z miesiącem: pozostawiony przy 1 590 zł
+     * byłby na stronie pułapką obok ceny 2 zł, i to jedyną, którą ktoś naprawdę
+     * mógłby kliknąć.
+     *
+     * **Póki to trwa, plan Starter da się kupić za 2 zł** — także komuś z ulicy,
+     * kto trafi na cennik. Zadanie przywracające jest w docs/todo.md.
+     */
+    netCents: { month: 200, year: 2_000 },
   },
   pro: {
     id: 'pro',

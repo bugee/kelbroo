@@ -388,6 +388,24 @@ co człowiek** — automat, któremu powiemy „odrzucono", spróbuje inaczej.
       Polityka ma wersję 2026-08-29; regulamin zostaje przy 2026-08-28.
       **Zawiadomienie klientów obejmuje teraz trzy wersje naraz** (27, 28 i 29 sierpnia)
       — jedno pismo, jeśli jeszcze nie poszło.
+- [~] **⚠️ PRZYWRÓCIĆ cenę planu Starter** — obniżona 2026-09-01 ze **159 zł na 2 zł
+      netto miesięcznie** (i z 1 590 zł na 20 zł rocznie), żeby dało się przejść
+      **prawdziwą** płatność przez PayU za drobne. Zmiana obowiązuje **także na
+      produkcji**, bo o to chodziło w teście.
+
+      Dwie rzeczy do świadomości, dopóki to trwa:
+      - **Każdy, kto trafi na cennik, może kupić Startera za 2,46 zł brutto.** Nie ma
+        przełącznika „ceny testowe" — jest jedna cena i jest publiczna.
+      - **Tabela cen w regulaminie (§5) podaje 159 zł** i przez ten czas nie zgadza się
+        ze stanem faktycznym. Świadomie jej **nie zmieniałem**: zmiana ceny w regulaminie
+        to nowa wersja dokumentu i kolejne 14-dniowe zawiadomienie klientów — za dużo
+        jak na cenę, która ma żyć chwilę. Gdyby test miał potrwać dłużej niż kilka dni,
+        trzeba to odwrócić: albo zmienić regulamin, albo cofnąć cenę.
+
+      Przywrócenie: `netCents` w [plans.ts](../packages/types/src/plans.ts) na
+      `{ month: 15_900, year: 159_000 }` i ceny wyświetlane w
+      [Pricing.tsx](../apps/web-marketing/components/Pricing.tsx) na `159` / `132`
+      oraz podpis „1 590 zł rocznie". Oba miejsca mają komentarz z docelowymi wartościami.
 - [ ] **Anonimizacja konta po 6 miesiącach + powiadomienie 30 dni wcześniej** —
       **nowe zobowiązanie z dokumentów 2026-08-28** i najpoważniejsza rzecz, jaką te
       dokumenty zostawiły do zrobienia. Żaden mechanizm retencji nie istnieje.

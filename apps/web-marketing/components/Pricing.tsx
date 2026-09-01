@@ -36,8 +36,9 @@ const PLANY: Plan[] = [
   {
     nazwa: 'Starter',
     dlaKogo: 'Kawiarnia, mały lokal, food truck',
-    cena: { m: '159', y: '132' },
-    podpis: { m: 'rozliczenie miesięczne', y: '1 590 zł rocznie' },
+    // ⚠️ CENY TESTOWE (2026-09-01) — docelowo m: '159', y: '132', podpis „1 590 zł rocznie".
+    cena: { m: '2', y: '2' },
+    podpis: { m: 'rozliczenie miesięczne', y: '20 zł rocznie' },
     cechy: [
       'Do 12 stolików, 2 języki, 50 pozycji',
       // Płatność gościa w aplikacji należy do etapu 2 i nie istnieje — cennik
