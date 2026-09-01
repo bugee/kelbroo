@@ -7,6 +7,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Put,
+  Query,
   Post,
   UseGuards,
 } from '@nestjs/common';
@@ -31,6 +32,7 @@ import type { StaffContext } from '../auth/auth.types';
 import { StaffOrdersService } from './staff-orders.service';
 import { StaffSessionsService, type OfflineMethod } from './staff-sessions.service';
 import { StaffOrderingService } from './staff-ordering.service';
+import { ReportsService } from './reports.service';
 import { SplitService } from './split.service';
 import { WaiterCallsService } from './waiter-calls.service';
 import { BadgesService } from './badges.service';
@@ -209,6 +211,7 @@ export class StaffController {
     private readonly sessions: StaffSessionsService,
     private readonly ordering: StaffOrderingService,
     private readonly split: SplitService,
+    private readonly reports: ReportsService,
     private readonly calls: WaiterCallsService,
     private readonly badges: BadgesService,
     private readonly lifecycle: TableLifecycleService,
@@ -347,6 +350,19 @@ export class StaffController {
   @Roles('owner', 'manager', 'waiter')
   sessionItems(@Staff() staff: StaffContext, @Param('id', ParseUUIDPipe) id: string) {
     return this.sessions.items(staff, id);
+  }
+
+  /**
+   * Raport sprzedaży — wyłącznie dla właściciela i managera.
+   *
+   * Kelner i kuchnia go nie widzą: obrót lokalu nie jest informacją potrzebną
+   * do wydania talerza, a rozliczenie zmiany to osobna rzecz, której jeszcze
+   * nie ma.
+   */
+  @Get('reports/sales')
+  @Roles('owner', 'manager')
+  salesReport(@Staff() staff: StaffContext, @Query('days') days?: string) {
+    return this.reports.sprzedaz(staff, Number(days ?? 7));
   }
 
   @Get('sessions/:id/split')

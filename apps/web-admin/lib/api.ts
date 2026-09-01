@@ -359,6 +359,21 @@ export const settleSplitGroup = (
     body: JSON.stringify({ method }),
   });
 
+export interface SalesReport {
+  od: string;
+  do: string;
+  currency: string;
+  razem: { zamowien: number; sprzedazCents: number; sredniRachunekCents: number };
+  dni: { data: string; zamowien: number; sprzedazCents: number }[];
+  dania: { nazwa: string; sztuk: number; sprzedazCents: number }[];
+  /** Pozycje w karcie, których w tym okresie nikt nie zamówił. */
+  martwe: { nazwa: string }[];
+  godziny: { godzina: number; zamowien: number }[];
+}
+
+export const fetchSalesReport = (days: number) =>
+  authorized<SalesReport>(`/staff/reports/sales?days=${days}`);
+
 export const fetchOrderingTables = () => authorized<OrderingTable[]>('/staff/tables');
 export const fetchOrderingMenu = () => authorized<OrderingMenu>('/staff/menu');
 

@@ -147,6 +147,22 @@ bo goście o nie pytają:
 - **Adresu nie zapisujemy** — ani my, ani aplikacja w telefonie gościa. Idzie
   jednorazowo do wysłania wiadomości i znika. Nie trafia do żadnej listy mailowej.
 
+## Sprzedaż
+
+**Ustawienia → Sprzedaż.** Widzą ją właściciel i manager; kelner i kuchnia nie.
+
+Do wyboru trzy okresy: **dziś**, **7 dni**, **30 dni**. Na górze kwota sprzedaży,
+liczba zamówień i średnie zamówienie. Niżej: sprzedaż dzień po dniu, ranking dań,
+pozycje z karty, których **nikt nie zamówił**, i rozkład godzinowy.
+
+Dwie rzeczy warto wiedzieć, żeby liczby się zgadzały z tym, co pamiętasz ze zmiany:
+
+- **Liczymy po dobie biznesowej, nie po kalendarzu.** Zamówienie o 00:30 należy do
+  wieczoru, który się jeszcze nie skończył — tak samo jak numeracja rachunków.
+  Godzinę przełomu ustawiasz w ustawieniach lokalu.
+- **Zamówienia odrzucone i anulowane nie wchodzą** do sprzedaży. To ta sama reguła,
+  którą liczy się rachunek stolika.
+
 ## Paragon i kasa fiskalna
 
 kelbroo **nie wystawia paragonów i nie zastępuje kasy fiskalnej**. Na ekranie Sala

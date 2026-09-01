@@ -221,6 +221,12 @@ Model i arytmetyka: [architecture.md §14](architecture.md#14-podział-rachunku)
 
 ### 3.10 Raporty i analityka
 
+> **Stan na 2026-09-01:** zbudowany jest **ekran sprzedaży** — kwoty okresu, dzień
+> po dniu, ranking dań, pozycje bez ani jednego zamówienia i rozkład godzinowy.
+> Liczony po **dobie biznesowej**, z pominięciem zamówień odrzuconych i anulowanych.
+> Pozostałe punkty poniżej czekają; eksport do CSV domknie obietnicę z cennika Pro.
+
+
 - Sprzedaż w czasie (dzień/tydzień/miesiąc), z podziałem na kategorie i dania.
 - Ranking dań: najlepiej sprzedające się, najbardziej dochodowe, najgorzej oceniane, martwe pozycje (nikt nie zamawia).
 - Godziny szczytu (heatmapa dzień × godzina) — wsparcie grafiku pracy.

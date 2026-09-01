@@ -604,9 +604,29 @@ Kolejność według tego, ile kosztuje odkrycie braku przez klienta, który już
       Obietnica z sekcji o podziale rachunku, w czasie teraźniejszym, sprzedawana
       od pierwszej wersji strony i **pominięta przez pierwszy audyt** (patrz wyżej).
       Szczegóły w §4.
-- [ ] **Pro: „Analityka i eksport raportów".**
-      Zero kodu, także w panelu. Obiecane kafelkiem „Raporty i analityka".
-      To najbardziej rozbudowana pozycja z całej listy.
+- [~] **„Analityka i eksport raportów" — ekran sprzedaży zbudowany** (2026-09-01),
+      eksport jeszcze nie. Świadomie **wąsko**: jeden ekran odpowiadający na trzy
+      pytania, które restaurator zadaje po dwóch tygodniach pracy — ile sprzedaliśmy,
+      co się sprzedaje, o których godzinach zamawiają. Reszta z
+      [docs/02 §3.10](02-admin-panel.md) czeka, aż okaże się, których pozycji
+      naprawdę brakuje.
+
+      **Liczymy po dobie biznesowej, nie po kalendarzu.** Zamówienie z 00:30 należy
+      do wieczoru, który się jeszcze nie skończył; raport idący za kalendarzem
+      rozcinałby każdą nocną zmianę na pół i nie zgadzałby się z tym, co obsługa
+      pamięta z pracy. Zamówienia odrzucone i anulowane **nie wchodzą** — ta sama
+      reguła, którą liczy się rachunek wizyty.
+
+      Dwie pomyłki złapane po drodze, obie takie, że raport kłamałby po cichu:
+
+      - **„Nikt tego nie zamawia" liczone przez odjęcie od rankingu.** Ranking jest
+        obcięty do kilkunastu pozycji, więc wszystko poza czołówką wypadało jako
+        martwe — także danie sprzedające się codziennie. Liczone jest teraz w bazie.
+      - **Godzina brana z UTC.** Kolumna ma typ `timestamp without time zone`, więc
+        pojedyncze `AT TIME ZONE` przeliczało **w drugą stronę** i wykres pokazywał
+        południe o ósmej rano. Konwersja jest teraz dwustopniowa.
+
+      Zostaje **eksport do CSV** — to on domyka obietnicę z cennika Pro w całości.
 - [x] **Pro: podział rachunku „po pozycjach"** (2026-08-27). Domyka ostatnią
       rozbieżność między `product.md` a kodem: dokument mówił „po pozycjach", a tryb
       nie istniał.

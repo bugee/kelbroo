@@ -45,6 +45,7 @@ import { StaffAuthGuard } from './auth/staff.guard';
 import { StaffController } from './staff/staff.controller';
 import { StaffOrdersService } from './staff/staff-orders.service';
 import { StaffOrderingService } from './staff/staff-ordering.service';
+import { ReportsService } from './staff/reports.service';
 import { SplitService } from './staff/split.service';
 import { WaiterCallsService } from './staff/waiter-calls.service';
 import { BadgesService } from './staff/badges.service';
@@ -121,6 +122,7 @@ import { ReviewsAdminService } from './management/reviews.admin.service';
     StaffOrdersService,
     StaffOrderingService,
     SplitService,
+    ReportsService,
     WaiterCallsService,
     BadgesService,
     TableLifecycleService,
