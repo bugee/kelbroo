@@ -11,12 +11,16 @@ FROM base AS deps
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json .npmrc ./
 COPY packages/config/package.json packages/config/
 COPY packages/types/package.json packages/types/
+COPY packages/i18n/package.json packages/i18n/
 COPY apps/web-marketing/package.json apps/web-marketing/
 RUN pnpm install --frozen-lockfile --filter @kelbroo/web-marketing...
 
 FROM deps AS build
 COPY packages/config packages/config
 COPY packages/types packages/types
+# Słowniki czterech wersji językowych. `@kelbroo/i18n` nie ma kroku budowania —
+# `main` wskazuje wprost na `src`, więc wystarczy skopiować źródła.
+COPY packages/i18n packages/i18n
 COPY apps/web-marketing apps/web-marketing
 # Regulamin i polityka prywatności są renderowane przy budowaniu — to treść
 # strony, nie dokumentacja. Reszta `docs` zostaje poza obrazem (.dockerignore).
