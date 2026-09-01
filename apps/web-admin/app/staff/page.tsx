@@ -260,13 +260,16 @@ function MemberRow({
           </button>
 
           {resetting ? (
-            <span className="flex items-center gap-2">
+            // `flex-wrap` i `min-w-0`, bo na telefonie pole z przyciskiem obok
+            // nie mieści się w jednym wierszu — bez tego rozpychały cały ekran
+            // i trzeba go było przewijać w bok.
+            <span className="flex w-full flex-wrap items-center gap-2">
               <input
                 type="text"
                 value={newPassword}
                 onChange={(event) => setNewPassword(event.target.value)}
                 placeholder="nowe hasło tymczasowe"
-                className="mono min-h-11 rounded-[var(--radius-control)] border border-[var(--line)] px-3 text-sm"
+                className="mono min-h-11 min-w-0 flex-1 rounded-[var(--radius-control)] border border-[var(--line)] px-3 text-sm"
               />
               <button
                 type="button"

@@ -159,15 +159,27 @@ function Shell({
     (item) => !item.feature || abonament?.reviewsEnabled === true,
   );
 
+  const wyloguj = () => {
+    clearSession();
+    router.replace('/login');
+  };
+
   return (
     <div className="min-h-dvh">
       <header className="sticky top-0 z-20 border-b border-[var(--line)] bg-[var(--surface)] px-4 py-2 print:hidden">
-        <div className="mx-auto flex max-w-6xl items-center gap-3">
+        <div className="mx-auto flex max-w-6xl items-center gap-2 sm:gap-3">
           <span className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--teal)]">
             kelbroo
           </span>
 
-          <nav className="flex flex-1 gap-1">
+          {/*
+            Nawigacja główna w nagłówku **tylko od tabletu w górę**. Na telefonie
+            trzy pozycje z licznikami nie mieszczą się obok logo i przełączników,
+            więc pasek trzeba było przewijać w bok — a przewijanie w poziomie
+            w aplikacji, którą obsługuje się jedną ręką w biegu, jest gorsze niż
+            brak menu. Na telefonie te same pozycje stoją na dole ekranu.
+          */}
+          <nav className="hidden flex-1 gap-1 sm:flex">
             {visible.map((item) => (
               <Link
                 key={item.href}
@@ -184,13 +196,21 @@ function Shell({
             ))}
           </nav>
 
-          <span className="text-sm text-[var(--muted)]">
+          {/* Rozpycha przełączniki na prawo, gdy nawigacja jest schowana. */}
+          <span className="flex-1 sm:hidden" />
+
+          {/* Kto jest zalogowany, widać na telefonie w menu Ustawień — w pasku
+              zabrałoby to miejsce przyciskom, których używa się co chwilę. */}
+          <span className="hidden text-sm text-[var(--muted)] lg:inline">
             {staff.name} · {staff.role}
           </span>
 
-          {widoczneUstawienia.length > 0 && (
-            <SettingsMenu items={widoczneUstawienia} pathname={pathname} />
-          )}
+          <SettingsMenu
+            items={widoczneUstawienia}
+            pathname={pathname}
+            staff={staff}
+            onLogout={wyloguj}
+          />
 
           {/* W przeciwieństwie do palety dźwięk **zostaje na koncie**: kucharz
               staje przy dowolnym tablecie, a wyciszenie ma iść za nim. */}
@@ -202,13 +222,11 @@ function Shell({
           {/* Kuchnia często pracuje przy słabym świetle — wybór palety
               zostaje na urządzeniu, nie na koncie pracownika. */}
           <ThemeToggle />
+
           <button
             type="button"
-            onClick={() => {
-              clearSession();
-              router.replace('/login');
-            }}
-            className="min-h-11 px-3 text-sm text-[var(--muted)] underline"
+            onClick={wyloguj}
+            className="hidden min-h-11 px-3 text-sm text-[var(--muted)] underline sm:inline"
           >
             Wyloguj
           </button>
@@ -217,8 +235,61 @@ function Shell({
 
       {abonament && <SubscriptionBanner stan={abonament} />}
 
-      <main className="mx-auto max-w-6xl p-4">{children(staff)}</main>
+      {/*
+        Zapas na dole robi miejsce pod pasek nawigacji na telefonie. Bez niego
+        ostatni kafel sali chowa się pod paskiem i nie da się go stuknąć — a to
+        zwykle ten stolik, o który chodzi.
+      */}
+      <main className="mx-auto max-w-6xl p-4 pb-24 sm:pb-4">{children(staff)}</main>
+
+      <MobileNav items={visible} pathname={pathname} badges={badges} />
     </div>
+  );
+}
+
+/**
+ * Nawigacja na telefonie: pasek na dole, w zasięgu kciuka.
+ *
+ * Na dole, a nie na górze, bo panel obsługuje się jedną ręką, często w ruchu —
+ * górna krawędź telefonu jest wtedy najtrudniejszym miejscem do trafienia.
+ * Ikon nie ma: trzy słowa czyta się szybciej niż trzy symbole, których trzeba
+ * się nauczyć, a miejsca na trzy pozycje wystarcza.
+ */
+function MobileNav({
+  items,
+  pathname,
+  badges,
+}: {
+  items: NavItem[];
+  pathname: string;
+  badges: Record<string, number> | null;
+}) {
+  if (items.length === 0) return null;
+
+  return (
+    <nav
+      aria-label="Nawigacja główna"
+      className="fixed inset-x-0 bottom-0 z-20 flex border-t border-[var(--line)] bg-[var(--surface)] sm:hidden print:hidden"
+      // Wcięcie na pasek gestów iPhone'a — bez niego dolny rząd przycisków
+      // ląduje pod kreską systemową i łapie jej stuknięcia zamiast swoich.
+      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+    >
+      {items.map((item) => (
+        <Link
+          key={item.href}
+          href={item.href}
+          aria-current={pathname === item.href ? 'page' : undefined}
+          className={`mono flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 text-xs font-semibold ${
+            pathname === item.href
+              ? 'bg-[var(--teal-wash)] text-[var(--teal)]'
+              : 'text-[var(--muted)]'
+          }`}
+        >
+          <span>{item.label}</span>
+          <Badge count={badges?.[item.href]} samodzielny />
+        </Link>
+      ))}
+    </nav>
   );
 }
 
@@ -268,20 +339,39 @@ function SubscriptionBanner({ stan }: { stan: SubscriptionState }) {
  * Sama liczba, nie kropka — kelner ma wiedzieć, czy czeka jedno zamówienie,
  * czy siedem. Zero nie jest informacją, więc serwer go nie zwraca i nic tu nie rysujemy.
  */
-function Badge({ count }: { count?: number }) {
+/**
+ * Licznik czekającej pracy.
+ *
+ * `samodzielny` zdejmuje odstęp z lewej: w pasku na dole telefonu licznik stoi
+ * **pod** etykietą, a nie obok niej, i margines rozjeżdżałby go z osi.
+ */
+function Badge({ count, samodzielny = false }: { count?: number; samodzielny?: boolean }) {
   if (!count) return null;
 
   return (
     <span
       aria-label={`${count} do obsługi`}
-      className="mono ml-2 inline-flex min-w-6 items-center justify-center rounded-full bg-[var(--orange)] px-1.5 py-0.5 text-xs font-bold text-white"
+      className={`mono inline-flex min-w-6 items-center justify-center rounded-full bg-[var(--orange)] px-1.5 py-0.5 text-xs font-bold text-white ${
+        samodzielny ? '' : 'ml-2'
+      }`}
     >
       {count > 99 ? '99+' : count}
     </span>
   );
 }
 
-function SettingsMenu({ items, pathname }: { items: NavItem[]; pathname: string }) {
+function SettingsMenu({
+  items,
+  pathname,
+  staff,
+  onLogout,
+}: {
+  items: NavItem[];
+  pathname: string;
+  staff: Staff;
+  /** Wylogowanie mieszka tutaj **na telefonie** — w pasku nie ma na nie miejsca. */
+  onLogout: () => void;
+}) {
   const [open, setOpen] = useState(false);
   const container = useRef<HTMLDivElement>(null);
   const here = items.some((item) => item.href === pathname);
@@ -319,7 +409,7 @@ function SettingsMenu({ items, pathname }: { items: NavItem[]; pathname: string 
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((current) => !current)}
-        className={`mono min-h-11 rounded-[var(--radius-control)] px-4 py-2.5 text-sm font-semibold ${
+        className={`mono min-h-11 rounded-[var(--radius-control)] px-3 py-2.5 text-sm font-semibold sm:px-4 ${
           here || open ? 'bg-[var(--teal-wash)] text-[var(--teal)]' : 'text-[var(--muted)]'
         }`}
       >
@@ -334,6 +424,12 @@ function SettingsMenu({ items, pathname }: { items: NavItem[]; pathname: string 
           role="menu"
           className="absolute right-0 z-30 mt-1 flex min-w-56 flex-col rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface)] p-1 shadow-lg"
         >
+          {/* Na telefonie to jedyne miejsce, w którym widać, kim się jest —
+              w pasku nagłówka nazwisko konkurowałoby z przyciskami. */}
+          <p className="mono border-b border-[var(--line)] px-4 py-2.5 text-xs text-[var(--muted)] lg:hidden">
+            {staff.name} · {staff.role}
+          </p>
+
           {items.map((item) => (
             <Link
               key={item.href}
@@ -349,6 +445,15 @@ function SettingsMenu({ items, pathname }: { items: NavItem[]; pathname: string 
               {item.label}
             </Link>
           ))}
+
+          <button
+            type="button"
+            role="menuitem"
+            onClick={onLogout}
+            className="mono min-h-11 rounded-[var(--radius-control)] px-4 py-2.5 text-left text-sm font-semibold text-[var(--muted)] sm:hidden"
+          >
+            Wyloguj
+          </button>
         </div>
       )}
     </div>

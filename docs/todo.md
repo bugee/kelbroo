@@ -430,6 +430,23 @@ co człowiek** — automat, któremu powiemy „odrzucono", spróbuje inaczej.
       Przeglądarka nie zagra przed pierwszym dotknięciem ekranu i nie da się tego obejść.
       Zamiast milczeć, dzwonek pokazuje wtedy **pomarańczową kropkę** i mówi „stuknij,
       aby włączyć" — wymóg zapisany w [docs/02 §4](02-admin-panel.md).
+- [x] **Panel na telefonie** (2026-09-01) — nawigacja główna schodzi na telefonie
+      **na dół ekranu**, w zasięg kciuka, zamiast stać w nagłówku, którego trzeba było
+      przewijać w bok. Pasek przewijany w poziomie jest gorszy od braku paska: wygląda
+      na kompletny i nie jest.
+
+      Od tabletu w górę nic się nie zmienia — dolny pasek zabierałby wysokość ekranowi
+      kuchni, na którym liczy się każdy wiersz bonu. Nazwisko i „Wyloguj" znikają
+      z paska na telefonie i przenoszą się do menu Ustawień; bez tego nie byłoby jak
+      wyjść z konta na cudzym telefonie.
+
+      **Test e2e pilnuje jednej rzeczy: żaden ekran obsługi nie przewija się w poziomie.**
+      Sprawdzony przez cofnięcie zmiany — pada.
+
+      Przy okazji wyszła druga wada, **niewidoczna przy 390 px**: rozwinięty reset hasła
+      dawał dokument szeroki na 387 px w oknie 320 px. Najwęższe telefony w obiegu mają
+      dokładnie 320 px, więc ten jeden test celowo zwęża okno — na szerszym problem
+      nie istnieje.
 - [ ] **Anonimizacja konta po 6 miesiącach + powiadomienie 30 dni wcześniej** —
       **nowe zobowiązanie z dokumentów 2026-08-28** i najpoważniejsza rzecz, jaką te
       dokumenty zostawiły do zrobienia. Żaden mechanizm retencji nie istnieje.
@@ -825,10 +842,21 @@ Z [product.md §7](product.md#7-wymagania-niefunkcjonalne-dotyczą-wszystkich-tr
       w nazwę dania, bo ta jest losowa i bywa z dwójką („Danie b227"). Naprawione
       przez `exact`.
 
-      Zostają dwa 60-sekundowe timeouty z 2026-08-27 (`session-orders`, `password`),
-      których **nie odtworzyłem i nie wyjaśniłem**. Mogą mieć wspólną przyczynę
-      z zakleszczeniem — rywalizację o blokady w bazie — ale to hipoteza. Do obserwacji
-      na CI, gdzie obciążenie jest powtarzalne.
+      **Trzecia przyczyna znaleziona 2026-09-01 i to prawdopodobnie ta sama, która
+      dawała niewyjaśnione timeouty.** `qr.spec.ts` logował się i **od razu przechodził
+      na inny adres, nie czekając na przekierowanie**. Token trafia do pamięci
+      przeglądarki dopiero z odpowiedzią API, więc panel zastawał brak sesji i wracał
+      na `/login` — test padał wtedy z komunikatem wyglądającym na cokolwiek innego niż
+      wyścig. Przechodził wyłącznie dlatego, że logowanie zwykle zdążyło się skończyć.
+
+      Wyszło to dopiero, gdy doszedł nowy plik testów i zmienił rytm przebiegu.
+      **To zgadza się z sygnaturą timeoutu z `password.spec` z 27 sierpnia**, gdzie
+      przeglądarka stała na ekranie logowania mimo udanego zalogowania.
+
+      Naprawione w `qr.spec`. Pomocnicze `logIn` w `staff.spec` i `password.spec` mają
+      teraz ostrzeżenie, że wołający musi doczekać spodziewanego ekranu — czekania nie
+      da się w nie wbudować, bo część testów loguje się **spodziewając się
+      niepowodzenia**. Pozostałe wywołania są potencjalnie podatne i czekają na przegląd.
 - [ ] **Dostępność WCAG 2.1 AA** w aplikacji gościa — używa jej przypadkowa publiczność.
 - [x] ~~**Buforowanie offline w panelu.**~~ **Skreślone 2026-08-26** (§5f). kelbroo
       wymaga połączenia i mówi o tym wprost na stronie i w bazie wiedzy.

@@ -7,6 +7,18 @@ import {
   uniqueEmail,
 } from '../fixtures/db';
 
+/**
+ * Samo wypełnienie formularza i kliknięcie — **bez czekania na wynik**.
+ *
+ * Wołający musi doczekać spodziewanego ekranu (`toHaveURL`), zanim gdziekolwiek
+ * przejdzie. Token trafia do pamięci przeglądarki dopiero z odpowiedzią API,
+ * a nawigacja wykonana wcześniej zastaje panel bez sesji i wraca na `/login` —
+ * test pada wtedy z komunikatem, który wygląda na cokolwiek innego niż wyścig.
+ *
+ * Czekanie nie jest tu wbudowane celowo: część testów loguje się **spodziewając
+ * się niepowodzenia** albo przekierowania na zmianę hasła, więc twarde
+ * oczekiwanie na `/queue` zepsułoby im sens.
+ */
 async function logIn(page: Page, account: { email: string; password: string }): Promise<void> {
   await page.goto('/login');
   await page.getByLabel('E-mail').fill(account.email);

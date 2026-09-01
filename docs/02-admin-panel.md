@@ -237,7 +237,7 @@ Model i arytmetyka: [architecture.md §14](architecture.md#14-podział-rachunku)
 - Dezaktywacja konta (nigdy twarde usunięcie — historia zamówień musi zachować powiązanie).
 - Faza 2: statystyki wydajności kelnera (obsłużone stoliki, czas reakcji, oceny obsługi).
 
-## 4. Wymagania specyficzne dla tabletów
+## 4. Wymagania specyficzne dla tabletów i telefonów
 
 - ~~PWA instalowana na ekranie głównym (manifest, ikony, tryb standalone).~~
   **Skreślone 2026-08-26** razem z pracą bez sieci — panel otwiera się pod adresem
@@ -247,6 +247,7 @@ Model i arytmetyka: [architecture.md §14](architecture.md#14-podział-rachunku)
 - Wake Lock — ekran nie gaśnie w trakcie zmiany.
 - Powiadomienia dźwiękowe działające także przy zablokowanym ekranie (uwaga: ograniczenia iOS — dźwięk wymaga wcześniejszej interakcji użytkownika, panel powinien wymusić "kliknij, aby włączyć dźwięk" na starcie zmiany).
 - Tryb kiosku (opcjonalnie): blokada wyjścia z aplikacji na urządzeniu współdzielonym.
+- **Telefon** *(2026-09-01)*: nawigacja główna na dolnej krawędzi, w zasięgu kciuka — kelner obsługuje panel jedną ręką, w ruchu, a górna krawędź telefonu jest wtedy najtrudniejsza do trafienia. Nazwisko i wylogowanie w menu Ustawień. **Żaden ekran obsługi nie może wymagać przewijania w poziomie**; pilnuje tego test e2e, w tym na oknie 320 px.
 - Odporność na pracę ciągłą 12h bez przeładowania strony (kontrola wycieków pamięci, automatyczne odświeżanie sesji).
 
 ## 5. Kryteria akceptacji

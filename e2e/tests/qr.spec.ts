@@ -19,6 +19,13 @@ test.describe('stoliki i kody QR', () => {
       await page.getByLabel('E-mail').fill(ACCOUNTS.owner.email);
       await page.getByLabel('Hasło', { exact: true }).fill(ACCOUNTS.owner.password);
       await page.getByRole('button', { name: 'Zaloguj' }).click();
+
+      // Czekanie na przekierowanie **nie jest kosmetyką**: token trafia do pamięci
+      // przeglądarki dopiero z odpowiedzią API, a nawigacja wykonana wcześniej
+      // zastaje panel bez sesji i wraca na `/login`. Ten sam wyścig opisuje
+      // `password.spec.ts`; tutaj go brakowało i test przechodził wyłącznie
+      // dzięki temu, że logowanie zdążyło się skończyć.
+      await expect(page).toHaveURL(/\/queue$/);
       await page.goto('/qr');
 
       const karta = page.locator('article').filter({ hasText: fixture.tableLabel });
