@@ -45,9 +45,9 @@ test.describe('kelner przesadza gości', () => {
       await expect(gosc.getByText(skad.dishName)).toBeVisible();
       await gosc.getByText(skad.dishName).first().click();
       await gosc.getByRole('button', { name: /^Dodaj/ }).click();
-      await gosc.getByRole('button', { name: 'Koszyk' }).click();
+      await gosc.getByRole('button', { name: /Do zamówienia/ }).click();
       await gosc.getByRole('button', { name: /Zamawiam/ }).click();
-      await gosc.getByRole('button', { name: 'Zamówienia' }).click();
+      await gosc.getByRole('button', { name: 'Rachunek', exact: true }).click();
       await expect(gosc.getByText(skad.dishName)).toBeVisible();
 
       // Nick zapamiętany **przed** przesiadką. To on rozstrzyga, czy gość wrócił
@@ -91,7 +91,7 @@ test.describe('kelner przesadza gości', () => {
       await gosc.goto(`${GUEST_URL}/t/${skad.qrToken}`);
       await expect(gosc).toHaveURL(new RegExp(`/t/${dokad.qrToken}$`));
 
-      await gosc.getByRole('button', { name: 'Zamówienia' }).click();
+      await gosc.getByRole('button', { name: 'Rachunek', exact: true }).click();
       await expect(gosc.getByText(skad.dishName)).toBeVisible();
 
       /**

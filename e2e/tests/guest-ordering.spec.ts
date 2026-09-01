@@ -40,6 +40,51 @@ async function dodajDoKoszyka(
   await page.getByRole('button', { name: /^Dodaj/ }).click();
 }
 
+/**
+ * Niedokończone zamówienie — problem zgłoszony z prawdziwego lokalu.
+ *
+ * Gość dokładał dania do koszyka, po czym stukał w zakładkę z rachunkiem
+ * i widział „nie masz żadnych zamówień". Zdanie było prawdziwe i **kompletnie
+ * mylące**: brzmiało jak „coś się zgubiło", podczas gdy jedzenie po prostu nie
+ * zostało wysłane do kuchni. Aplikacja nie mówiła nigdzie indziej, że w koszyku
+ * coś czeka — jedynym śladem był drobny napis w zakładce.
+ */
+test.describe('koszyk, którego gość nie wysłał', () => {
+  test('mówi wprost, że nic nie zamówiono, i prowadzi do koszyka', async ({ browser }) => {
+    const fixture = await seedMenuAndTable();
+    const kontekst = await browser.newContext();
+
+    try {
+      const gosc = await kontekst.newPage();
+      await gosc.goto(`${GUEST_URL}/t/${fixture.qrToken}`);
+      await expect(gosc.getByText(fixture.dishName)).toBeVisible();
+
+      await dodajDoKoszyka(gosc, fixture.dishName);
+
+      // Pasek widoczny **z poziomu menu**, a nie dopiero w koszyku — to on ma
+      // nie pozwolić o zamówieniu zapomnieć.
+      const pasek = gosc.getByRole('button', { name: /dokończ zamówienie/ });
+      await expect(pasek).toBeVisible();
+
+      // Miejsce, w którym gość się gubił.
+      await gosc.getByRole('button', { name: 'Rachunek', exact: true }).click();
+      await expect(gosc.getByText('Nic jeszcze nie zamówiłeś')).toBeVisible();
+      await expect(gosc.getByText(/Masz 1 pozycję w koszyku/)).toBeVisible();
+
+      // I wyjście z tego miejsca, zamiast ślepego zaułka.
+      await gosc.getByRole('button', { name: 'Pokaż koszyk i zamów' }).click();
+      await gosc.getByRole('button', { name: /Zamawiam/ }).click();
+
+      // Po wysłaniu pasek znika — nie ma już czego dokańczać.
+      await expect(gosc.getByText(fixture.dishName)).toBeVisible();
+      await expect(gosc.getByRole('button', { name: /dokończ zamówienie/ })).toHaveCount(0);
+    } finally {
+      await kontekst.close();
+      await fixture.cleanup();
+    }
+  });
+});
+
 test.describe('gość składa zamówienie', () => {
   test.afterEach(async () => {
     // Domyślny stan restauracji testowej — kolejne pliki na nim polegają.
@@ -61,7 +106,7 @@ test.describe('gość składa zamówienie', () => {
       await dodajDoKoszyka(gosc, fixture.dishName, { ilosc: 2, notatka: 'bez cebuli' });
 
       // Koszyk liczy to, co gość wybrał. Danie kosztuje 25,00 zł.
-      await gosc.getByRole('button', { name: 'Koszyk' }).click();
+      await gosc.getByRole('button', { name: /Do zamówienia/ }).click();
       await expect(gosc.getByText(/2×/)).toBeVisible();
       await expect(gosc.getByText('bez cebuli')).toBeVisible();
       await expect(gosc.getByRole('button', { name: /Zamawiam/ })).toContainText('50,00');
@@ -69,7 +114,7 @@ test.describe('gość składa zamówienie', () => {
       await gosc.getByRole('button', { name: /Zamawiam/ }).click();
 
       // Gość widzi swoje zamówienie u siebie, zanim ktokolwiek je potwierdzi.
-      await gosc.getByRole('button', { name: 'Zamówienia' }).click();
+      await gosc.getByRole('button', { name: 'Rachunek', exact: true }).click();
       await expect(gosc.getByText(fixture.dishName)).toBeVisible();
 
       const panel = await panelContext.newPage();
@@ -121,7 +166,7 @@ test.describe('gość składa zamówienie', () => {
       await expect(gosc.getByText(fixture.dishName)).toBeVisible();
 
       await dodajDoKoszyka(gosc, fixture.dishName);
-      await gosc.getByRole('button', { name: 'Koszyk' }).click();
+      await gosc.getByRole('button', { name: /Do zamówienia/ }).click();
       await gosc.getByRole('button', { name: /Zamawiam/ }).click();
 
       const panel = await panelContext.newPage();
@@ -143,10 +188,10 @@ test.describe('gość składa zamówienie', () => {
       await page.goto(`${GUEST_URL}/t/${fixture.qrToken}`);
       await expect(page.getByText(fixture.dishName)).toBeVisible();
 
-      await page.getByRole('button', { name: 'Koszyk' }).click();
+      await page.getByRole('button', { name: /Do zamówienia/ }).click();
 
       // Nie ma czego zamawiać i nie ma o tym co negocjować.
-      await expect(page.getByText('Koszyk jest pusty.')).toBeVisible();
+      await expect(page.getByText('Nic tu jeszcze nie ma')).toBeVisible();
       await expect(page.getByRole('button', { name: /Zamawiam/ })).toHaveCount(0);
     } finally {
       await fixture.cleanup();
@@ -174,7 +219,7 @@ test('kelner rozlicza stolik i wizyta się zamyka', async ({ browser }) => {
     await expect(gosc.getByText(fixture.dishName)).toBeVisible();
 
     await dodajDoKoszyka(gosc, fixture.dishName);
-    await gosc.getByRole('button', { name: 'Koszyk' }).click();
+    await gosc.getByRole('button', { name: /Do zamówienia/ }).click();
     await gosc.getByRole('button', { name: /Zamawiam/ }).click();
     // Po złożeniu zamówienia aplikacja sama przechodzi na „Zamówienia" —
     // gość ma zobaczyć, że jego zamówienie istnieje, a nie pusty koszyk.

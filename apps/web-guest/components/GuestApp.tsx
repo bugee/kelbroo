@@ -322,7 +322,13 @@ export function GuestApp({ qrToken }: { qrToken: string }) {
       )}
       {view === 'status' && (
         <>
-          <StatusView orders={orders} currency={currency} qrToken={qrToken} />
+          <StatusView
+            orders={orders}
+            currency={currency}
+            qrToken={qrToken}
+            wKoszyku={cart.length}
+            onDoKoszyka={() => setView('cart')}
+          />
           {/*
             Zaproszenie do oceny stoi przy rachunku, a nie w osobnej zakładce:
             gość zagląda tu po posiłku, żeby sprawdzić, ile płaci — to jedyny
@@ -386,18 +392,54 @@ export function GuestApp({ qrToken }: { qrToken: string }) {
             <span className="mono">{formatMoney(cartTotal, currency)}</span>
           </button>
         ) : (
-          <div className="flex gap-2">
-            <CallWaiterButton qrToken={qrToken} tick={callTick} />
-            <TabButton active={view === 'menu'} onClick={() => setView('menu')}>
-              Menu
-            </TabButton>
-            <TabButton active={view === 'cart'} onClick={() => setView('cart')}>
-              Koszyk{cart.length > 0 ? ` · ${formatMoney(cartTotal, currency)}` : ''}
-            </TabButton>
-            <TabButton active={view === 'status'} onClick={() => setView('status')}>
-              Zamówienia
-            </TabButton>
-          </div>
+          <>
+            {/*
+              Pasek „Zamawiam" nad zakładkami, **na każdym widoku**, dopóki coś
+              leży w koszyku.
+              
+              Powstał z konkretnej obserwacji w lokalu: gość dokładał dania
+              i wychodził z aplikacji przekonany, że zamówił, bo jedyną
+              informacją o niewysłanym koszyku był drobny napis w zakładce,
+              wyglądający jak trzy sąsiednie. Przycisk kończący był schowany
+              o jedno stuknięcie — widoczny wyłącznie na ekranie koszyka.
+
+              Pomarańcz trafia tu zgodnie z zasadą z CLAUDE.md: to jest **główne
+              CTA** całej aplikacji gościa.
+            */}
+            {cart.length > 0 && view !== 'cart' && (
+              <button
+                type="button"
+                onClick={() => setView('cart')}
+                className="mb-2 flex min-h-14 w-full items-center justify-between rounded-[var(--radius-control)] bg-[var(--orange)] px-5 font-semibold text-white"
+              >
+                <span>
+                  {cart.length === 1 ? '1 pozycja' : `${cart.length} pozycje`} — dokończ zamówienie
+                </span>
+                <span className="mono">{formatMoney(cartTotal, currency)}</span>
+              </button>
+            )}
+
+            <div className="flex gap-2">
+              <CallWaiterButton qrToken={qrToken} tick={callTick} />
+              <TabButton active={view === 'menu'} onClick={() => setView('menu')}>
+                Menu
+              </TabButton>
+              {/*
+                „Do zamówienia" zamiast „Koszyk", „Rachunek" zamiast „Zamówienia".
+                Stare nazwy konkurowały ze sobą znaczeniowo: gość z pełnym
+                koszykiem myślał o nim jako o swoim zamówieniu i szukał go
+                w zakładce „Zamówienia". Teraz jedna nazwa mówi, co **zamówisz**,
+                druga — co **zamówiłeś**; „Rachunek" jest zresztą tytułem tamtego
+                ekranu od początku.
+              */}
+              <TabButton active={view === 'cart'} onClick={() => setView('cart')}>
+                Do zamówienia{cart.length > 0 ? ` · ${cart.length}` : ''}
+              </TabButton>
+              <TabButton active={view === 'status'} onClick={() => setView('status')}>
+                Rachunek
+              </TabButton>
+            </div>
+          </>
         )}
       </nav>
     </div>
@@ -485,14 +527,16 @@ function CartView({
   if (cart.length === 0) {
     return (
       <Centered>
-        <p className="text-[var(--muted)]">Koszyk jest pusty.</p>
+        <p className="text-[var(--muted)]">Nic tu jeszcze nie ma — wybierz coś z menu.</p>
       </Centered>
     );
   }
 
   return (
     <main className="px-4 pt-4">
-      <h2 className="text-base">Koszyk</h2>
+      {/* Ta sama nazwa co na zakładce — inaczej gość nie wie, że jest tam,
+          gdzie chciał. */}
+      <h2 className="text-base">Do zamówienia</h2>
       <ul className="mt-3 flex flex-col gap-2">
         {cart.map((line, index) => (
           <li
@@ -530,15 +574,44 @@ function StatusView({
   orders,
   currency,
   qrToken,
+  wKoszyku,
+  onDoKoszyka,
 }: {
   orders: SessionOrders | null;
   currency: string;
   qrToken: string;
+  /** Ile pozycji czeka w koszyku — **niezamówionych**. */
+  wKoszyku: number;
+  onDoKoszyka: () => void;
 }) {
   if (!orders || orders.orders.length === 0) {
     return (
       <Centered>
-        <p className="text-[var(--muted)]">Nie masz jeszcze żadnych zamówień.</p>
+        {/*
+          Gość z pełnym koszykiem przychodzi tu z konkretnym pytaniem: „gdzie
+          jest moje zamówienie?". Zdanie „nie masz żadnych zamówień" jest wtedy
+          prawdziwe i **kompletnie mylące** — brzmi jak „coś się zgubiło",
+          podczas gdy jedzenie po prostu nie zostało jeszcze wysłane do kuchni.
+          To był najczęstszy moment zagubienia w prawdziwym lokalu.
+        */}
+        {wKoszyku > 0 ? (
+          <>
+            <p className="text-lg font-semibold">Nic jeszcze nie zamówiłeś</p>
+            <p className="mt-2 text-[var(--muted)]">
+              {wKoszyku === 1 ? 'Masz 1 pozycję' : `Masz ${wKoszyku} pozycje`} w koszyku — kuchnia
+              ich jeszcze nie widzi.
+            </p>
+            <button
+              type="button"
+              onClick={onDoKoszyka}
+              className="mono mt-5 min-h-12 w-full max-w-xs rounded-[var(--radius-control)] bg-[var(--orange)] font-bold text-white"
+            >
+              Pokaż koszyk i zamów
+            </button>
+          </>
+        ) : (
+          <p className="text-[var(--muted)]">Nie masz jeszcze żadnych zamówień.</p>
+        )}
         <BillRequest qrToken={qrToken} currency={currency} />
       </Centered>
     );

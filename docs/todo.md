@@ -447,6 +447,25 @@ co człowiek** — automat, któremu powiemy „odrzucono", spróbuje inaczej.
       dawał dokument szeroki na 387 px w oknie 320 px. Najwęższe telefony w obiegu mają
       dokładnie 320 px, więc ten jeden test celowo zwęża okno — na szerszym problem
       nie istnieje.
+- [x] **Niedokończone zamówienia gościa** (2026-09-01) — problem zgłoszony
+      **z prawdziwego lokalu**, nie z audytu: gość dokładał dania do koszyka i wychodził
+      przekonany, że zamówił.
+
+      Przyczyny były trzy i tylko jedna z nich to „gość zapomniał". Przycisk kończący
+      pojawiał się **wyłącznie na ekranie koszyka**, więc z menu nic nie mówiło, że coś
+      czeka na wysłanie. Nazwy zakładek konkurowały ze sobą: gość z pełnym koszykiem
+      myślał o nim jako o „swoim zamówieniu" i szukał go w zakładce **Zamówienia** —
+      gdzie dostawał zdanie „nie masz jeszcze żadnych zamówień", prawdziwe
+      i **kompletnie mylące**, bo brzmiące jak „coś się zgubiło".
+
+      Zmiany: **pasek „dokończ zamówienie" widoczny z każdego ekranu**, dopóki koszyk
+      nie jest pusty; **ekran rachunku z niepustym koszykiem** mówi wprost, że nic nie
+      zamówiono, i prowadzi do koszyka; zakładki przemianowane na **`Do zamówienia`**
+      i **`Rachunek`** — jedna nazwa mówi, co zamówisz, druga co zamówiłeś.
+
+      Świadomie **nie** dodaliśmy automatycznego wysyłania po czasie ani blokady
+      przejścia z niepustym koszykiem: zamówienie musi zostać świadomą decyzją gościa,
+      a pytanie „na pewno?" przy każdym stuknięciu zmęczyłoby szybciej, niż pomogło.
 - [ ] **Anonimizacja konta po 6 miesiącach + powiadomienie 30 dni wcześniej** —
       **nowe zobowiązanie z dokumentów 2026-08-28** i najpoważniejsza rzecz, jaką te
       dokumenty zostawiły do zrobienia. Żaden mechanizm retencji nie istnieje.

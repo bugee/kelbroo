@@ -101,6 +101,9 @@ Ekran pojawia się po skanie QR, **tylko gdy restauracja ma włączony podział 
 ### 3.4 Koszyk
 
 - Lista pozycji z modyfikatorami, uwagami, możliwością edycji ilości i usunięcia.
+- **Pasek „dokończ zamówienie" widoczny z każdego ekranu**, dopóki coś leży w koszyku *(2026-09-01)*. Powstał z obserwacji w lokalu: gość dokładał dania i wychodził przekonany, że zamówił, bo przycisk kończący był widoczny wyłącznie na ekranie koszyka, a jedynym śladem niewysłanych pozycji był drobny napis w zakładce.
+- **Zakładki nazwane językiem restauracji:** `Do zamówienia` i `Rachunek`, zamiast `Koszyk` i `Zamówienia`. Stare nazwy konkurowały ze sobą znaczeniowo — gość z pełnym koszykiem myślał o nim jako o swoim zamówieniu i szukał go w zakładce „Zamówienia", gdzie dostawał „nie masz żadnych zamówień".
+- **Ekran rachunku z niepustym koszykiem** mówi wprost „nic jeszcze nie zamówiłeś" i prowadzi do koszyka, zamiast kończyć się ślepym zaułkiem.
 - Podsumowanie: suma, VAT (wyszczególniony).
 - Pole "Uwagi do całego zamówienia".
 - Ostrzeżenie o minimalnej wartości zamówienia, jeśli ustawiona.

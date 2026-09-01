@@ -303,7 +303,7 @@ test('prośba o rachunek pyta o podział, płatność i fakturę', async ({ page
   try {
     await page.goto(`${GUEST_URL}/t/${fixture.qrToken}`);
     await expect(page.getByText(fixture.dishName)).toBeVisible();
-    await page.getByRole('button', { name: 'Zamówienia' }).click();
+    await page.getByRole('button', { name: 'Rachunek', exact: true }).click();
 
     await page.getByRole('button', { name: 'Poproś o rachunek' }).click();
 
@@ -334,7 +334,7 @@ test('karta i gotówka pojawia się dopiero przy dzielonym rachunku', async ({ p
   try {
     await page.goto(`${GUEST_URL}/t/${fixture.qrToken}`);
     await expect(page.getByText(fixture.dishName)).toBeVisible();
-    await page.getByRole('button', { name: 'Zamówienia' }).click();
+    await page.getByRole('button', { name: 'Rachunek', exact: true }).click();
 
     await page.getByRole('button', { name: 'Poproś o rachunek' }).click();
     await page.getByRole('button', { name: 'Każdy za siebie' }).click();
