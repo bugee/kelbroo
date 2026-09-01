@@ -8,6 +8,7 @@ import {
   Patch,
   Put,
   Query,
+  Res,
   Post,
   UseGuards,
 } from '@nestjs/common';
@@ -26,6 +27,7 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator';
+import type { Response } from 'express';
 import type { OrderStatus, SplitMode } from '@kelbroo/types';
 import { Roles, Staff, StaffAuthGuard } from '../auth/staff.guard';
 import type { StaffContext } from '../auth/auth.types';
@@ -363,6 +365,33 @@ export class StaffController {
   @Roles('owner', 'manager')
   salesReport(@Staff() staff: StaffContext, @Query('days') days?: string) {
     return this.reports.sprzedaz(staff, Number(days ?? 7));
+  }
+
+  /**
+   * Ten sam raport jako plik do arkusza. Funkcja planu Pro i wyższych.
+   *
+   * Bramka planu stoi **w serwisie**, nie tutaj: ukrycie przycisku w panelu
+   * jest wygodą, nie zabezpieczeniem.
+   */
+  @Get('reports/sales.csv')
+  @Roles('owner', 'manager')
+  async salesCsv(
+    @Staff() staff: StaffContext,
+    @Res({ passthrough: true }) response: Response,
+    @Query('days') days?: string,
+    @Query('zakres') zakres?: string,
+  ) {
+    const plik = await this.reports.csv(
+      staff,
+      Number(days ?? 7),
+      zakres === 'dania' ? 'dania' : 'dni',
+    );
+
+    response.set({
+      'content-type': 'text/csv; charset=utf-8',
+      'content-disposition': `attachment; filename="${plik.nazwaPliku}"`,
+    });
+    return plik.tresc;
   }
 
   @Get('sessions/:id/split')

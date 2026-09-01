@@ -60,7 +60,7 @@ const PLANY: Plan[] = [
       'Zdjęcia dań w karcie',
       'Podział rachunku po pozycjach i grupami',
       'Oceny dań i feedback do managera',
-      'Analityka i eksport raportów',
+      'Analityka i eksport raportów do CSV',
       'Konta personelu bez limitu',
       'Wsparcie w 4 godziny',
     ],

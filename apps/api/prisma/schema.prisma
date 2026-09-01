@@ -340,6 +340,13 @@ model Subscription {
   /// dla historycznych rachunków i nie zajmuje miejsca w planie.
   menuItemLimit Int @default(9999) @map("menu_item_limit")
 
+  /// Czy lokal może wynieść raport sprzedaży do pliku CSV.
+  ///
+  /// Sam **ekran** sprzedaży widzi każdy plan z zamawianiem; płatny jest wynos
+  /// danych. Wartość siedzi na abonamencie, nie w kodzie planu, żeby zaplecze
+  /// mogło ją nadać pojedynczemu klientowi bez zmiany cennika.
+  reportsExportEnabled Boolean @default(false) @map("reports_export_enabled")
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 

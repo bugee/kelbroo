@@ -114,6 +114,51 @@ export class ReportsService {
   }
 
   /**
+   * Ten sam raport jako plik CSV.
+   *
+   * Dwa zakresy zamiast jednego pliku z sekcjami: arkusze nie radzą sobie
+   * z plikiem, w którym co kilkanaście wierszy zmienia się liczba kolumn.
+   */
+  async csv(
+    staff: StaffContext,
+    dni: number,
+    zakres: 'dni' | 'dania',
+  ): Promise<{ nazwaPliku: string; tresc: string }> {
+    await this.wymagajEksportu(staff.organizationId);
+    const raport = await this.sprzedaz(staff, dni);
+
+    const tresc =
+      zakres === 'dni'
+        ? doCsv(
+            ['Doba biznesowa', 'Zamówienia', `Sprzedaż (${raport.currency})`],
+            raport.dni.map((dzien) => [dzien.data, dzien.zamowien, dzien.sprzedazCents / 100]),
+          )
+        : doCsv(
+            ['Danie', 'Sztuk', `Sprzedaż (${raport.currency})`],
+            raport.dania.map((danie) => [danie.nazwa, danie.sztuk, danie.sprzedazCents / 100]),
+          );
+
+    return { nazwaPliku: `kelbroo-${zakres}-${raport.od}_${raport.do}.csv`, tresc };
+  }
+
+  /**
+   * Bramka planu **po stronie serwera**.
+   *
+   * Ukrycie przycisku w panelu jest wygodą, nie zabezpieczeniem — ta sama
+   * zasada, co przy zdjęciach dań i ocenach.
+   */
+  private async wymagajEksportu(organizationId: string): Promise<void> {
+    const wolno = await this.prisma.withTenant(organizationId, async (tx) => {
+      const subscription = await tx.subscription.findUnique({ where: { organizationId } });
+      return subscription?.reportsExportEnabled === true;
+    });
+
+    if (!wolno) {
+      throw new ForbiddenException('Eksport raportów jest dostępny w planie Pro i wyższych.');
+    }
+  }
+
+  /**
    * Ranking dań po nazwie ze snapshotu, nie po identyfikatorze pozycji z karty.
    *
    * Snapshot jest tym, co gość widział i za co zapłacił — a pozycja usunięta
@@ -261,6 +306,32 @@ export class ReportsService {
     }
     return dni;
   }
+}
+
+/**
+ * Raport jako plik do arkusza.
+ *
+ * **Średnik, przecinek dziesiętny i BOM** — trzy rzeczy, bez których plik otwiera
+ * się w polskim Excelu jako jedna kolumna krzaków. To nie jest wybór estetyczny:
+ * arkusz w polskiej lokalizacji oczekuje średnika jako separatora pól i przecinka
+ * w liczbach, a bez znacznika BOM traktuje UTF-8 jak stronę kodową Windows.
+ *
+ * Kwoty w złotych, nie w groszach: plik trafia do księgowej, nie do programisty.
+ */
+export function doCsv(naglowki: string[], wiersze: (string | number)[][]): string {
+  const komorka = (wartosc: string | number): string => {
+    if (typeof wartosc === 'number') {
+      // Liczba sztuk ma być „3", nie „3,00" — dwa miejsca po przecinku przy
+      // liczniku wyglądają jak kwota i mylą przy pierwszym spojrzeniu.
+      return Number.isInteger(wartosc) ? String(wartosc) : wartosc.toFixed(2).replace('.', ',');
+    }
+    // Cudzysłów podwajamy, całość w cudzysłowie — nazwa dania bywa
+    // ze średnikiem („Zestaw: zupa; drugie") i rozbiłaby wiersz na dwa.
+    return `"${wartosc.replace(/"/g, '""')}"`;
+  };
+
+  const linie = [naglowki, ...wiersze].map((wiersz) => wiersz.map(komorka).join(';'));
+  return `\ufeff${linie.join('\r\n')}\r\n`;
 }
 
 /** Przesuwa datę biznesową o zadaną liczbę dni. Kalendarz, nie moment w czasie. */

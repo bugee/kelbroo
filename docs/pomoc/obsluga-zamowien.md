@@ -163,6 +163,16 @@ Dwie rzeczy warto wiedzieć, żeby liczby się zgadzały z tym, co pamiętasz ze
 - **Zamówienia odrzucone i anulowane nie wchodzą** do sprzedaży. To ta sama reguła,
   którą liczy się rachunek stolika.
 
+### Eksport do arkusza
+
+W planie Pro i wyższych pod nagłówkiem są przyciski **Pobierz dzień po dniu**
+i **Pobierz ranking dań**. Plik CSV otwiera się bezpośrednio w Excelu i Arkuszach
+Google — ma polski separator i przecinek dziesiętny, więc liczby wchodzą jako
+liczby, a nie jako tekst.
+
+Dwa osobne pliki zamiast jednego: arkusz nie radzi sobie z plikiem, w którym
+w połowie zmienia się liczba kolumn.
+
 ## Paragon i kasa fiskalna
 
 kelbroo **nie wystawia paragonów i nie zastępuje kasy fiskalnej**. Na ekranie Sala

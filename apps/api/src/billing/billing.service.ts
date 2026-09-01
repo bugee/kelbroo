@@ -484,6 +484,7 @@ export class BillingService {
           ...limity,
           menuPhotosEnabled: plan.features.menuPhotos,
           reviewsEnabled: plan.features.reviews,
+          reportsExportEnabled: plan.features.reportsExport,
         },
         update: {
           plan: zamowienie.plan,
@@ -495,6 +496,7 @@ export class BillingService {
           // w chwili zakupu, a wyjątek trzeba wtedy nadać na nowo.
           menuPhotosEnabled: plan.features.menuPhotos,
           reviewsEnabled: plan.features.reviews,
+          reportsExportEnabled: plan.features.reportsExport,
         },
       });
 

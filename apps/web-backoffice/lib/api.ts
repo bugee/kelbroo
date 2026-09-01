@@ -164,6 +164,8 @@ export interface KartaKlienta {
     menuPhotosEnabled: boolean;
     /** Oceny gości. Tak samo: wartość z planu, z możliwością nadpisania. */
     reviewsEnabled: boolean;
+    /** Eksport raportu sprzedaży do CSV — funkcja planu Pro i wyższych. */
+    reportsExportEnabled: boolean;
   };
   lokale: {
     id: string;
@@ -211,7 +213,7 @@ export const changePlan = (id: string, plan: Plan, reason: string) =>
  * **Zmiana planu kasuje taki wyjątek** — plan jest wtedy świeżą decyzją i ustawia
  * funkcje na wartości z cennika. Trzeba go wtedy nadać na nowo.
  */
-export type Funkcja = 'menuPhotos' | 'reviews';
+export type Funkcja = 'menuPhotos' | 'reviews' | 'reportsExport';
 
 export type Limit = 'tableLimit' | 'languageLimit' | 'staffLimit' | 'menuItemLimit';
 
@@ -228,10 +230,11 @@ export const setLimit = (id: string, limit: Limit, value: number, reason: string
   });
 
 export const setFeature = (id: string, feature: Funkcja, enabled: boolean, reason: string) =>
-  operacja<{ menuPhotosEnabled: boolean; reviewsEnabled: boolean }>(
-    `/platform/clients/${id}/feature`,
-    { feature, enabled, reason },
-  );
+  operacja<{
+    menuPhotosEnabled: boolean;
+    reviewsEnabled: boolean;
+    reportsExportEnabled: boolean;
+  }>(`/platform/clients/${id}/feature`, { feature, enabled, reason });
 
 export const blockClient = (id: string, reason: string) =>
   operacja<{ zablokowane: boolean }>(`/platform/clients/${id}/block`, { reason });

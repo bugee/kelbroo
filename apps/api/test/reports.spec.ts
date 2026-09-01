@@ -294,3 +294,60 @@ describe('godziny', () => {
     expect(zZamowieniem[0]!.godzina).toBeGreaterThan(10);
   });
 });
+
+describe('eksport CSV', () => {
+  /** Ustawia flagę funkcji na abonamencie lokalu testowego. */
+  async function ustawEksport(enabled: boolean) {
+    await direct.subscription.upsert({
+      where: { organizationId },
+      update: { reportsExportEnabled: enabled },
+      create: {
+        organizationId,
+        plan: 'pro',
+        status: 'active',
+        tableLimit: 40,
+        languageLimit: 6,
+        reportsExportEnabled: enabled,
+      },
+    });
+  }
+
+  it('odmawia planom bez tej funkcji', async () => {
+    await ustawEksport(false);
+
+    // Bramka stoi po stronie serwera — ukrycie przycisku w panelu jest wygodą,
+    // nie zabezpieczeniem.
+    await expect(reports.csv(manager, 7, 'dni')).rejects.toThrow(/Pro i wyższych/);
+  });
+
+  it('daje plik, który polski arkusz otworzy poprawnie', async () => {
+    await ustawEksport(true);
+    await zamowienie({
+      businessDate: dobaDzis(),
+      pozycje: [{ nazwa: 'Zestaw: zupa; drugie', sztuk: 3, cenaCents: 2050 }],
+    });
+
+    const plik = await reports.csv(manager, 7, 'dania');
+
+    // Trzy rzeczy, bez których plik otwiera się jako jedna kolumna krzaków:
+    // znacznik BOM, średnik jako separator i przecinek dziesiętny.
+    expect(plik.tresc.startsWith('﻿')).toBe(true);
+    expect(plik.tresc).toContain('"Danie";"Sztuk"');
+    expect(plik.tresc).toContain('61,50');
+
+    // Średnik w nazwie dania nie może rozbić wiersza na dwa.
+    expect(plik.tresc).toContain('"Zestaw: zupa; drugie";3;61,50');
+    expect(plik.nazwaPliku).toMatch(/^kelbroo-dania-\d{4}-\d{2}-\d{2}_\d{4}-\d{2}-\d{2}\.csv$/);
+  });
+
+  it('eksport dni ma po wierszu na dobę, także pustą', async () => {
+    await ustawEksport(true);
+
+    const plik = await reports.csv(manager, 3, 'dni');
+    const wiersze = plik.tresc.trimEnd().split('\r\n');
+
+    // Nagłówek + trzy doby. Dzień bez sprzedaży zostaje z zerem, żeby wykres
+    // w arkuszu nie zsuwał sąsiednich słupków.
+    expect(wiersze).toHaveLength(4);
+  });
+});

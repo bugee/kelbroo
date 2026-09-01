@@ -47,6 +47,14 @@ export interface PlanFeatures {
   menuPhotos: boolean;
   /** Oceny dań i wizyty od gości, czytane przez managera w panelu. */
   reviews: boolean;
+  /**
+   * Eksport raportu sprzedaży do CSV.
+   *
+   * Sam **ekran** sprzedaży widzi każdy plan z zamawianiem — to jest „podstawowy
+   * pulpit" z product.md §5.1. Płatny jest wynos danych: to on odróżnia
+   * zaglądanie w liczby od pracy na nich w arkuszu.
+   */
+  reportsExport: boolean;
 }
 
 export interface Plan {
@@ -76,14 +84,14 @@ export const PLANS: Record<PlanId, Plan> = {
     id: 'menu',
     name: 'Menu',
     limits: { tableLimit: BEZ_LIMITU, languageLimit: 1, staffLimit: 1, menuItemLimit: 10 },
-    features: { menuPhotos: false, reviews: false },
+    features: { menuPhotos: false, reviews: false, reportsExport: false },
     netCents: { month: 0, year: 0 },
   },
   starter: {
     id: 'starter',
     name: 'Starter',
     limits: { tableLimit: 12, languageLimit: 2, staffLimit: 3, menuItemLimit: 50 },
-    features: { menuPhotos: false, reviews: false },
+    features: { menuPhotos: false, reviews: false, reportsExport: false },
     /**
      * ⚠️ CENA TESTOWA — do przywrócenia. Docelowo: 15_900 / 159_000
      * (159 zł/mies albo 1 590 zł/rok, czyli 132 zł/mies w przeliczeniu).
@@ -107,7 +115,7 @@ export const PLANS: Record<PlanId, Plan> = {
       staffLimit: BEZ_LIMITU,
       menuItemLimit: BEZ_LIMITU,
     },
-    features: { menuPhotos: true, reviews: true },
+    features: { menuPhotos: true, reviews: true, reportsExport: true },
     // 349 zł/mies albo 3 490 zł/rok (291 zł/mies w przeliczeniu).
     netCents: { month: 34_900, year: 349_000 },
   },
@@ -120,7 +128,7 @@ export const PLANS: Record<PlanId, Plan> = {
       staffLimit: BEZ_LIMITU,
       menuItemLimit: BEZ_LIMITU,
     },
-    features: { menuPhotos: true, reviews: true },
+    features: { menuPhotos: true, reviews: true, reportsExport: true },
     netCents: { month: null, year: null },
   },
 };

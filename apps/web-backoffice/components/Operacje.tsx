@@ -141,6 +141,7 @@ export function Operacje({ karta, onZmiana }: { karta: KartaKlienta; onZmiana: (
         [
           ['menuPhotos', 'Zdjęcia dań', karta.abonament.menuPhotosEnabled],
           ['reviews', 'Oceny gości', karta.abonament.reviewsEnabled],
+          ['reportsExport', 'Eksport raportów', karta.abonament.reportsExportEnabled],
         ] as const
       ).map(([funkcja, nazwa, wlaczona]) => (
         <div key={funkcja} className="flex flex-wrap items-center gap-3">

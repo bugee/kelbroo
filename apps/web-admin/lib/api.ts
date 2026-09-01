@@ -374,6 +374,41 @@ export interface SalesReport {
 export const fetchSalesReport = (days: number) =>
   authorized<SalesReport>(`/staff/reports/sales?days=${days}`);
 
+/**
+ * Pobranie pliku CSV.
+ *
+ * Nie zwykłym odnośnikiem, bo żądanie musi nieść token sesji — `<a href>` nie
+ * dołoży nagłówka. Stąd pobranie do pamięci i sztuczne kliknięcie w odnośnik
+ * do obiektu w przeglądarce; nazwę pliku podaje serwer.
+ */
+export async function downloadSalesCsv(days: number, zakres: 'dni' | 'dania'): Promise<void> {
+  const access = readAccess();
+  const response = await fetch(`${API}/staff/reports/sales.csv?days=${days}&zakres=${zakres}`, {
+    headers: access ? { authorization: `Bearer ${access}` } : undefined,
+    cache: 'no-store',
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      response.status === 403
+        ? 'Eksport raportów jest dostępny w planie Pro i wyższych.'
+        : 'Nie udało się pobrać pliku.',
+    );
+  }
+
+  const nazwa =
+    /filename="([^"]+)"/.exec(response.headers.get('content-disposition') ?? '')?.[1] ??
+    'kelbroo-raport.csv';
+
+  const url = URL.createObjectURL(await response.blob());
+  const odnosnik = document.createElement('a');
+  odnosnik.href = url;
+  odnosnik.download = nazwa;
+  odnosnik.click();
+  // Bez tego obiekt zostaje w pamięci karty do jej zamknięcia.
+  URL.revokeObjectURL(url);
+}
+
 export const fetchOrderingTables = () => authorized<OrderingTable[]>('/staff/tables');
 export const fetchOrderingMenu = () => authorized<OrderingMenu>('/staff/menu');
 
@@ -739,6 +774,8 @@ export interface SubscriptionState {
   menuPhotosEnabled: boolean;
   /** Czy lokal zbiera oceny gości. Panel chowa po tym ekran opinii. */
   reviewsEnabled: boolean;
+  /** Czy wolno wynieść raport do CSV. Sam ekran sprzedaży widzi każdy plan. */
+  reportsExportEnabled: boolean;
   /** Ile pozycji mieści karta w tym planie. */
   menuItemLimit: number | null;
 }

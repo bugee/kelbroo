@@ -77,8 +77,8 @@ class LimitsDto extends PowodDto {
 
 /** Włączenie funkcji poza planem — dziś jedna, ale lista z założenia urośnie. */
 class FeatureDto extends PowodDto {
-  @IsIn(['menuPhotos', 'reviews'])
-  feature!: 'menuPhotos' | 'reviews';
+  @IsIn(['menuPhotos', 'reviews', 'reportsExport'])
+  feature!: 'menuPhotos' | 'reviews' | 'reportsExport';
 
   @IsBoolean()
   enabled!: boolean;

@@ -3,7 +3,13 @@
 import { useCallback, useState } from 'react';
 import { StaffShell } from '@/components/StaffShell';
 import { useLiveData } from '@/components/useLiveData';
-import { fetchSalesReport, money, type SalesReport } from '@/lib/api';
+import {
+  downloadSalesCsv,
+  fetchSalesReport,
+  fetchSubscription,
+  money,
+  type SalesReport,
+} from '@/lib/api';
 
 /**
  * Okresy do wyboru. Trzy, nie dziesięć.
@@ -24,7 +30,13 @@ export default function ReportsPage() {
 
 function Raport() {
   const [dni, setDni] = useState(7);
+  const [pobieranie, setPobieranie] = useState<string | null>(null);
+  const [bladPliku, setBladPliku] = useState<string | null>(null);
+
   const load = useCallback(() => fetchSalesReport(dni), [dni]);
+  // Plan zmienia się rzadko — pytamy raz na pięć minut, jak w powłoce.
+  const loadPlan = useCallback(() => fetchSubscription(), []);
+  const { data: abonament } = useLiveData(loadPlan, 300_000);
   // Raport nie jest ekranem serwisu — odświeżanie co 15 sekund byłoby ruchem
   // bez powodu. Pięć minut wystarcza, żeby liczba z dziś była aktualna.
   const { data: raport, error } = useLiveData(load, 300_000);
@@ -59,6 +71,51 @@ function Raport() {
         Doba biznesowa {raport.od} — {raport.do}. Liczymy zamówienia przyjęte; odrzucone i anulowane
         nie wchodzą.
       </p>
+
+      {/*
+        Eksport to funkcja planu Pro. Przycisk pokazujemy dopiero, gdy znamy plan —
+        migające i znikające przyciski czyta się jak usterkę. Bramka i tak stoi
+        po stronie serwera; ukrycie jest wygodą, nie zabezpieczeniem.
+      */}
+      {abonament?.reportsExportEnabled && (
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          {(
+            [
+              ['dni', 'Pobierz dzień po dniu'],
+              ['dania', 'Pobierz ranking dań'],
+            ] as const
+          ).map(([zakres, etykieta]) => (
+            <button
+              key={zakres}
+              type="button"
+              disabled={pobieranie !== null}
+              onClick={() => {
+                setPobieranie(zakres);
+                setBladPliku(null);
+                void downloadSalesCsv(dni, zakres)
+                  .catch((przyczyna: unknown) =>
+                    setBladPliku(
+                      przyczyna instanceof Error
+                        ? przyczyna.message
+                        : 'Nie udało się pobrać pliku.',
+                    ),
+                  )
+                  .finally(() => setPobieranie(null));
+              }}
+              className="mono min-h-11 rounded-[var(--radius-control)] border border-[var(--line-strong)] px-4 text-sm font-semibold disabled:opacity-50"
+            >
+              {pobieranie === zakres ? 'Pobieram…' : etykieta}
+            </button>
+          ))}
+          <span className="mono text-xs text-[var(--muted)]">CSV do arkusza</span>
+        </div>
+      )}
+
+      {bladPliku && (
+        <p role="alert" className="mt-2 text-sm text-[var(--orange)]">
+          {bladPliku}
+        </p>
+      )}
 
       <div className="mt-4 grid gap-3 sm:grid-cols-3">
         <Kafel

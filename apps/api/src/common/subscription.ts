@@ -29,6 +29,8 @@ export interface StanAbonamentu {
   menuPhotosEnabled: boolean;
   /** Czy lokal zbiera oceny gości. Panel chowa po tym cały ekran opinii. */
   reviewsEnabled: boolean;
+  /** Czy wolno wynieść raport sprzedaży do CSV. Sam ekran widzi każdy plan. */
+  reportsExportEnabled: boolean;
   /** `null`, gdy abonament nie ma daty końca. */
   currentPeriodEnd: Date | null;
   /** Ile dni zostało; ujemne, gdy termin minął. `null` przy braku daty. */
@@ -54,6 +56,7 @@ export async function readSubscription(
     menuItemLimit: subscription?.menuItemLimit ?? null,
     menuPhotosEnabled: subscription?.menuPhotosEnabled ?? false,
     reviewsEnabled: subscription?.reviewsEnabled ?? false,
+    reportsExportEnabled: subscription?.reportsExportEnabled ?? false,
     currentPeriodEnd: subscription?.currentPeriodEnd ?? null,
     daysLeft: subscription?.currentPeriodEnd
       ? Math.ceil((subscription.currentPeriodEnd.getTime() - Date.now()) / DZIEN)

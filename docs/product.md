@@ -69,7 +69,7 @@ Szczegółowy diagram sekwencji: patrz [architecture.md §6](architecture.md#6-p
 | Konta personelu *(egzekwowane od 2026-08-26)* | 1 | 3 | bez limitu | bez limitu |
 | Zdjęcia dań w karcie *(od 2026-08-27; zaplecze może włączyć w niższym planie)* | ❌ | ❌ | ✅ | ✅ |
 | Oceny dań i feedback do managera *(od 2026-08-27; jedna wersja, bez podziału „podstawowe/pełne"; zaplecze może włączyć w niższym planie)* | ❌ | ❌ | ✅ | ✅ |
-| Analityka i raporty | ❌ | podstawowy pulpit | ✅ pełna + eksport | ✅ + API raportowe |
+| Analityka i raporty *(ekran sprzedaży od 2026-09-01)* | ❌ | ekran sprzedaży | ekran sprzedaży **+ eksport CSV** | j.w. + API raportowe |
 | Podział rachunku | ❌ | „każdy za siebie” | ✅ pełny (po pozycjach, grupami, po równo) | ✅ pełny |
 | Wiele lokali w jednej organizacji | ❌ | ❌ | ❌ | ✅ |
 | Integracja z kasą fiskalną / POS | ❌ | ❌ | dodatek płatny | ✅ w cenie |

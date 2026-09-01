@@ -187,6 +187,7 @@ export class PlatformClientService {
           // przepada przy zmianie planu — trzeba je wtedy nadać na nowo, świadomie.
           menuPhotosEnabled: PLANS[plan].features.menuPhotos,
           reviewsEnabled: PLANS[plan].features.reviews,
+          reportsExportEnabled: PLANS[plan].features.reportsExport,
         },
       });
     });
@@ -265,7 +266,7 @@ export class PlatformClientService {
   async setFeature(
     admin: PlatformAdminContext,
     organizationId: string,
-    feature: 'menuPhotos' | 'reviews',
+    feature: 'menuPhotos' | 'reviews' | 'reportsExport',
     enabled: boolean,
     powod: string,
   ) {
@@ -280,8 +281,13 @@ export class PlatformClientService {
       }
       return tx.subscription.update({
         where: { organizationId },
-        data:
-          feature === 'menuPhotos' ? { menuPhotosEnabled: enabled } : { reviewsEnabled: enabled },
+        // Mapa zamiast łańcucha `if`: przy trzeciej funkcji warunek zaczynał
+        // gubić przypadki, a przy czwartej zgubiłby na pewno.
+        data: {
+          menuPhotos: { menuPhotosEnabled: enabled },
+          reviews: { reviewsEnabled: enabled },
+          reportsExport: { reportsExportEnabled: enabled },
+        }[feature],
       });
     });
 
@@ -292,6 +298,7 @@ export class PlatformClientService {
     return {
       menuPhotosEnabled: wynik.menuPhotosEnabled,
       reviewsEnabled: wynik.reviewsEnabled,
+      reportsExportEnabled: wynik.reportsExportEnabled,
     };
   }
 

@@ -53,10 +53,11 @@ ze schematu nie stoi już bez kodu.
    własne awarie — bazę, Redisa, wywrócone zadania, odmowy operatora płatności.
    Zostaje dziura, której z definicji nie da się zatkać od środka: **martwy proces
    nie wyśle wiadomości o własnej śmierci**. Potrzebny monitor spoza maszyny.
-2. **Jedna obietnica ze strony produktowej nie ma pokrycia w kodzie** (§5f,
-   przeliczone 2026-08-27; z dziewięciu trzy zamknięto skreśleniem obietnicy,
-   pięć dopisaniem kodu). Zostaje **analityka i eksport raportów** — najbardziej
-   rozbudowana pozycja z całej listy.
+2. ~~Obietnice ze strony bez pokrycia w kodzie.~~ **Rejestr §5f zamknięty 2026-09-01:**
+   z dziesięciu pozycji trzy skreślono jako obietnice, siedem dopisano kodem.
+   Analityka była ostatnia. Rejestr zostaje jako nawyk — **dwie ostatnie pozycje
+   doszły do niego po audycie**, obie znalezione dopiero wtedy, gdy ktoś przeczytał
+   prozę pod nagłówkami, a nie same nagłówki.
 
 Ścieżka gościa ma od 2026-08-27 test e2e (§7) — zamawianie, kolejka potwierdzeń,
 obie strony bramki kuchennej i rozliczenie stolika. Regresja nie wróci już
@@ -604,8 +605,8 @@ Kolejność według tego, ile kosztuje odkrycie braku przez klienta, który już
       Obietnica z sekcji o podziale rachunku, w czasie teraźniejszym, sprzedawana
       od pierwszej wersji strony i **pominięta przez pierwszy audyt** (patrz wyżej).
       Szczegóły w §4.
-- [~] **„Analityka i eksport raportów" — ekran sprzedaży zbudowany** (2026-09-01),
-      eksport jeszcze nie. Świadomie **wąsko**: jeden ekran odpowiadający na trzy
+- [x] **„Analityka i eksport raportów"** (2026-09-01) — ostatnia obietnica ze strony
+      produktowej bez pokrycia w kodzie. Świadomie **wąsko**: jeden ekran odpowiadający na trzy
       pytania, które restaurator zadaje po dwóch tygodniach pracy — ile sprzedaliśmy,
       co się sprzedaje, o których godzinach zamawiają. Reszta z
       [docs/02 §3.10](02-admin-panel.md) czeka, aż okaże się, których pozycji
@@ -626,7 +627,22 @@ Kolejność według tego, ile kosztuje odkrycie braku przez klienta, który już
         pojedyncze `AT TIME ZONE` przeliczało **w drugą stronę** i wykres pokazywał
         południe o ósmej rano. Konwersja jest teraz dwustopniowa.
 
-      Zostaje **eksport do CSV** — to on domyka obietnicę z cennika Pro w całości.
+      **Eksport do CSV dołożony tego samego dnia** i to on domyka obietnicę z cennika
+      Pro w całości. Dwa pliki zamiast jednego z sekcjami — arkusze nie radzą sobie
+      z plikiem, w którym co kilkanaście wierszy zmienia się liczba kolumn.
+
+      **Format jest pod polski arkusz, nie pod programistę:** znacznik BOM, średnik
+      jako separator i przecinek dziesiętny. Bez tych trzech rzeczy plik otwiera się
+      w Excelu jako jedna kolumna krzaków. Kwoty w złotych, bo trafiają do księgowej.
+
+      **Podział na plany zgodny z `product.md`:** sam **ekran** widzi każdy plan
+      z zamawianiem („podstawowy pulpit"), płatny jest **wynos danych** — to on
+      odróżnia zaglądanie w liczby od pracy na nich w arkuszu. Nowa flaga
+      `reportsExportEnabled` na abonamencie, jak przy zdjęciach i ocenach, więc
+      zaplecze może ją nadać pojedynczemu klientowi.
+
+      Przy okazji: przełącznik funkcji w zapleczu miał łańcuch `if` na dwie wartości
+      i przy trzeciej zaczynał gubić przypadki. Zastąpiony mapą.
 - [x] **Pro: podział rachunku „po pozycjach"** (2026-08-27). Domyka ostatnią
       rozbieżność między `product.md` a kodem: dokument mówił „po pozycjach", a tryb
       nie istniał.
