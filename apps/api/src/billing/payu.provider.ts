@@ -35,6 +35,15 @@ const STATUSY: Record<string, PaymentNotification['status']> = {
   WAITING_FOR_CONFIRMATION: 'pending',
   COMPLETED: 'completed',
   CANCELED: 'canceled',
+  /**
+   * Płatność odrzucona przez operatora — dla nas to samo co anulowana.
+   *
+   * Brakowało jej tu do 2026-09-01 i skutek był gorszy, niż wygląda: nieznany
+   * status leciał jako błąd podpisu, czyli odpowiedź 401. PayU ponawiał wtedy
+   * powiadomienie w kółko, a w naszym logu **nie było ani śladu**, bo kontroler
+   * zamieniał wyjątek na kod HTTP bez zapisu.
+   */
+  REJECTED: 'canceled',
 };
 
 /**
@@ -235,7 +244,7 @@ export class PayuProvider extends SubscriptionPaymentProvider {
     return {
       externalId: zamowienie.extOrderId,
       providerOrderId: zamowienie.orderId,
-      status,
+      status: status ?? 'pending',
       grossCents: Number(zamowienie.totalAmount ?? 0),
       currency: zamowienie.currencyCode ?? 'PLN',
     };
@@ -260,15 +269,26 @@ export class PayuProvider extends SubscriptionPaymentProvider {
       throw new PaymentSignatureError('Powiadomienie nie zawiera zamówienia.');
     }
 
+    /**
+     * Nieznany status **nie jest** błędem podpisu i nie może kończyć się 401.
+     *
+     * 401 każe operatorowi ponawiać powiadomienie, a ponawianie nie sprawi, że
+     * status nagle stanie się znany — to pętla bez wyjścia. Traktujemy go więc
+     * jak `pending`: nie ruszamy abonamentu, odpowiadamy 200, a prawdę i tak
+     * ustali zadanie uzgadniające, pytając operatora wprost.
+     */
     const status = STATUSY[zamowienie.status];
     if (!status) {
-      throw new PaymentSignatureError(`Nieznany status PayU: ${zamowienie.status}`);
+      this.logger.error(
+        `Nieznany status PayU „${zamowienie.status}" dla ${zamowienie.extOrderId} — ` +
+          'traktuję jak oczekujące. Uzupełnij mapę statusów.',
+      );
     }
 
     return {
       externalId: zamowienie.extOrderId,
       providerOrderId: zamowienie.orderId,
-      status,
+      status: status ?? 'pending',
       grossCents: Number(zamowienie.totalAmount ?? 0),
       currency: zamowienie.currencyCode ?? 'PLN',
     };

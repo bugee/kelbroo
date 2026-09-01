@@ -368,6 +368,16 @@ export class BillingService {
   async handleNotification(rawBody: Buffer, signature?: string): Promise<void> {
     const powiadomienie = this.provider.readNotification(rawBody, signature);
 
+    /**
+     * Ślad, że powiadomienie **w ogóle dotarło**.
+     *
+     * Bez tego wiersza nie da się rozstrzygnąć jedynego pytania, jakie zadaje się
+     * przy nieprzedłużonym abonamencie: czy operator do nas nie zadzwonił, czy
+     * zadzwonił, a my odrzuciliśmy. To dwie różne awarie, w dwóch różnych
+     * miejscach, a z zewnątrz wyglądają identycznie.
+     */
+    this.logger.log(`Powiadomienie PayU: ${powiadomienie.externalId} → ${powiadomienie.status}`);
+
     // Jedyny odczyt w poprzek najemców: bez niego nie wiadomo, w czyim kontekście
     // otworzyć transakcję.
     const organizationId = await this.znajdzNajemce(powiadomienie.externalId);

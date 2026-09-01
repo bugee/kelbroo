@@ -174,10 +174,22 @@ describe('podpis powiadomienia', () => {
     expect(provider.readNotification(body, naglowek).status).toBe('completed');
   });
 
-  it('nie zgaduje nieznanego statusu', () => {
+  it('odrzucenie płatności czyta jak anulowanie', () => {
+    // `REJECTED` **jest** statusem PayU i do 2026-09-01 brakowało go w mapie.
+    // Skutek był gorszy, niż wygląda: leciał jako błąd podpisu, czyli 401, więc
+    // operator ponawiał powiadomienie w kółko, a w logu nie było ani śladu.
     const { body, naglowek } = powiadomienie('abc-123', 'REJECTED', 19_557);
 
-    expect(() => provider.readNotification(body, naglowek)).toThrow(PaymentSignatureError);
+    expect(provider.readNotification(body, naglowek).status).toBe('canceled');
+  });
+
+  it('nieznany status traktuje jak oczekujący, zamiast odsyłać 401', () => {
+    // Ponawianie nie sprawi, że status stanie się znany — 401 byłby pętlą bez
+    // wyjścia. `pending` nie rusza abonamentu, a prawdę ustali uzgadnianie,
+    // pytając operatora wprost.
+    const { body, naglowek } = powiadomienie('abc-123', 'CO_TO_JEST', 19_557);
+
+    expect(provider.readNotification(body, naglowek).status).toBe('pending');
   });
 
   it('stan przejściowy operatora to dla nas brak wpłaty', () => {

@@ -946,6 +946,60 @@ jest skrócenie tego czasu albo wyłączenie pola notatki w restauracji pokazowe
 
 ---
 
+## Płatność nie została zaksięgowana — co sprawdzić
+
+Klient zapłacił, wrócił z bramki i widzi **„Potwierdzenie jeszcze nie dotarło"**.
+Ten ekran pyta serwer przez **30 sekund** (dwadzieścia prób co półtorej sekundy)
+i po tym czasie mówi „jeszcze nie" — to **nie jest** komunikat o błędzie.
+
+Pytanie do rozstrzygnięcia jest jedno: **czy operator do nas nie zadzwonił, czy
+zadzwonił, a my odrzuciliśmy.** To dwie różne awarie w dwóch różnych miejscach,
+a z zewnątrz wyglądają identycznie.
+
+### 1. Czy nasz adres powiadomień w ogóle odpowiada
+
+```bash
+curl -i -X POST https://panel.kelbroo.com/api/billing/notify
+```
+
+Oczekiwane: **401** z komunikatem o braku treści. To znaczy, że żądanie doszło
+do API — trasa i certyfikat działają. **404 albo 502** znaczą, że powiadomienie
+PayU nie miało jak do nas trafić i szukać trzeba w Caddym albo w kontenerze.
+
+### 2. Co widzi nasz log
+
+```bash
+docker compose -f docker-compose.prod.yml --env-file .env.prod logs api --since 1h \
+  | grep -i "powiadomienie\|payu\|uzgadnianie"
+```
+
+| Co w logu | Co to znaczy |
+|---|---|
+| `Powiadomienie PayU: <id> → completed` | Doszło i zostało przyjęte. Problem jest gdzie indziej — sprawdź zamówienie w bazie |
+| `Odrzucone powiadomienie PayU: …` | Doszło i **odrzuciliśmy podpis**. Prawie zawsze zły `PAYU_SECOND_KEY` — np. klucz z piaskownicy na produkcji |
+| `Nieznany status PayU „…"` | Doszło, ale operator przysłał stan, którego nie znamy. Uzupełnij mapę statusów |
+| **cisza** | **Powiadomienie do nas nie dotarło.** Szukaj po stronie PayU (punkt 3) |
+
+### 3. Co widzi PayU
+
+W panelu operatora, przy zamówieniu, jest historia powiadomień z kodami
+odpowiedzi. Trzy najczęstsze przyczyny ciszy po naszej stronie:
+
+- **Płatność wisi w `WAITING_FOR_CONFIRMATION`** — POS ma wyłączony automatyczny
+  odbiór, więc środki są zablokowane, ale nie zaksięgowane. Dla nas to wciąż
+  „brak wpłaty" i **tak ma być**; włącz automatyczny odbiór w konfiguracji POS.
+- **Powiadomienia wyłączone albo skierowane gdzie indziej** w ustawieniach punktu
+  płatności.
+- **Płatność nie doszła do skutku** — status `CANCELED` albo `REJECTED`.
+
+### 4. Siatka bezpieczeństwa działa sama
+
+Nie trzeba nic ratować ręcznie przez pierwszy kwadrans. **Zadanie uzgadniające
+chodzi co dziesięć minut** i pyta operatora o zamówienia wiszące dłużej niż
+**15 minut** — jeśli wpłata jest, zaksięguje ją samo i przyśle wiadomość
+„Wpłata odzyskana przez uzgadnianie". Ta wiadomość jest zarazem sygnałem, że
+**powiadomienia nie działają** i przyczyna zostaje do naprawienia.
+
 ## Alarmy o awariach
 
 Od 2026-08-27 API samo zgłasza część awarii pocztą na adres z `MAIL_NOTIFY`

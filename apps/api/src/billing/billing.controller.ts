@@ -5,6 +5,7 @@ import {
   HttpCode,
   HttpStatus,
   Ip,
+  Logger,
   Param,
   Post,
   Req,
@@ -27,6 +28,8 @@ import { CheckoutDto, assertNip } from './dto';
  */
 @Controller('billing')
 export class BillingController {
+  private readonly logger = new Logger(BillingController.name);
+
   constructor(private readonly billing: BillingService) {}
 
   @Get('plans')
@@ -90,6 +93,15 @@ export class BillingController {
       await this.billing.handleNotification(rawBody, request.get('openpayu-signature'));
     } catch (przyczyna) {
       if (przyczyna instanceof PaymentSignatureError) {
+        /**
+         * Zapisujemy **przed** odesłaniem 401 i to jest tu cała rzecz.
+         *
+         * Odrzucony podpis znaczy zwykle nie atak, tylko zły drugi klucz
+         * w konfiguracji — a wtedy **żadna płatność się nie zaksięguje**.
+         * Bez tego wiersza wygląda to z naszej strony identycznie jak brak
+         * powiadomienia: cisza w logu i abonament, który się nie przedłużył.
+         */
+        this.logger.warn(`Odrzucone powiadomienie PayU: ${przyczyna.message}`);
         throw new UnauthorizedException('Podpis powiadomienia się nie zgadza.');
       }
       throw przyczyna;
