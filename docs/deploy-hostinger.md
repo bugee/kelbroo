@@ -705,6 +705,26 @@ docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm migrate 
 Hasło musi mieć **12 znaków** — więcej niż w panelu, bo to konto widzi wszystkich
 klientów. Użyj menedżera haseł, nie wymyślaj.
 
+#### Zmiana adresu istniejącego konta
+
+**Nie rób tego skryptem powyżej.** `create-platform-admin.ts` robi `upsert` po
+adresie, więc uruchomiony z nowym adresem **założy drugie konto** zamiast zmienić
+pierwsze — a dwa czynne konta administratora platformy, o jednym zapomniane, to
+nie jest pomyłka kosmetyczna. Do zmiany adresu jest osobne polecenie:
+
+```bash
+docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm migrate \
+  pnpm exec tsx scripts/rename-platform-admin.ts \
+  "stary@adres.pl" "kontakt@kelbroo.com"
+```
+
+Hasło zostaje bez zmian. **Drugi składnik logowania idzie od tej chwili na nowy
+adres** — zanim się wylogujesz, sprawdź, że masz do niego dostęp, bo kod
+jednorazowy jest jedyną drogą do środka.
+
+Skrypt odmawia, gdy starego adresu nie ma (wypisze wtedy istniejące konta) albo
+gdy nowy jest już zajęty.
+
 ### Krok 5. Sprawdź, że działa
 
 ```bash
