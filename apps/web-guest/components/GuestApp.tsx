@@ -154,6 +154,16 @@ export function GuestApp({ qrToken }: { qrToken: string }) {
     load,
   ]);
 
+  /**
+   * Jeden stan wezwania na całą aplikację: przycisk stoi w nagłówku, a zdanie
+   * o tym, co się dzieje, nad zakładkami. Dwa miejsca, jedno źródło prawdy.
+   *
+   * Hak stoi **nad** wczesnymi `return` poniżej — ta sama zasada, co przy
+   * gnieździe realtime kilka linijek wyżej. Wywołany niżej zmieniałby liczbę
+   * hooków między renderami i wywracał cały ekran (React #310).
+   */
+  const wezwanie = useWaiterCall(qrToken, callTick);
+
   if (error) {
     return (
       <Centered>
@@ -235,22 +245,37 @@ export function GuestApp({ qrToken }: { qrToken: string }) {
             Podpis „żółty samochodzik" byłby dopisywaniem oczywistości pod obrazkiem;
             nazwa zostaje w `aria-label`, dla czytników ekranu.
           */}
-          <span className="flex items-center gap-2 text-xs text-[var(--muted)]">
+          {/*
+            `min-w-0` i przycięcie nicku: na telefonie 320 px to **nick musi
+            ustąpić**, a nie przyciski obok. Bez tego długa nazwa („Niesforny
+            Kapibara") rozpychała nagłówek i wypychała przełącznik języka poza
+            ekran — dokładnie ta sama wada, którą naprawiliśmy w dolnym pasku.
+          */}
+          <span className="flex min-w-0 flex-1 items-center gap-2 text-xs text-[var(--muted)]">
             <GuestMark
               symbol={entry.participant.symbol}
               color={entry.participant.color}
               size={22}
             />
-            {entry.participant.displayName}
+            <span className="truncate">{entry.participant.displayName}</span>
             {/* Host płaci domyślnie i do niego trafia nierozdzielony grosz przy
                 podziale — powinien o tym wiedzieć, zanim przyjdzie rachunek. */}
             {entry.participant.isHost && (
-              <span className="mono rounded-full bg-[var(--teal-wash)] px-2 py-0.5 text-[10px] text-[var(--teal)]">
+              <span className="mono shrink-0 rounded-full bg-[var(--teal-wash)] px-2 py-0.5 text-[10px] text-[var(--teal)]">
                 host
               </span>
             )}
           </span>
-          <div className="flex items-center gap-1">
+          <div className="flex shrink-0 items-center gap-1">
+            {/*
+              „Kelner" wyprowadzony tu z dolnego paska (2026-09-01). Tam był
+              **akcją w rzędzie nawigacji** i konkurował o piksele z trzema
+              zakładkami — na telefonie 360 px rząd wystawał poza ekran jeszcze
+              przed stuknięciem, a rosnąca etykieta wypychała „Rachunek".
+              Ceną jest gorszy zasięg kciuka; wezwanie kelnera jest jednak
+              akcją okazjonalną, a nie taką, którą powtarza się co chwilę.
+            */}
+            <CallWaiterButton stan={wezwanie} />
             <ThemeToggle />
             {entry.restaurant.supportedLocales.map((locale) => (
               <button
@@ -318,6 +343,7 @@ export function GuestApp({ qrToken }: { qrToken: string }) {
           cart={cart}
           currency={currency}
           onRemove={(index) => setCart((c) => c.filter((_, i) => i !== index))}
+          onBack={() => setView('menu')}
         />
       )}
       {view === 'status' && (
@@ -419,8 +445,9 @@ export function GuestApp({ qrToken }: { qrToken: string }) {
               </button>
             )}
 
+            <WaiterCallNotice stan={wezwanie} />
+
             <div className="flex gap-2">
-              <CallWaiterButton qrToken={qrToken} tick={callTick} />
               <TabButton active={view === 'menu'} onClick={() => setView('menu')}>
                 Menu
               </TabButton>
@@ -519,10 +546,13 @@ function CartView({
   cart,
   currency,
   onRemove,
+  onBack,
 }: {
   cart: CartLine[];
   currency: string;
   onRemove: (index: number) => void;
+  /** Powrót do menu — patrz komentarz przy przycisku. */
+  onBack: () => void;
 }) {
   if (cart.length === 0) {
     return (
@@ -534,9 +564,25 @@ function CartView({
 
   return (
     <main className="px-4 pt-4">
-      {/* Ta sama nazwa co na zakładce — inaczej gość nie wie, że jest tam,
-          gdzie chciał. */}
-      <h2 className="text-base">Do zamówienia</h2>
+      <div className="flex items-center justify-between gap-3">
+        {/* Ta sama nazwa co na zakładce — inaczej gość nie wie, że jest tam,
+            gdzie chciał. */}
+        <h2 className="text-base">Do zamówienia</h2>
+
+        {/*
+          **Jedyne wyjście z tego ekranu.** Gdy koszyk nie jest pusty, dolny pasek
+          pokazuje wyłącznie „Zamawiam" — zakładki znikają, więc gość, który
+          zajrzał sprawdzić zamówienie i chce dołożyć deser, nie miał czym wrócić.
+          Musiał albo zamówić, albo usunąć wszystko.
+        */}
+        <button
+          type="button"
+          onClick={onBack}
+          className="min-h-11 shrink-0 text-sm text-[var(--teal)] underline"
+        >
+          Dodaj coś jeszcze
+        </button>
+      </div>
       <ul className="mt-3 flex flex-col gap-2">
         {cart.map((line, index) => (
           <li
@@ -871,7 +917,16 @@ function Question({
  * Przycisk, który sam po chwili wraca do punktu wyjścia, kłamałby dwa razy —
  * najpierw obiecując, że ktoś idzie, potem gubiąc trwające zgłoszenie.
  */
-function CallWaiterButton({ qrToken, tick }: { qrToken: string; tick: number }) {
+/**
+ * Wezwanie kelnera — stan trzymany w jednym miejscu, pokazywany w dwóch.
+ *
+ * Przycisk stoi w nagłówku, a zdanie o tym, co się właśnie stało, nad zakładkami.
+ * Rozdzielenie jest celowe: przycisk musi mieć **stałą szerokość**, bo dzielił
+ * dolny pasek z zakładkami i rosnąca etykieta („Kelner — wysłane", a przy błędzie
+ * „Spróbuj jeszcze raz") wypychała „Rachunek" poza ekran telefonu. Wyjaśnienie
+ * przeniesione do osobnej linijki ma tyle miejsca, ile potrzebuje.
+ */
+function useWaiterCall(qrToken: string, tick: number) {
   const [call, setCall] = useState<ActiveCall | null>(null);
   const [sending, setSending] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -927,35 +982,83 @@ function CallWaiterButton({ qrToken, tick }: { qrToken: string; tick: number }) 
     }
   };
 
-  const label = sending
-    ? 'Wysyłam…'
+  return { call, idzie, doWycofania, sending, failed, send, cancel };
+}
+
+type StanWezwania = ReturnType<typeof useWaiterCall>;
+
+/**
+ * Przycisk w nagłówku. **Nazwa jest stała i to jest cały sens tej zmiany.**
+ *
+ * Stan mówi kolorem i znacznikiem, nie dłuższym napisem — inaczej szerokość
+ * zależałaby od tego, co się właśnie dzieje, a układ paska od przypadku.
+ */
+function CallWaiterButton({ stan }: { stan: StanWezwania }) {
+  const { call, idzie, doWycofania, sending, failed, send, cancel } = stan;
+
+  const opis = sending
+    ? 'Wysyłam zgłoszenie'
     : failed
-      ? 'Spróbuj jeszcze raz'
+      ? 'Nie udało się wezwać kelnera — spróbuj jeszcze raz'
       : idzie
-        ? 'Kelner idzie'
+        ? 'Kelner już idzie'
         : call
-          ? 'Kelner — wysłane'
-          : 'Kelner';
+          ? 'Kelner wezwany — stuknij ponownie, żeby wycofać'
+          : 'Wezwij kelnera';
 
   return (
     <button
       type="button"
-      // Blokujemy wyłącznie „Kelner idzie": zgłoszenia, po które ktoś już
+      // Blokujemy wyłącznie „kelner idzie": zgłoszenia, po które ktoś już
       // wstał od baru, gość nie może cofnąć.
       disabled={sending || idzie}
       onClick={() => void (doWycofania ? cancel() : send())}
-      // Bez `aria-label`: nadpisałby nazwę przycisku i czytnik ekranu mówiłby coś
-      // innego, niż widać na nim napisane. Podpowiedź idzie tytułem, który dokłada
-      // się do nazwy, zamiast ją zastępować.
-      title={doWycofania ? 'Stuknij ponownie, żeby wycofać' : undefined}
-      className={`mono min-h-12 shrink-0 rounded-[var(--radius-control)] border px-3 text-sm font-semibold disabled:opacity-100 ${
-        idzie
+      title={opis}
+      // Nazwa dostępna niesie stan, którego nie widać w samym napisie — inaczej
+      // czytnik ekranu mówiłby „Kelner" niezależnie od tego, co się dzieje.
+      aria-label={`Kelner. ${opis}`}
+      className={`mono flex min-h-11 shrink-0 items-center gap-1.5 rounded-[var(--radius-control)] border px-3 text-sm font-semibold disabled:opacity-100 ${
+        call || failed
           ? 'border-[var(--teal)] bg-[var(--teal-wash)] text-[var(--teal)]'
-          : 'border-[var(--line)]'
+          : 'border-[var(--line)] text-[var(--muted)]'
       }`}
     >
-      {label}
+      <span>Kelner</span>
+      {/* Znacznik zamiast dopisku: zajmuje tyle samo miejsca w każdym stanie. */}
+      {call && (
+        <span aria-hidden="true" className="text-xs">
+          {idzie ? '✓' : '•'}
+        </span>
+      )}
     </button>
+  );
+}
+
+/**
+ * Zdanie o wezwaniu — nad zakładkami, gdzie jest miejsce na całe słowa.
+ *
+ * Widoczne z każdego ekranu, bo gość, który wezwał kelnera, chce wiedzieć,
+ * czy zgłoszenie żyje, niezależnie od tego, co akurat ogląda.
+ */
+function WaiterCallNotice({ stan }: { stan: StanWezwania }) {
+  const { call, idzie, failed } = stan;
+  if (!call && !failed) return null;
+
+  return (
+    <p
+      role="status"
+      className={`mb-2 rounded-[var(--radius-control)] px-3 py-2 text-xs ${
+        failed
+          ? 'bg-[var(--orange-wash)] text-[var(--ink)]'
+          : 'bg-[var(--teal-wash)] text-[var(--teal)]'
+      }`}
+    >
+      {failed
+        ? 'Nie udało się wezwać kelnera. Stuknij „Kelner" jeszcze raz.'
+        : idzie
+          ? 'Kelner już idzie do Waszego stolika.'
+          : 'Kelner wezwany. Stuknij „Kelner" ponownie, żeby wycofać zgłoszenie.'}
+    </p>
   );
 }
 

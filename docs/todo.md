@@ -466,6 +466,26 @@ co człowiek** — automat, któremu powiemy „odrzucono", spróbuje inaczej.
       Świadomie **nie** dodaliśmy automatycznego wysyłania po czasie ani blokady
       przejścia z niepustym koszykiem: zamówienie musi zostać świadomą decyzją gościa,
       a pytanie „na pewno?" przy każdym stuknięciu zmęczyłoby szybciej, niż pomogło.
+- [x] **Aplikacja gościa na wąskim telefonie** (2026-09-01) — zgłoszone z lokalu:
+      po wezwaniu kelnera zakładka „Rachunek" znikała z ekranu. Pomiar pokazał, że
+      **rząd wystawał już przed stuknięciem** — przy 360 px prawa krawędź „Rachunku"
+      wypadała na 368 px. Przyczyną było mieszanie **akcji z nawigacją** w jednym
+      rzędzie: trzy zakładki przełączają widok, a czwarty przycisk wysyła zgłoszenie
+      i rośnie wraz ze stanem („Spróbuj jeszcze raz" jest jeszcze dłuższe niż
+      „Kelner — wysłane").
+
+      Przy okazji trzeba przyznać: **poprzednia zmiana nazw zakładek to pogorszyła** —
+      „Do zamówienia" jest szersze niż „Koszyk". Stary układ mieścił się o włos.
+
+      Rozwiązanie: przycisk wyprowadzony do nagłówka, **nazwa stała**, stan pokazywany
+      kolorem i znacznikiem, a wyjaśnienie osobną linijką nad zakładkami. Bez przycisku
+      w rzędzie trzy zakładki dostają po 106 px przy potrzebnych 104.
+
+      Test na 320 px znalazł przy okazji **dwie wady, których nikt nie zgłaszał**:
+      długi nick rozpychał nagłówek (teraz się przycina, bo to przyciski mają zostać),
+      oraz **z ekranu koszyka nie było powrotu do menu** — przy niepustym koszyku dolny
+      pasek pokazuje wyłącznie „Zamawiam", więc gość chcący dołożyć deser musiał albo
+      zamówić, albo usunąć wszystko.
 - [ ] **Anonimizacja konta po 6 miesiącach + powiadomienie 30 dni wcześniej** —
       **nowe zobowiązanie z dokumentów 2026-08-28** i najpoważniejsza rzecz, jaką te
       dokumenty zostawiły do zrobienia. Żaden mechanizm retencji nie istnieje.

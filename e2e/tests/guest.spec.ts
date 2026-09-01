@@ -65,9 +65,11 @@ test.describe('gość przy stoliku', () => {
       await page.goto(`${GUEST_URL}/t/${fixture.qrToken}`);
       await expect(page.getByText(fixture.dishName)).toBeVisible();
 
-      await page.getByRole('button', { name: 'Kelner', exact: true }).click();
-      // „Wysłane", nie „idzie" — nikt jeszcze zgłoszenia nie przyjął.
-      await expect(page.getByRole('button', { name: /Kelner — wysłane/ })).toBeVisible();
+      await page.getByRole('button', { name: /^Kelner\./ }).click();
+
+      // Napis na przycisku **się nie zmienia** — rosnąca etykieta wypychała
+      // „Rachunek" poza ekran telefonu. Stan niesie osobny komunikat.
+      await expect(page.getByText(/Kelner wezwany/)).toBeVisible();
     } finally {
       await fixture.cleanup();
     }
@@ -80,18 +82,18 @@ test.describe('gość przy stoliku', () => {
       await page.goto(`${GUEST_URL}/t/${fixture.qrToken}`);
       await expect(page.getByText(fixture.dishName)).toBeVisible();
 
-      const przycisk = page.getByRole('button', { name: /^Kelner/ });
+      const przycisk = page.getByRole('button', { name: /^Kelner\./ });
       await przycisk.click();
-      await expect(page.getByRole('button', { name: /Kelner — wysłane/ })).toBeVisible();
+      await expect(page.getByText(/Kelner wezwany/)).toBeVisible();
 
       // To samo miejsce, ta sama decyzja: „jednak nie".
-      await page.getByRole('button', { name: /Kelner — wysłane/ }).click();
-      await expect(page.getByRole('button', { name: 'Kelner', exact: true })).toBeVisible();
+      await przycisk.click();
+      await expect(page.getByText(/Kelner wezwany/)).toHaveCount(0);
 
       // Stan pochodzi z serwera, nie z pamięci komponentu — po przeładowaniu
-      // przycisk nie może wrócić do „wysłane".
+      // zgłoszenie nie może wrócić.
       await page.reload();
-      await expect(page.getByRole('button', { name: 'Kelner', exact: true })).toBeVisible();
+      await expect(page.getByText(/Kelner wezwany/)).toHaveCount(0);
     } finally {
       await fixture.cleanup();
     }
@@ -104,16 +106,15 @@ test.describe('gość przy stoliku', () => {
       await page.goto(`${GUEST_URL}/t/${fixture.qrToken}`);
       await expect(page.getByText(fixture.dishName)).toBeVisible();
 
-      await page.getByRole('button', { name: /^Kelner/ }).click();
-      await expect(page.getByRole('button', { name: /Kelner — wysłane/ })).toBeVisible();
+      await page.getByRole('button', { name: /^Kelner\./ }).click();
+      await expect(page.getByText(/Kelner wezwany/)).toBeVisible();
 
       await acknowledgeCallAt(fixture.tableId);
       await page.reload();
 
       // Kelner idzie przez salę — zniknięcie zgłoszenia byłoby kłamstwem.
-      const idzie = page.getByRole('button', { name: 'Kelner idzie' });
-      await expect(idzie).toBeVisible();
-      await expect(idzie).toBeDisabled();
+      await expect(page.getByText(/Kelner już idzie/)).toBeVisible();
+      await expect(page.getByRole('button', { name: /^Kelner\./ })).toBeDisabled();
     } finally {
       await fixture.cleanup();
     }

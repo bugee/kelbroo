@@ -104,6 +104,9 @@ Ekran pojawia się po skanie QR, **tylko gdy restauracja ma włączony podział 
 - **Pasek „dokończ zamówienie" widoczny z każdego ekranu**, dopóki coś leży w koszyku *(2026-09-01)*. Powstał z obserwacji w lokalu: gość dokładał dania i wychodził przekonany, że zamówił, bo przycisk kończący był widoczny wyłącznie na ekranie koszyka, a jedynym śladem niewysłanych pozycji był drobny napis w zakładce.
 - **Zakładki nazwane językiem restauracji:** `Do zamówienia` i `Rachunek`, zamiast `Koszyk` i `Zamówienia`. Stare nazwy konkurowały ze sobą znaczeniowo — gość z pełnym koszykiem myślał o nim jako o swoim zamówieniu i szukał go w zakładce „Zamówienia", gdzie dostawał „nie masz żadnych zamówień".
 - **Ekran rachunku z niepustym koszykiem** mówi wprost „nic jeszcze nie zamówiłeś" i prowadzi do koszyka, zamiast kończyć się ślepym zaułkiem.
+- **Wezwanie kelnera stoi w nagłówku, nie w dolnym pasku** *(2026-09-01)*. W pasku była to **akcja w rzędzie nawigacji** — konkurowała o piksele z trzema zakładkami, a jej etykieta rosła wraz ze stanem („Kelner" → „Kelner — wysłane" → „Spróbuj jeszcze raz") i wypychała zakładkę „Rachunek" poza ekran telefonu. Nazwa przycisku jest teraz **stała**, stan niesie kolor i znacznik, a wyjaśnienie — osobna linijka nad zakładkami. Ceną jest gorszy zasięg kciuka; wezwanie kelnera jest akcją okazjonalną.
+- **Z ekranu koszyka da się wrócić do menu** („Dodaj coś jeszcze"). Przy niepustym koszyku dolny pasek pokazuje wyłącznie „Zamawiam", więc bez tego gość, który zajrzał sprawdzić zamówienie i chciał dołożyć deser, musiał albo zamówić, albo usunąć wszystko.
+- **Żaden ekran gościa nie może przewijać się w poziomie** — pilnuje tego test e2e na oknie 320 px, przechodzący przez stany wezwania kelnera i pełnego koszyka.
 - Podsumowanie: suma, VAT (wyszczególniony).
 - Pole "Uwagi do całego zamówienia".
 - Ostrzeżenie o minimalnej wartości zamówienia, jeśli ustawiona.
