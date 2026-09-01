@@ -24,6 +24,8 @@ export const es: Dictionary = {
     wyprobuj: 'Prueba 14 días',
     stronaGlowna: 'kelbroo — inicio',
     jezyk: 'Idioma',
+    trybCiemny: 'Activar el modo oscuro',
+    trybJasny: 'Activar el modo claro',
   },
   hero: {
     eyebrow: 'Self-service dining',

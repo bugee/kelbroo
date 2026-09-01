@@ -558,14 +558,9 @@ export async function LandingPage({ dict, locale }: { dict: Dictionary; locale: 
             {/* `align-items: center` z .split-wrap zostawiłoby prawą kolumnę
                 zawieszoną w pionie obok wysokiego formularza. */}
             <div
-              className="split-wrap rv"
+              className="split-wrap rv anchor"
               id="prezentacja"
-              style={{
-                alignItems: 'flex-start',
-                // Nagłówek jest przyklejony do góry: bez tego skok do
-                // `#prezentacja` chowa początek formularza pod paskiem.
-                scrollMarginTop: '96px',
-              }}
+              style={{ alignItems: 'flex-start' }}
             >
               <ContactForm dict={dict} locale={locale} />
 

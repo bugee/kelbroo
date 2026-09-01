@@ -57,11 +57,9 @@ export function SegmentyPage({ dict, locale }: { dict: Dictionary; locale: Local
         {dict.dlaKogo.segmenty.map((segment) => (
           <section
             key={segment.id}
-            className="section"
+            className="section anchor"
             id={segment.id}
-            // Nagłówek jest przyklejony do góry — bez tego kotwica ze stopki
-            // chowałaby tytuł sekcji pod paskiem nawigacji.
-            style={{ scrollMarginTop: '80px', paddingTop: 0 }}
+            style={{ paddingTop: 0 }}
           >
             <div className="wrap">
               <div className="section-head">

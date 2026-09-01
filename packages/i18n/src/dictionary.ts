@@ -52,6 +52,9 @@ export interface Dictionary {
     wyprobuj: string;
     stronaGlowna: string;
     jezyk: string;
+    /** Etykiety przełącznika palety — czytnik ekranu i dymek. */
+    trybCiemny: string;
+    trybJasny: string;
   };
   hero: {
     eyebrow: string;

@@ -593,6 +593,39 @@ w ogóle (decyzja z CLAUDE.md).
 - [ ] **Baza wiedzy `/pomoc` zostaje po polsku** — opisuje panel ekran po ekranie,
       a panel nie jest tłumaczony. Wraca do kolejki razem z tłumaczeniem panelu.
 
+### 5h. Przełącznik palety na stronie produktowej
+
+Zrobione 2026-09-01. Ciemna paleta siedziała w `landing.css` od początku, ale
+widzieli ją **wyłącznie odwiedzający z ciemnym systemem** — nie było czym jej
+włączyć ani wyłączyć.
+
+- [x] **Przycisk w pasku nawigacji**, obok skrótów języków. Sam znak, bez
+      podpisu: dwa napisy obok siebie zabrałyby pasek na telefonie.
+- [x] **Trzy stany, nie dwa.** Brak zapisanego wyboru znaczy „jak w systemie"
+      i paletę wybiera wtedy `prefers-color-scheme`. Kliknięcie zapisuje decyzję,
+      a ta wygrywa z systemem w obie strony. Ikona chodzi za zmianą ustawienia
+      systemu, dopóki wybór nie jest zapisany.
+- [x] **Skrypt w `<head>`, przed pierwszym malowaniem** — inaczej strona
+      zapisana jako ciemna błyska najpierw na jasno.
+- [x] **`color-scheme` w każdym z trzech stanów** — bez tego pola formularza
+      i paski przewijania zostają jasne na ciemnej stronie.
+- [x] **`theme-color` w dwóch wariantach** — pasek adresu na telefonie malował
+      się jasny nad ciemną stroną.
+- [x] Bliźniak `ThemeToggle` z `packages/ui`, a nie ten sam komponent: tamten
+      jest ubrany w klasy Tailwinda, a strona produktowa stoi na własnym arkuszu
+      i nie zależy od `@kelbroo/ui`.
+
+**Przy okazji naprawione: pasek nawigacji przewijał stronę w poziomie.**
+Cztery skróty języków (dodane 2026-09-01) plus przycisk palety przestały mieścić
+się w jednym rzędzie — na telefonie brakowało ~70 px, a między 880 a 970 px
+nadmiar sięgał 86 px. Języki schodzą teraz do własnego rzędu poniżej 1000 px,
+a układ kompaktowy zaczyna się tam, gdzie pełny przestaje się mieścić, nie
+przy dawnych 880 px. Wysokość paska jest tokenem `--nav-h`, z którego liczą
+kotwice (`.anchor`) — dwie wartości wpisane wprost w komponentach rozjechałyby
+się przy pierwszej zmianie paska. Niemieckie złożenia dostały `overflow-wrap`.
+Sprawdzone: dziesięć stron × dwanaście szerokości od 320 do 1440 px, zero
+przewijania w poziomie.
+
 ### 5f. Obietnice ze strony bez pokrycia w kodzie
 
 Rejestr sporządzony 2026-08-26 przez porównanie cennika, siatki funkcji i FAQ ze
@@ -1008,6 +1041,7 @@ Z [product.md §7](product.md#7-wymagania-niefunkcjonalne-dotyczą-wszystkich-tr
 ## Zrobione
 
 - [x] Strona produktowa, podstrony i dokumenty prawne w czterech językach (PL/EN/DE/ES), cennik w euro
+- [x] Przełącznik jasnej/ciemnej palety na stronie produktowej
 - [x] Monorepo, schemat bazy, RLS z testem izolacji najemców
 - [x] Ścieżka gościa: skan QR, menu, koszyk, złożenie zamówienia
 - [x] Panel obsługi: kolejka potwierdzeń, KDS, rozliczanie stolika

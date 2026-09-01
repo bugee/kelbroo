@@ -1,5 +1,11 @@
 /* ============ TOKENS ============ */
 :root {
+  color-scheme: light;
+
+  /* Wysokość przyklejonego paska. Kotwice odejmują ją od pozycji docelowej,
+     więc obie wartości muszą pochodzić z jednego miejsca. */
+  --nav-h: 72px;
+
   --ground: #f1f5f4;
   --surface: #ffffff;
   --surface-2: #e8f0ef;
@@ -38,6 +44,8 @@
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
+    color-scheme: dark;
+
     --ground: #0a1716;
     --surface: #122423;
     --surface-2: #193230;
@@ -65,6 +73,8 @@
   }
 }
 :root[data-theme='dark'] {
+  color-scheme: dark;
+
   --ground: #0a1716;
   --surface: #122423;
   --surface-2: #193230;
@@ -97,6 +107,10 @@
 }
 body {
   margin: 0;
+  /* Niemieckie złożenia („Installationen", „Transaktionsgebühren") są dłuższe
+     niż kolumna na wąskim telefonie i wypychały stronę w poziomie. Łamiemy je
+     dopiero wtedy, gdy słowo samo nie mieści się w wierszu. */
+  overflow-wrap: break-word;
   background: var(--ground);
   color: var(--ink);
   font-family:
@@ -238,7 +252,7 @@ svg {
   display: flex;
   align-items: center;
   gap: 32px;
-  height: 72px;
+  min-height: var(--nav-h);
 }
 .brand {
   display: flex;
@@ -276,7 +290,10 @@ svg {
   gap: 10px;
   align-items: center;
 }
-@media (max-width: 880px) {
+/* 1000 px, nie 880: pasek niesie teraz brand, pięć odnośników, cztery języki,
+   paletę i dwa przyciski — pełny układ przestaje się mieścić poniżej ~970 px
+   i strona zaczyna przewijać się w poziomie. */
+@media (max-width: 1000px) {
   .nav-links {
     display: none;
   }
@@ -585,6 +602,8 @@ svg {
   grid-template-columns: repeat(4, 1fr);
 }
 .strip-cell {
+  /* Bez tego komórka siatki nie schodzi poniżej szerokości najdłuższego słowa. */
+  min-width: 0;
   padding: 26px 22px;
   border-left: 1px solid var(--line);
 }
@@ -1451,6 +1470,30 @@ svg {
   color: var(--muted);
 }
 
+/* --- przełącznik palety -----------------------------------------------------
+   Sam znak, bez podpisu: stoi obok skrótów języków, a dwa napisy obok siebie
+   zabrałyby pasek na telefonie. Znaczenie niesie `aria-label`, nie kształt. */
+.theme-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition:
+    color 0.15s,
+    background 0.15s;
+}
+.theme-btn:hover {
+  color: var(--teal);
+  background: var(--teal-wash);
+}
+
 /* --- przełącznik języka -----------------------------------------------------
    Skróty, nie pełne nazwy: w pasku nawigacji na telefonie mieszczą się trzy
    znaki, a nie „Deutsch". Pełna nazwa idzie w `title` i w nazwie dostępnej. */
@@ -1481,8 +1524,36 @@ svg {
   background: var(--teal-wash);
   color: var(--teal);
 }
-@media (max-width: 900px) {
+/* Na telefonie pasek nie mieści brandu, czterech języków, palety i przycisku
+   w jednym rzędzie — przy 390 px brakowało ~70 px i strona przewijała się
+   w poziomie. Języki schodzą wtedy do własnego, wyśrodkowanego rzędu: to
+   tańsze niż chowanie ich przed czytającym, który wszedł po angielsku. */
+@media (max-width: 1000px) {
+  :root {
+    --nav-h: 108px;
+  }
+  .nav-in {
+    padding-block: 10px;
+  }
+  .nav-cta {
+    flex: 1;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    row-gap: 8px;
+  }
   .lang {
-    order: -1;
+    order: 3;
+    flex-basis: 100%;
+    justify-content: flex-end;
+    margin-right: 0;
+  }
+  /* Przy 360 px sam przycisk „Wypróbuj" spychał paletę do trzeciego rzędu. */
+  .nav-cta .btn-sm {
+    padding-inline: 13px;
+  }
+}
+@media (max-width: 400px) {
+  .wrap {
+    padding: 0 16px;
   }
 }

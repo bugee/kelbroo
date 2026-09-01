@@ -1,5 +1,6 @@
 import { localePath, type Dictionary, type Locale } from '@kelbroo/i18n';
 import { LanguageSwitcher } from './LanguageSwitcher';
+import { ThemeToggle } from './ThemeToggle';
 
 /**
  * Pasek nawigacji, wspólny dla strony głównej i podstron.
@@ -101,6 +102,7 @@ export function SiteHeader({
         </nav>
         <div className="nav-cta">
           <LanguageSwitcher dict={dict} locale={locale} sciezka={sciezka} />
+          <ThemeToggle dict={dict} />
           <a className="btn btn-ghost btn-sm" href="https://panel.kelbroo.com">
             {dict.nav.zaloguj}
           </a>

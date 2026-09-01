@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { dictionary } from '@kelbroo/i18n';
 import { Analytics } from '@/components/Analytics';
+import { ThemeScript } from '@/components/ThemeScript';
 import { alternatywy } from '@/lib/meta';
 import '../landing.css';
 
@@ -32,13 +33,20 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  themeColor: '#F1F5F4',
+  // Dwie wartości, nie jedna: pasek adresu przeglądarki na telefonie maluje się
+  // tym kolorem i przy jednej wartości ciemna strona dostawała jasny pasek.
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#F1F5F4' },
+    { media: '(prefers-color-scheme: dark)', color: '#0A1716' },
+  ],
 };
 
 export default function PolishLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pl">
       <head>
+        {/* Przed pierwszym malowaniem — inaczej ciemna strona błyska na jasno. */}
+        <ThemeScript />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link

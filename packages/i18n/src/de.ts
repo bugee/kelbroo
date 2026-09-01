@@ -24,6 +24,8 @@ export const de: Dictionary = {
     wyprobuj: '14 Tage testen',
     stronaGlowna: 'kelbroo — Startseite',
     jezyk: 'Sprache',
+    trybCiemny: 'Dunkles Design einschalten',
+    trybJasny: 'Helles Design einschalten',
   },
   hero: {
     eyebrow: 'Self-Service Dining',
