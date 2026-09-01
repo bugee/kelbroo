@@ -114,6 +114,15 @@ Wszystkie trzy adresy wskazują na jeden VPS; rozdziela je Caddy po nazwie hosta
 ## Konwencje
 
 - Monorepo: pnpm workspaces + Turborepo. Współdzielone typy w `packages/types`, komponenty w `packages/ui`, słowniki w `packages/i18n`.
+- **Strona produktowa istnieje w czterech językach: PL / EN / DE / ES.** Polski
+  jest domyślny i **nie ma przedrostka w adresie** (`kelbroo.com/regulamin` widnieje
+  w wysłanych wiadomościach i w zgodach); pozostałe siedzą pod `/en`, `/de`, `/es`.
+  Wersje obcojęzyczne podają ceny w **euro**, informacyjnie — rozliczenie idzie
+  w złotych i strona mówi o tym wprost. **Panel obsługi i aplikacja gościa nie są
+  tłumaczone**, tak samo baza wiedzy `/pomoc`, bo opisuje panel ekran po ekranie.
+- **Dokumenty prawne mają cztery wersje** (`regulamin.md`, `regulamin.en.md`, …),
+  a każde tłumaczenie niesie klauzulę, że w razie rozbieżności **wiąże wersja polska**.
+  Zmiana dokumentu to zmiana czterech plików o tej samej dacie wersji.
 - Ceny zawsze jako `*_cents` (integer), nigdy float.
 - Wszystkie kwoty przechowywane z walutą (`currency`) — nie zakładać PLN.
 - Język interfejsu dokumentacji i komunikacji: polski. Kod, nazwy zmiennych i commity: angielski.

@@ -1,14 +1,30 @@
+import { localePath, type Dictionary, type Locale } from '@kelbroo/i18n';
+import { LanguageSwitcher } from './LanguageSwitcher';
+
 /**
  * Pasek nawigacji, wspólny dla strony głównej i podstron.
  *
  * Kotwice są zapisane od korzenia (`/#cennik`, a nie `#cennik`) — z podstrony
  * samo `#cennik` szukałoby sekcji, której tam nie ma, i nie robiłoby nic.
+ * W wersjach obcojęzycznych korzeń niesie przedrostek języka, więc adresy
+ * budujemy przez `localePath`, a nie sklejamy ręcznie.
  */
-export function SiteHeader() {
+export function SiteHeader({
+  dict,
+  locale,
+  sciezka,
+}: {
+  dict: Dictionary;
+  locale: Locale;
+  /** Adres tej strony **bez przedrostka języka** — do przełącznika języków. */
+  sciezka: string;
+}) {
+  const dom = localePath(locale, '/');
+  const kotwica = (id: string) => `${dom === '/' ? '' : dom}/#${id}`;
   return (
     <header className="nav" id="nav">
       <div className="wrap nav-in">
-        <a className="brand" href="/#top" aria-label="kelbroo — strona główna">
+        <a className="brand" href={kotwica('top')} aria-label={dict.nav.stronaGlowna}>
           <svg viewBox="0 0 120 180" fill="none" aria-hidden="true">
             <defs>
               <linearGradient
@@ -77,18 +93,19 @@ export function SiteHeader() {
           <span>kelbroo</span>
         </a>
         <nav className="nav-links">
-          <a href="/#jak">Jak to działa</a>
-          <a href="/#modele">Płatności</a>
-          <a href="/#funkcje">Funkcje</a>
-          <a href="/#cennik">Cennik</a>
-          <a href="/#faq">FAQ</a>
+          <a href={kotwica('jak')}>{dict.nav.jak}</a>
+          <a href={kotwica('modele')}>{dict.nav.modele}</a>
+          <a href={kotwica('funkcje')}>{dict.nav.funkcje}</a>
+          <a href={kotwica('cennik')}>{dict.nav.cennik}</a>
+          <a href={kotwica('faq')}>{dict.nav.faq}</a>
         </nav>
         <div className="nav-cta">
+          <LanguageSwitcher dict={dict} locale={locale} sciezka={sciezka} />
           <a className="btn btn-ghost btn-sm" href="https://panel.kelbroo.com">
-            Zaloguj się
+            {dict.nav.zaloguj}
           </a>
-          <a className="btn btn-primary btn-sm" href="/rejestracja">
-            Wypróbuj 14 dni
+          <a className="btn btn-primary btn-sm" href={localePath(locale, '/rejestracja')}>
+            {dict.nav.wyprobuj}
           </a>
         </div>
       </div>

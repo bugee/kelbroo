@@ -8,14 +8,14 @@ import { ZDARZENIE_USTAWIENIA } from './Analytics';
  * Istnieje, bo **zgodę trzeba dać się wycofać równie łatwo, jak się ją dało**.
  * Baner znika po pierwszej decyzji i bez tego odnośnika nie byłoby jak wrócić.
  */
-export function PrivacySettings() {
+export function PrivacySettings({ etykieta }: { etykieta: string }) {
   return (
     <button
       type="button"
       className="foot-link-button"
       onClick={() => window.dispatchEvent(new Event(ZDARZENIE_USTAWIENIA))}
     >
-      Statystyki i zgoda
+      {etykieta}
     </button>
   );
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
+import { dictionary } from '@kelbroo/i18n';
 import { ARTYKULY } from '@/lib/pomoc';
 
 export const metadata: Metadata = {
@@ -10,10 +11,20 @@ export const metadata: Metadata = {
     'obsługa zamówień na zmianie, konta pracowników i abonament.',
 };
 
+/**
+ * Baza wiedzy zostaje **wyłącznie po polsku**.
+ *
+ * Opisuje panel obsługi ekran po ekranie, a panel nie jest tłumaczony
+ * (CLAUDE.md, decyzja o zakresie). Instrukcja po angielsku do polskiego panelu
+ * byłaby pracą do wyrzucenia przy pierwszej zmianie i myliłaby czytającego
+ * bardziej niż jej brak.
+ */
 export default function PomocPage() {
+  const pl = dictionary('pl');
+
   return (
     <>
-      <SiteHeader />
+      <SiteHeader dict={pl} locale="pl" sciezka="/pomoc" />
 
       <main>
         <section className="section">
@@ -62,7 +73,7 @@ export default function PomocPage() {
         </section>
       </main>
 
-      <SiteFooter />
+      <SiteFooter dict={pl} locale="pl" />
     </>
   );
 }

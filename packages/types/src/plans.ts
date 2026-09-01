@@ -79,6 +79,33 @@ export interface Plan {
  */
 export const VAT_RATE_PERCENT = 23;
 
+/**
+ * Cennik w euro dla wersji obcojęzycznych strony.
+ *
+ * **Osobny cennik, nie przeliczenie po kursie.** Cena z kursu dnia wygląda jak
+ * 36,98 € i zmienia się co rano — cennik ma być liczbą, którą klient zapamięta.
+ *
+ * ⚠️ **Ceny są dziś wyłącznie informacyjne.** Rozliczenie i płatność idą przez
+ * PayU **w złotych** (`SubscriptionOrder.currency` ma domyślnie `PLN`), a tabela
+ * cen w regulaminie podaje PLN. Sprzedaż w euro wymaga wielowalutowości
+ * u operatora i zmiany dokumentów — strony obcojęzyczne mówią o tym wprost.
+ */
+export const EUR_NET_CENTS: Record<PlanId, Record<BillingPeriod, number | null>> = {
+  menu: { month: 0, year: 0 },
+  /**
+   * ⚠️ CENA TESTOWA, jak w cenniku złotówkowym — docelowo `{ month: 3_900, year: 39_000 }`
+   * (39 € miesięcznie albo 390 € rocznie). Obie listy schodzą i wracają **razem**,
+   * inaczej polska strona pokazywałaby 2 zł obok 39 € na angielskiej.
+   *
+   * Kwota jest **równa złotówkowej**, a nie przeliczona: cennik zaokrągla się do
+   * pełnych jednostek, więc 0,50 € wyświetliłoby się jako „1 €" — liczba, której
+   * nikt nie zapłaci. Na czas testu obie strony mówią „2".
+   */
+  starter: { month: 200, year: 2_000 },
+  pro: { month: 8_500, year: 85_000 },
+  enterprise: { month: null, year: null },
+};
+
 export const PLANS: Record<PlanId, Plan> = {
   menu: {
     id: 'menu',

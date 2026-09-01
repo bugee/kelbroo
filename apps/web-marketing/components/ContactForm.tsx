@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { localePath, type Dictionary, type Locale } from '@kelbroo/i18n';
 import { sendContact, type ContactInput } from '@/lib/api';
 
 const POLE: React.CSSProperties = {
@@ -25,7 +26,8 @@ const POLE: React.CSSProperties = {
  * końcowej, „Porozmawiajmy" z planu Enterprise i „Kontakt" ze stopki. Cel
  * ustawia się sam z kotwicy, żeby nikt nie musiał go wybierać drugi raz.
  */
-export function ContactForm() {
+export function ContactForm({ dict, locale }: { dict: Dictionary; locale: Locale }) {
+  const t = dict.formularz;
   const [cel, setCel] = useState<ContactInput['purpose']>('pytanie');
   const [wysylanie, setWysylanie] = useState(false);
   const [blad, setBlad] = useState<string | null>(null);
@@ -59,7 +61,7 @@ export function ContactForm() {
       });
       setGotowe(true);
     } catch (przyczyna) {
-      setBlad(przyczyna instanceof Error ? przyczyna.message : 'Nie udało się wysłać wiadomości.');
+      setBlad(przyczyna instanceof Error ? przyczyna.message : t.bladOgolny);
     } finally {
       setWysylanie(false);
     }
@@ -68,11 +70,8 @@ export function ContactForm() {
   if (gotowe) {
     return (
       <div className="split-card" role="status">
-        <h3 style={{ marginTop: 0 }}>Wiadomość wysłana</h3>
-        <p>
-          Odezwiemy się w ciągu jednego dnia roboczego. Potwierdzenie poszło na podany adres — jeśli
-          nie dotarło, sprawdź folder ze spamem.
-        </p>
+        <h3 style={{ marginTop: 0 }}>{t.wyslaneTytul}</h3>
+        <p>{t.wyslaneTresc}</p>
       </div>
     );
   }
@@ -85,13 +84,13 @@ export function ContactForm() {
     >
       <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
         <legend style={{ fontSize: 'var(--fs-sm)', fontWeight: 600, marginBottom: '8px' }}>
-          W jakiej sprawie?
+          {t.sprawa}
         </legend>
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
           {(
             [
-              ['pytanie', 'Mam pytanie'],
-              ['prezentacja', 'Chcę prezentację'],
+              ['pytanie', t.celPytanie],
+              ['prezentacja', t.celPrezentacja],
             ] as const
           ).map(([wartosc, etykieta]) => (
             <button
@@ -107,36 +106,34 @@ export function ContactForm() {
         </div>
       </fieldset>
 
-      <Pole nazwa="name" label="Imię i nazwisko" autoComplete="name" required />
-      <Pole nazwa="company" label="Lokal lub firma" autoComplete="organization" />
-      <Pole nazwa="email" label="E-mail" type="email" autoComplete="email" required />
+      <Pole nazwa="name" label={t.imie} autoComplete="name" required />
+      <Pole nazwa="company" label={t.lokal} autoComplete="organization" />
+      <Pole nazwa="email" label={t.email} type="email" autoComplete="email" required />
       <Pole
         nazwa="phone"
-        label="Telefon"
+        label={t.telefon}
         type="tel"
         autoComplete="tel"
-        podpowiedz="Nieobowiązkowo"
+        podpowiedz={t.nieobowiazkowo}
       />
 
       {cel === 'prezentacja' && (
         <Pole
           nazwa="preferredTime"
-          label="Kiedy najlepiej się odezwać"
-          podpowiedz="Np. wtorki i czwartki przed 11. Prezentacja trwa około 20 minut."
+          label={t.kiedy}
+          podpowiedz={t.kiedyPodpowiedz}
         />
       )}
 
       <label style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-        <span style={{ fontSize: 'var(--fs-sm)', fontWeight: 600 }}>Wiadomość</span>
+        <span style={{ fontSize: 'var(--fs-sm)', fontWeight: 600 }}>{t.wiadomosc}</span>
         <textarea
           name="message"
           required
           minLength={10}
           rows={5}
           placeholder={
-            cel === 'prezentacja'
-              ? 'Ile macie stolików, jak dziś przyjmujecie zamówienia, co chcecie zobaczyć?'
-              : 'O co chcesz zapytać?'
+            cel === 'prezentacja' ? t.placeholderPrezentacja : t.placeholderPytanie
           }
           style={{ ...POLE, minHeight: '120px', padding: '12px 14px', resize: 'vertical' }}
         />
@@ -147,7 +144,7 @@ export function ContactForm() {
           i nie kosztuje użytkownika ani jednego kliknięcia. */}
       <div aria-hidden="true" style={{ position: 'absolute', left: '-9999px' }}>
         <label>
-          Nie wypełniaj tego pola
+          {t.pulapka}
           <input name="website" type="text" tabIndex={-1} autoComplete="off" />
         </label>
       </div>
@@ -159,12 +156,12 @@ export function ContactForm() {
       )}
 
       <button type="submit" className="btn btn-primary" disabled={wysylanie}>
-        {wysylanie ? 'Wysyłam…' : cel === 'prezentacja' ? 'Umów prezentację' : 'Wyślij wiadomość'}
+        {wysylanie ? t.wysylam : cel === 'prezentacja' ? t.umowPrezentacje : t.wyslijWiadomosc}
       </button>
 
       <p style={{ fontSize: 'var(--fs-xs)', color: 'var(--muted)', margin: 0 }}>
-        Adres wykorzystamy wyłącznie do odpowiedzi na tę wiadomość. Szczegóły w{' '}
-        <a href="/prywatnosc">polityce prywatności</a>.
+        {t.zgodaAdres}{' '}
+        <a href={localePath(locale, '/prywatnosc')}>{t.politykaLink}</a>.
       </p>
     </form>
   );

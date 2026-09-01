@@ -1,16 +1,27 @@
 import type { Metadata, Viewport } from 'next';
+import { dictionary } from '@kelbroo/i18n';
 import { Analytics } from '@/components/Analytics';
-import './landing.css';
+import { alternatywy } from '@/lib/meta';
+import '../landing.css';
+
+/**
+ * Korzeń polskiej wersji strony.
+ *
+ * Dwa korzenie zamiast jednego z parametrem `[locale]`, bo `<html lang>` musi
+ * znać język, a układ w korzeniu drzewa nie dostaje parametrów trasy. Polski
+ * siedzi w `(pl)` **bez przedrostka w adresie** — `kelbroo.com/regulamin` widnieje
+ * w wysłanych wiadomościach i w zgodach, na które klienci już się zgodzili.
+ */
+const pl = dictionary('pl');
 
 export const metadata: Metadata = {
-  title: 'kelbroo — self-service dining',
-  description:
-    'Goście zamawiają z telefonu po zeskanowaniu kodu QR przy stoliku. Zamówienie trafia prosto do kuchni i do kelnera. Stały abonament, bez prowizji od zamówień.',
+  title: pl.meta.tytul,
+  description: pl.meta.opis,
   metadataBase: new URL('https://kelbroo.com'),
+  alternates: alternatywy('pl', '/'),
   openGraph: {
-    title: 'kelbroo — self-service dining',
-    description:
-      'Goście zamawiają z telefonu po zeskanowaniu kodu QR przy stoliku. Bez prowizji od zamówień.',
+    title: pl.meta.tytul,
+    description: pl.meta.ogOpis,
     url: 'https://kelbroo.com',
     siteName: 'kelbroo',
     locale: 'pl_PL',
@@ -24,7 +35,7 @@ export const viewport: Viewport = {
   themeColor: '#F1F5F4',
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function PolishLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pl">
       <head>

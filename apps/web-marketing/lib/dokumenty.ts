@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { marked } from 'marked';
+import { DEFAULT_LOCALE, type Locale } from '@kelbroo/i18n';
 
 /**
  * Dokumenty prawne renderowane wprost z `docs/legal/`.
@@ -37,8 +38,19 @@ renderer.heading = (token) => {
 
 export type Dokument = 'regulamin' | 'polityka-prywatnosci';
 
-export async function dokumentHtml(nazwa: Dokument): Promise<string> {
-  return markdownHtml(path.join(KORZEN, 'legal', `${nazwa}.md`));
+/**
+ * Dokument w danym języku: `regulamin.md` po polsku, `regulamin.en.md` po
+ * angielsku. Tłumaczenia są **informacyjne** — każde niesie na górze klauzulę,
+ * że w razie rozbieżności wiąże wersja polska, bo umowa jest zawierana po
+ * polsku i tylko ona podlega interpretacji przed sądem.
+ *
+ * Brakującego tłumaczenia **nie podmieniamy po cichu na polskie**: dokument
+ * prawny udający tłumaczenie jest gorszy niż jego brak. Plik ma istnieć,
+ * a jeśli nie istnieje, budowanie ma paść.
+ */
+export async function dokumentHtml(nazwa: Dokument, locale: Locale): Promise<string> {
+  const przyrostek = locale === DEFAULT_LOCALE ? '' : `.${locale}`;
+  return markdownHtml(path.join(KORZEN, 'legal', `${nazwa}${przyrostek}.md`));
 }
 
 /**

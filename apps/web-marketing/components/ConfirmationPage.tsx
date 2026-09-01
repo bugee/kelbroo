@@ -1,26 +1,21 @@
 import { Suspense } from 'react';
-import type { Metadata } from 'next';
+import { localePath, type Dictionary, type Locale } from '@kelbroo/i18n';
 import { EmailConfirmation } from '@/components/EmailConfirmation';
 
-export const metadata: Metadata = {
-  title: 'Potwierdzenie adresu — kelbroo',
-  robots: { index: false, follow: false },
-};
-
-export default function ConfirmPage() {
+export function ConfirmationPage({ dict, locale }: { dict: Dictionary; locale: Locale }) {
   return (
     <main className="section">
       <div className="wrap" style={{ maxWidth: '520px' }}>
         <a
-          href="/"
+          href={localePath(locale, '/')}
           className="mono"
           style={{ color: 'var(--muted)', fontSize: 'var(--fs-sm)', textDecoration: 'none' }}
         >
           ← kelbroo
         </a>
         {/* `useSearchParams` wymaga granicy Suspense — bez niej budowanie pada. */}
-        <Suspense fallback={<p className="mono mt-4 text-sm">Sprawdzam odnośnik…</p>}>
-          <EmailConfirmation />
+        <Suspense fallback={<p className="mono mt-4 text-sm">{dict.potwierdzenie.sprawdzam}</p>}>
+          <EmailConfirmation dict={dict} />
         </Suspense>
       </div>
     </main>

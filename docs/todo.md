@@ -557,6 +557,42 @@ co człowiek** — automat, któremu powiemy „odrzucono", spróbuje inaczej.
       > jedyna różnica między nimi: wiersze gości na karcie „Rachunek stolika" są o 7 px
       > wyższe. Nowa wersja jest poprawna; starej nie naprawiamy, bo i tak ją zastąpi.
 
+### 5g. Cztery języki strony produktowej
+
+Zrobione 2026-09-01. Strona produktowa, podstrony i dokumenty prawne istnieją
+po polsku, angielsku, niemiecku i hiszpańsku. **Panel obsługi i aplikacja gościa
+zostają nietłumaczone** — menu gościa tłumaczy się treścią w bazie, a panel
+w ogóle (decyzja z CLAUDE.md).
+
+- [x] **`packages/i18n`** — jeden typ `Dictionary` na cztery słowniki. Brakujące
+      zdanie jest **błędem kompilacji**, a nie pustym miejscem odkrytym przez
+      odwiedzającego: strona sprzedaje, więc nie ma czego podstawić w zamian.
+- [x] **Polski bez przedrostka w adresie.** `kelbroo.com/regulamin` widnieje
+      w wysłanych wiadomościach i w zgodach, na które klienci już się zgodzili.
+      Pozostałe języki siedzą pod `/en`, `/de`, `/es`.
+- [x] **Dwa korzenie zamiast jednego z `[locale]`** — `app/(pl)` i `app/(intl)/[locale]`.
+      `<html lang>` musi znać język, a układ w korzeniu drzewa nie dostaje parametrów
+      trasy; Next dopuszcza kilka korzeni, o ile każdy siedzi we własnej grupie tras.
+- [x] **Przełącznik języka na zwykłych odnośnikach**, nie na liście rozwijanej:
+      wyszukiwarka ma je przejść, a odwiedzający otworzyć w nowej karcie. Prowadzi
+      do **tej samej strony** w innym języku, nie na stronę główną.
+- [x] **`hreflang` na każdej podstronie** plus `x-default` na polski — bez tego
+      cztery wersje tej samej strony konkurują ze sobą zamiast się uzupełniać.
+- [x] **Cennik w euro dla wersji obcojęzycznych** (`EUR_NET_CENTS`) — osobna lista,
+      nie przeliczenie po kursie dnia. Symbol i separator stawia `Intl`: po polsku
+      i po niemiecku waluta idzie **za** liczbą, po angielsku przed nią.
+- [x] **Pod tabelą stoi wprost, że rozliczenie idzie w złotych.** Kwoty w euro są
+      informacyjne, bo PayU rozlicza w PLN i taką walutę podaje regulamin.
+- [x] **Dokumenty prawne przetłumaczone** (`regulamin.en.md` i pozostałe pięć),
+      każdy z klauzulą, że **w razie rozbieżności wiąże wersja polska**. Brakującego
+      tłumaczenia nie podmieniamy po cichu na polskie — dokument prawny udający
+      tłumaczenie jest gorszy niż jego brak, więc budowanie ma wtedy paść.
+- [x] **Słownik trzyma napisy, nie funkcje.** Cały słownik przechodzi przez granicę
+      serwer→klient, a React odmawia serializacji funkcji; wartości podstawia
+      `wstaw()` w miejscu użycia. Wyszło dopiero przy budowaniu, nie przy typowaniu.
+- [ ] **Baza wiedzy `/pomoc` zostaje po polsku** — opisuje panel ekran po ekranie,
+      a panel nie jest tłumaczony. Wraca do kolejki razem z tłumaczeniem panelu.
+
 ### 5f. Obietnice ze strony bez pokrycia w kodzie
 
 Rejestr sporządzony 2026-08-26 przez porównanie cennika, siatki funkcji i FAQ ze
@@ -971,6 +1007,7 @@ Z [product.md §7](product.md#7-wymagania-niefunkcjonalne-dotyczą-wszystkich-tr
 
 ## Zrobione
 
+- [x] Strona produktowa, podstrony i dokumenty prawne w czterech językach (PL/EN/DE/ES), cennik w euro
 - [x] Monorepo, schemat bazy, RLS z testem izolacji najemców
 - [x] Ścieżka gościa: skan QR, menu, koszyk, złożenie zamówienia
 - [x] Panel obsługi: kolejka potwierdzeń, KDS, rozliczanie stolika

@@ -264,6 +264,9 @@ importers:
 
   apps/web-marketing:
     dependencies:
+      '@kelbroo/i18n':
+        specifier: workspace:*
+        version: link:../../packages/i18n
       '@kelbroo/types':
         specifier: workspace:*
         version: link:../../packages/types
@@ -333,6 +336,15 @@ importers:
         version: 5.9.3
 
   packages/config: {}
+
+  packages/i18n:
+    devDependencies:
+      '@kelbroo/config':
+        specifier: workspace:*
+        version: link:../config
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
 
   packages/types:
     devDependencies:

@@ -1,93 +1,60 @@
 'use client';
 
 import { useState } from 'react';
+import { EUR_NET_CENTS, PLANS, type BillingPeriod, type PlanId } from '@kelbroo/types';
+import { DEFAULT_LOCALE, localePath, wstaw, type Dictionary, type Locale } from '@kelbroo/i18n';
 
 /**
  * Cennik z przełącznikiem okresu rozliczeniowego.
  *
- * W pliku projektowym ceny siedziały w atrybutach `data-m` i `data-y`, a skrypt
- * podmieniał je w miejscu. Tutaj są danymi: przełącznik jest jedynym stanem na
- * całej stronie, a podpięcie zakupu abonamentu będzie potrzebowało dokładnie
- * tej listy, nie znaczników.
+ * **Ceny pochodzą z katalogu planów, nie ze znaczników.** To ten sam katalog,
+ * z którego liczy je checkout — dzięki temu obniżka ceny w jednym miejscu
+ * schodzi na stronę i do panelu naraz, zamiast rozjeżdżać się po tygodniu.
+ *
+ * Wersje obcojęzyczne pokazują **osobny cennik w euro**, nie przeliczenie po
+ * kursie dnia: cennik ma być liczbą do zapamiętania. Płatność idzie dziś
+ * w złotych i strony obcojęzyczne mówią o tym wprost pod tabelą.
  */
 type Okres = 'm' | 'y';
 
-interface Plan {
-  nazwa: string;
-  dlaKogo: string;
-  cena: Record<Okres, string>;
-  podpis?: Record<Okres, string>;
-  /** Gdy plan ma jeden podpis niezależny od okresu — np. „wycena indywidualna". */
-  podpisStaly?: string;
-  cechy: string[];
-  cta: { etykieta: string; href: string };
-  najlepszy?: boolean;
+const OKRES: Record<Okres, BillingPeriod> = { m: 'month', y: 'year' };
+
+/**
+ * Cena do pokazania na kaflu.
+ *
+ * Przy rozliczeniu rocznym pokazujemy **kwotę miesięczną w przeliczeniu**, bo
+ * kafle porównuje się między sobą, a nie z fakturą — pełną kwotę roczną niesie
+ * podpis pod ceną.
+ */
+function kwotaNetto(plan: PlanId, okres: Okres, locale: Locale): number | null {
+  const lista = locale === DEFAULT_LOCALE ? PLANS[plan].netCents : EUR_NET_CENTS[plan];
+  const cents = lista[OKRES[okres]];
+  if (cents === null) return null;
+  return okres === 'y' ? Math.round(cents / 12 / 100) : Math.round(cents / 100);
 }
 
-const PLANY: Plan[] = [
-  {
-    nazwa: 'Menu',
-    dlaKogo: 'Cyfrowa karta z kodem QR, bez zamawiania',
-    cena: { m: '0', y: '0' },
-    podpisStaly: 'na zawsze za darmo',
-    cechy: ['Kody QR bez limitu', '1 język, do 10 pozycji', 'Aktualizacja karty w minutę'],
-    cta: { etykieta: 'Załóż konto', href: '/rejestracja' },
-  },
-  {
-    nazwa: 'Starter',
-    dlaKogo: 'Kawiarnia, mały lokal, food truck',
-    // ⚠️ CENY TESTOWE (2026-09-01) — docelowo m: '159', y: '132', podpis „1 590 zł rocznie".
-    cena: { m: '2', y: '2' },
-    podpis: { m: 'rozliczenie miesięczne', y: '20 zł rocznie' },
-    cechy: [
-      'Do 12 stolików, 2 języki, 50 pozycji',
-      // Płatność gościa w aplikacji należy do etapu 2 i nie istnieje — cennik
-      // obiecywał ją do 2026-08-26, mimo że plan Starter da się kupić dziś.
-      'Zamawianie do stolika, płatność u kelnera',
-      'Ekran kuchni i panel kelnera',
-      'Podział „każdy za siebie”',
-      '3 konta personelu',
-    ],
-    cta: { etykieta: 'Wybierz Starter', href: '/rejestracja' },
-  },
-  {
-    nazwa: 'Pro',
-    dlaKogo: 'Restauracja z pełną obsługą kelnerską',
-    cena: { m: '349', y: '291' },
-    podpis: { m: 'rozliczenie miesięczne', y: '3 490 zł rocznie' },
-    cechy: [
-      'Do 40 stolików, 6 języków, karta bez limitu',
-      'Zdjęcia dań w karcie',
-      'Podział rachunku po pozycjach i grupami',
-      'Oceny dań i feedback do managera',
-      'Analityka i eksport raportów do CSV',
-      'Konta personelu bez limitu',
-      'Wsparcie w 4 godziny',
-    ],
-    cta: { etykieta: 'Testuj 14 dni', href: '/rejestracja' },
-    najlepszy: true,
-  },
-  {
-    nazwa: 'Enterprise',
-    dlaKogo: 'Sieć restauracji, hotel, food court',
-    cena: { m: '899', y: '749' },
-    podpisStaly: 'wycena indywidualna',
-    cechy: [
-      'Wiele lokali, bez limitów',
-      'Integracja z kasą fiskalną i POS',
-      'Własna domena i branding',
-      'Opiekun klienta i SLA 99,9%',
-    ],
-    // Enterprise to sieci i hotele — te nie zakładają konta samodzielnie,
-    // więc kierujemy je od razu na prezentację, a nie na ogólne pytanie.
-    cta: { etykieta: 'Porozmawiajmy', href: '#prezentacja' },
-  },
-];
+function rocznieRazem(plan: PlanId, locale: Locale): number | null {
+  const cents = (locale === DEFAULT_LOCALE ? PLANS[plan].netCents : EUR_NET_CENTS[plan]).year;
+  return cents === null ? null : Math.round(cents / 100);
+}
 
-const OSZCZEDNOSC: Record<Okres, string> = {
-  m: 'Przy płatności rocznej oszczędzasz 17% — dwa miesiące gratis.',
-  y: 'Rozliczenie roczne — dwa miesiące gratis w cenie.',
-};
+/**
+ * Kwota z walutą.
+ *
+ * Symbol stawia `Intl`, nie my: po polsku i po niemiecku waluta idzie **za**
+ * liczbą, po angielsku przed nią, a separator tysięcy jest w każdym z tych
+ * języków inny. Sklejenie tego ręcznie działa dokładnie dla jednego z nich.
+ *
+ * Bez części groszowej — cennik ma być liczbą do zapamiętania, a wszystkie
+ * kwoty w nim są pełne.
+ */
+function zWaluta(kwota: number, locale: Locale): string {
+  return new Intl.NumberFormat(locale === DEFAULT_LOCALE ? 'pl-PL' : locale, {
+    style: 'currency',
+    currency: locale === DEFAULT_LOCALE ? 'PLN' : 'EUR',
+    maximumFractionDigits: 0,
+  }).format(kwota);
+}
 
 function Ptaszek() {
   return (
@@ -104,81 +71,101 @@ function Ptaszek() {
   );
 }
 
-export function Pricing() {
+export function Pricing({ dict, locale }: { dict: Dictionary; locale: Locale }) {
   const [okres, setOkres] = useState<Okres>('m');
+  const t = dict.cennik;
 
   return (
     <section className="section" id="cennik">
       <div className="wrap">
         <div className="section-head rv" style={{ maxWidth: '60ch' }}>
-          <p className="eyebrow">Cennik</p>
-          <h2>Stały abonament. Zero prowizji od zamówień.</h2>
+          <p className="eyebrow">{t.eyebrow}</p>
+          <h2>{t.naglowek}</h2>
           <p className="lede" style={{ marginBottom: '22px' }}>
-            Ceny netto za jeden lokal. Bez umowy na czas określony — rezygnujesz, kiedy chcesz.
+            {t.lede}
           </p>
-          <div className="toggle" role="group" aria-label="Okres rozliczeniowy">
-            <button
-              type="button"
-              className={okres === 'm' ? 'on' : undefined}
-              aria-pressed={okres === 'm'}
-              onClick={() => setOkres('m')}
-            >
-              Miesięcznie
-            </button>
-            <button
-              type="button"
-              className={okres === 'y' ? 'on' : undefined}
-              aria-pressed={okres === 'y'}
-              onClick={() => setOkres('y')}
-            >
-              Rocznie
-            </button>
+          <div className="toggle" role="group" aria-label={t.eyebrow}>
+            {(
+              [
+                ['m', t.miesiecznie],
+                ['y', t.rocznie],
+              ] as const
+            ).map(([wartosc, etykieta]) => (
+              <button
+                key={wartosc}
+                type="button"
+                className={okres === wartosc ? 'on' : undefined}
+                aria-pressed={okres === wartosc}
+                onClick={() => setOkres(wartosc)}
+              >
+                {etykieta}
+              </button>
+            ))}
           </div>
           <p className="save" id="saveline">
-            {OSZCZEDNOSC[okres]}
+            {okres === 'm' ? t.oszczednoscMiesiecznie : t.oszczednoscRocznie}
           </p>
         </div>
 
         <div className="plans rv">
-          {PLANY.map((plan) => (
-            <div key={plan.nazwa} className={plan.najlepszy ? 'plan best' : 'plan'}>
-              {plan.najlepszy && <span className="plan-badge">Najpopularniejszy</span>}
-              <h3>{plan.nazwa}</h3>
-              <p className="plan-for">{plan.dlaKogo}</p>
-              <div className="price">
-                <b>{plan.cena[okres]}</b>
-                <i>zł / mies.</i>
+          {t.plany.map((plan) => {
+            const najlepszy = plan.id === 'pro';
+            const kwota = kwotaNetto(plan.id, okres, locale);
+            const rocznie = rocznieRazem(plan.id, locale);
+
+            return (
+              <div key={plan.id} className={najlepszy ? 'plan best' : 'plan'}>
+                {najlepszy && <span className="plan-badge">{t.najlepszy}</span>}
+                <h3>{PLANS[plan.id].name}</h3>
+                <p className="plan-for">{plan.dlaKogo}</p>
+                <div className="price">
+                  <b>{kwota === null ? '—' : zWaluta(kwota, locale)}</b>
+                  <i>{t.zaMiesiac}</i>
+                </div>
+                <p className="price-sub">
+                  {kwota === null
+                    ? t.wycena
+                    : kwota === 0
+                      ? t.naZawsze
+                      : okres === 'm'
+                        ? t.rozliczenieMiesieczne
+                        : wstaw(t.rozliczenieRoczne, { kwota: zWaluta(rocznie ?? 0, locale) })}
+                </p>
+                <ul>
+                  {plan.cechy.map((cecha) => (
+                    <li key={cecha}>
+                      <Ptaszek />
+                      {cecha}
+                    </li>
+                  ))}
+                </ul>
+                <a
+                  className={najlepszy ? 'btn btn-primary' : 'btn btn-ghost'}
+                  href={localePath(locale, '/rejestracja')}
+                >
+                  {plan.cta}
+                </a>
               </div>
-              <p className="price-sub">{plan.podpisStaly ?? plan.podpis?.[okres]}</p>
-              <ul>
-                {plan.cechy.map((cecha) => (
-                  <li key={cecha}>
-                    <Ptaszek />
-                    {cecha}
-                  </li>
-                ))}
-              </ul>
-              <a
-                className={plan.najlepszy ? 'btn btn-primary' : 'btn btn-ghost'}
-                href={plan.cta.href}
-              >
-                {plan.cta.etykieta}
-              </a>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         <div className="pricing-note rv">
-          <span>
-            <b>Rabaty dla sieci:</b> 3–9 lokali −15%, 10+ lokali −25%
-          </span>
-          <span>
-            <b>Dodatki:</b> +10 stolików 49 zł · dodatkowy język 39 zł
-          </span>
-          <span>
-            <b>Do wszystkich cen</b> doliczamy VAT
-          </span>
+          {t.notatki.map((notatka) => (
+            <span key={notatka.tytul}>
+              <b>{notatka.tytul}</b> {notatka.tresc}
+            </span>
+          ))}
         </div>
+
+        {/* Zdanie o walucie stoi wyłącznie na stronach obcojęzycznych: płatność
+            idzie w złotych, a cennik w euro jest orientacyjny. Przemilczenie
+            tego byłoby wprowadzaniem w błąd. */}
+        {t.walutaUwaga && (
+          <p className="pricing-currency rv" role="note">
+            {t.walutaUwaga}
+          </p>
+        )}
       </div>
     </section>
   );

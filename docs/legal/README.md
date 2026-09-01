@@ -212,3 +212,16 @@ Warto zapamiętać wzorzec, bo powtórzył się w tej sekcji trzy razy: **funkcj
 dopisana do produktu potrafi unieważnić zdanie w dokumencie prawnym**, a zauważa się
 to dopiero wtedy, gdy ktoś czyta oba naraz. Regulamin zostaje przy wersji 2026-08-28.
 
+## Wersje językowe
+
+Dokumenty istnieją w czterech językach: `regulamin.md` (polski, **wiążący**) oraz
+`regulamin.en.md`, `regulamin.de.md`, `regulamin.es.md`. Tak samo polityka
+prywatności. Każde tłumaczenie niesie na górze klauzulę, że w razie rozbieżności
+wiąże wersja polska — umowa jest zawierana po polsku i tylko ta wersja podlega
+interpretacji.
+
+**Zmiana dokumentu to zmiana czterech plików.** Wersja (`_Wersja RRRR-MM-DD_`)
+musi być w nich identyczna: klient zgadza się na konkretną wersję przy
+rejestracji, a rozbieżna data w tłumaczeniu podważałaby, na co dokładnie.
+Strona nie podmienia brakującego tłumaczenia na polskie — budowanie pada,
+i to jest zamierzone.

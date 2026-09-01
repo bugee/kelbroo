@@ -6,15 +6,20 @@
  * i nie rozprasza treści; ceną jest słabsze pozycjonowanie pod pojedyncze
  * hasła w wyszukiwarce.
  */
+import { localePath, type Dictionary, type Locale } from '@kelbroo/i18n';
 import { PrivacySettings } from './PrivacySettings';
 
-export function SiteFooter() {
+export function SiteFooter({ dict, locale }: { dict: Dictionary; locale: Locale }) {
+  const dom = localePath(locale, '/');
+  const kotwica = (id: string) => `${dom === '/' ? '' : dom}/#${id}`;
+  const sciezka = (adres: string) => localePath(locale, adres);
+
   return (
     <footer className="foot">
       <div className="wrap">
         <div className="foot-grid">
           <div className="foot-brand">
-            <a className="brand" href="/#top">
+            <a className="brand" href={kotwica('top')}>
               <svg viewBox="0 0 120 180" fill="none" aria-hidden="true">
                 <defs>
                   <linearGradient
@@ -73,62 +78,58 @@ export function SiteFooter() {
               </svg>
               <span>kelbroo</span>
             </a>
-            <p>Zamawianie przy stoliku dla restauracji, kawiarni i barów w Polsce.</p>
+            <p>{dict.stopka.opis}</p>
           </div>
           <div>
-            <h4>Produkt</h4>
+            <h4>{dict.stopka.produkt}</h4>
             <ul>
-              <li>
-                <a href="/#jak">Jak to działa</a>
-              </li>
-              <li>
-                <a href="/#modele">Płatność u kelnera</a>
-              </li>
-              <li>
-                <a href="/#funkcje">Funkcje</a>
-              </li>
-              <li>
-                <a href="/#cennik">Cennik</a>
-              </li>
-              <li>
-                <a href="/#demo">Demo menu</a>
-              </li>
+              {(
+                [
+                  ['jak', dict.nav.jak],
+                  ['modele', dict.stopka.platnoscUKelnera],
+                  ['funkcje', dict.nav.funkcje],
+                  ['cennik', dict.nav.cennik],
+                  ['demo', dict.stopka.demoMenu],
+                ] as const
+              ).map(([id, etykieta]) => (
+                <li key={id}>
+                  <a href={kotwica(id)}>{etykieta}</a>
+                </li>
+              ))}
             </ul>
           </div>
           <div>
-            <h4>Dla kogo</h4>
+            <h4>{dict.stopka.dlaKogo}</h4>
             <ul>
-              <li>
-                <a href="/dla-kogo#restauracje">Restauracje</a>
-              </li>
-              <li>
-                <a href="/dla-kogo#kawiarnie">Kawiarnie</a>
-              </li>
-              <li>
-                <a href="/dla-kogo#bary">Bary i puby</a>
-              </li>
-              <li>
-                <a href="/dla-kogo#hotele">Hotele</a>
-              </li>
-              <li>
-                <a href="/dla-kogo#sieci">Sieci i food courty</a>
-              </li>
+              {(
+                [
+                  ['restauracje', dict.segmenty.restauracje],
+                  ['kawiarnie', dict.segmenty.kawiarnie],
+                  ['bary', dict.segmenty.bary],
+                  ['hotele', dict.segmenty.hotele],
+                  ['sieci', dict.segmenty.sieci],
+                ] as const
+              ).map(([id, etykieta]) => (
+                <li key={id}>
+                  <a href={`${sciezka('/dla-kogo')}#${id}`}>{etykieta}</a>
+                </li>
+              ))}
             </ul>
           </div>
           <div>
-            <h4>Pomoc</h4>
+            <h4>{dict.stopka.prawne}</h4>
             <ul>
               <li>
-                <a href="/pomoc">Baza wiedzy</a>
+                <a href={sciezka('/pomoc')}>{dict.stopka.pomoc}</a>
               </li>
               <li>
-                <a href="/#kontakt">Kontakt</a>
+                <a href={kotwica('kontakt')}>{dict.stopka.kontakt}</a>
               </li>
               <li>
-                <a href="/regulamin">Regulamin</a>
+                <a href={sciezka('/regulamin')}>{dict.stopka.regulamin}</a>
               </li>
               <li>
-                <a href="/prywatnosc">Prywatność</a>
+                <a href={sciezka('/prywatnosc')}>{dict.stopka.prywatnosc}</a>
               </li>
               {/*
                 Obowiązek informacyjny RODO wypełnia polityka prywatności — §1
@@ -140,11 +141,11 @@ export function SiteFooter() {
                 skrócenie polityki potrafi cicho rozwiązać ten odnośnik.
               */}
               <li>
-                <a href="/prywatnosc#par-7">RODO</a>
+                <a href={`${sciezka('/prywatnosc')}#par-7`}>{dict.stopka.rodo}</a>
               </li>
               {/* Zgodę trzeba dać się wycofać tak łatwo, jak się ją dało. */}
               <li>
-                <PrivacySettings />
+                <PrivacySettings etykieta={dict.stopka.statystyki} />
               </li>
             </ul>
           </div>

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { isValidNip } from '@kelbroo/types';
+import { localePath, wstaw, type Dictionary, type Locale } from '@kelbroo/i18n';
 import { RegistrationError, register, type Pole, type RegistrationInput } from '@/lib/api';
 
 /** Minimalna długość hasła — ta sama, której pilnuje serwer. */
@@ -15,19 +16,36 @@ const MIN_HASLO = 8;
  * formularz, który przepuszcza coś, co serwer odrzuci, jest gorszy niż brak
  * sprawdzania, bo obiecuje poprawność.
  */
-function sprawdz(dane: RegistrationInput): Partial<Record<Pole, string>> {
+function sprawdz(dane: RegistrationInput, dict: Dictionary): Partial<Record<Pole, string>> {
+  const komunikaty = dict.rejestracjaForm.bledy;
   const bledy: Partial<Record<Pole, string>> = {};
 
-  if (dane.restaurantName.trim().length < 2) bledy.restaurantName = 'Podaj nazwę lokalu.';
-  if (dane.ownerName.trim().length < 2) bledy.ownerName = 'Podaj imię i nazwisko.';
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(dane.email.trim()))
-    bledy.email = 'To nie wygląda na poprawny adres e-mail.';
-  if (dane.password.length < MIN_HASLO)
-    bledy.password = `Hasło musi mieć co najmniej ${MIN_HASLO} znaków.`;
+  if (dane.restaurantName.trim().length < 2) bledy.restaurantName = komunikaty.nazwaLokalu;
+  if (dane.ownerName.trim().length < 2) bledy.ownerName = komunikaty.imie;
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(dane.email.trim())) bledy.email = komunikaty.email;
+  if (dane.password.length < MIN_HASLO) bledy.password = wstaw(komunikaty.haslo, { min: MIN_HASLO });
   // Suma kontrolna, nie sama długość — literówka wyszłaby dopiero przy fakturze.
-  if (!isValidNip(dane.nip)) bledy.nip = 'Sprawdź numer NIP — te cyfry się nie zgadzają.';
+  if (!isValidNip(dane.nip)) bledy.nip = komunikaty.nip;
 
   return bledy;
+}
+
+/**
+ * Zdanie zgody z odnośnikiem w środku.
+ *
+ * `{link}` w tłumaczeniu wyznacza miejsce nazwy dokumentu — sklejanie zdania
+ * z trzech kawałków wokół znacznika działa tylko dla jednego szyku zdania,
+ * a mamy cztery języki.
+ */
+function zZgodaLinkiem(szablon: string, adres: string, etykieta: string) {
+  const [przed, po = ''] = szablon.split('{link}');
+  return (
+    <>
+      {przed}
+      <a href={adres}>{etykieta}</a>
+      {po}
+    </>
+  );
 }
 
 /**
@@ -37,7 +55,8 @@ function sprawdz(dane: RegistrationInput): Partial<Record<Pole, string>> {
  * formularza zmusza do zgadywania, co poprawić — a przy zakładaniu konta to
  * moment, w którym najłatwiej zrezygnować.
  */
-export function RegistrationForm() {
+export function RegistrationForm({ dict, locale }: { dict: Dictionary; locale: Locale }) {
+  const t = dict.rejestracjaForm;
   const [wysylanie, setWysylanie] = useState(false);
   const [bledy, setBledy] = useState<Partial<Record<Pole, string>>>({});
   const [blad, setBlad] = useState<string | null>(null);
@@ -50,20 +69,20 @@ export function RegistrationForm() {
         style={{ borderColor: 'var(--teal)', background: 'var(--teal-wash)' }}
       >
         <h2 style={{ fontSize: 'var(--fs-h3)', fontWeight: 700, marginBottom: '8px' }}>
-          Sprawdź skrzynkę
+          {t.sukcesTytul}
         </h2>
         {/*
           Konto dla „…" istnieje, ale panel wpuści dopiero po potwierdzeniu adresu.
           Mówimy to wprost, żeby nikt nie próbował się logować i nie odbił się
           o komunikat, którego nie umiałby powiązać z tym ekranem.
         */}
-        <p style={{ color: 'var(--ink-2)', marginBottom: '12px' }}>
-          Konto dla „{gotowe.nazwa}” jest założone. Wysłaliśmy wiadomość na{' '}
-          <strong>{gotowe.email}</strong> — kliknij w odnośnik, żeby potwierdzić adres i wejść do
-          panelu.
+        <p style={{ color: 'var(--ink-2)', marginBottom: '8px' }}>{wstaw(t.sukcesKonto, { nazwa: gotowe.nazwa })}</p>
+        <p className="mono" style={{ marginBottom: '12px' }}>
+          <strong>{gotowe.email}</strong>
         </p>
+        <p style={{ color: 'var(--ink-2)', marginBottom: '12px' }}>{t.sukcesKlik}</p>
         <p className="mono" style={{ fontSize: 'var(--fs-xs)', color: 'var(--muted)' }}>
-          Wiadomość nie dotarła? Sprawdź spam albo napisz na kontakt@kelbroo.com.
+          {t.sukcesSpam}
         </p>
       </div>
     );
@@ -88,7 +107,7 @@ export function RegistrationForm() {
       nip: String(formularz.get('nip') ?? ''),
     };
 
-    const wlasne = sprawdz(dane);
+    const wlasne = sprawdz(dane, dict);
     if (Object.keys(wlasne).length > 0) {
       setBledy(wlasne);
       setBlad(null);
@@ -107,7 +126,7 @@ export function RegistrationForm() {
         // Gdy błąd dotyczy pól, komunikat nad przyciskiem tylko by je powtarzał.
         setBlad(Object.keys(przyczyna.pola).length > 0 ? null : przyczyna.message);
       } else {
-        setBlad('Nie udało się założyć konta. Spróbuj ponownie.');
+        setBlad(t.bladOgolny);
       }
     } finally {
       setWysylanie(false);
@@ -122,25 +141,25 @@ export function RegistrationForm() {
     >
       <Pole
         nazwa="restaurantName"
-        label="Nazwa lokalu"
+        label={t.nazwaLokalu}
         autoComplete="organization"
         blad={bledy.restaurantName}
       />
-      <Pole nazwa="ownerName" label="Imię i nazwisko" autoComplete="name" blad={bledy.ownerName} />
+      <Pole nazwa="ownerName" label={t.imie} autoComplete="name" blad={bledy.ownerName} />
       <Pole
         nazwa="nip"
-        label="NIP"
+        label={t.nip}
         inputMode="numeric"
-        podpowiedz="Dziesięć cyfr. Usługa jest wyłącznie dla firm."
+        podpowiedz={t.nipPodpowiedz}
         blad={bledy.nip}
       />
-      <Pole nazwa="email" label="E-mail" type="email" autoComplete="email" blad={bledy.email} />
+      <Pole nazwa="email" label={t.email} type="email" autoComplete="email" blad={bledy.email} />
       <Pole
         nazwa="password"
-        label="Hasło"
+        label={t.haslo}
         type="password"
         autoComplete="new-password"
-        podpowiedz={`Co najmniej ${MIN_HASLO} znaków.`}
+        podpowiedz={wstaw(t.hasloPodpowiedz, { min: MIN_HASLO })}
         blad={bledy.password}
       />
 
@@ -151,10 +170,10 @@ export function RegistrationForm() {
         systemowy jest tak samo dobry jak własny.
       */}
       <Zgoda name="acceptTerms">
-        Akceptuję <a href="/regulamin">regulamin</a> usługi kelbroo.
+        {zZgodaLinkiem(t.zgodaRegulamin, localePath(locale, '/regulamin'), dict.stopka.regulamin)}
       </Zgoda>
       <Zgoda name="acceptPrivacy">
-        Zapoznałem się z <a href="/prywatnosc">polityką prywatności</a>.
+        {zZgodaLinkiem(t.zgodaPrywatnosc, localePath(locale, '/prywatnosc'), dict.stopka.prywatnosc)}
       </Zgoda>
 
       {blad && (
@@ -173,7 +192,7 @@ export function RegistrationForm() {
       )}
 
       <button type="submit" className="btn btn-primary" disabled={wysylanie}>
-        {wysylanie ? 'Zakładam konto…' : 'Zacznij 14 dni za darmo'}
+        {wysylanie ? t.zakladam : t.zacznij}
       </button>
     </form>
   );

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { dictionary } from '@kelbroo/i18n';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { pomocHtml } from '@/lib/dokumenty';
@@ -32,7 +33,7 @@ export default async function ArtykulPage({ params }: { params: Promise<{ slug: 
 
   return (
     <>
-      <SiteHeader />
+      <SiteHeader dict={dictionary('pl')} locale="pl" sciezka={`/pomoc/${slug}`} />
 
       <main className="section">
         {/* Węższa kolumna niż strona produktowa: to tekst do czytania, a nie
@@ -53,7 +54,7 @@ export default async function ArtykulPage({ params }: { params: Promise<{ slug: 
         </div>
       </main>
 
-      <SiteFooter />
+      <SiteFooter dict={dictionary('pl')} locale="pl" />
     </>
   );
 }

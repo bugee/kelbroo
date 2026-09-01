@@ -1439,3 +1439,50 @@ svg {
     flex: 1;
   }
 }
+
+/* Zdanie o walucie pod cennikiem — wyłącznie na stronach obcojęzycznych.
+   Drobne, bo to zastrzeżenie, a nie oferta; ale czytelne, bo dotyczy tego,
+   w czym klient naprawdę zapłaci. */
+.pricing-currency {
+  margin-top: 14px;
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+/* --- przełącznik języka -----------------------------------------------------
+   Skróty, nie pełne nazwy: w pasku nawigacji na telefonie mieszczą się trzy
+   znaki, a nie „Deutsch". Pełna nazwa idzie w `title` i w nazwie dostępnej. */
+.lang {
+  display: flex;
+  gap: 2px;
+  margin-right: 6px;
+}
+.lang a {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 7px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--muted);
+  text-decoration: none;
+  transition:
+    color 0.15s,
+    background 0.15s;
+}
+.lang a:hover {
+  color: var(--teal);
+}
+.lang a.lang-on {
+  background: var(--teal-wash);
+  color: var(--teal);
+}
+@media (max-width: 900px) {
+  .lang {
+    order: -1;
+  }
+}
