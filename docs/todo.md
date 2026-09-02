@@ -1112,6 +1112,26 @@ Z [product.md §7](product.md#7-wymagania-niefunkcjonalne-dotyczą-wszystkich-tr
 
 ---
 
+## Zgodność zestawienia na e-mail z RODO
+
+Analiza: [analiza-zgoda-na-zestawienie.md](analiza-zgoda-na-zestawienie.md).
+Funkcja działa na produkcji, a **Polityka prywatności nie opisuje jej ani
+słowem** — kod powołuje się na §9, którego nie ma.
+
+- [ ] **Paragraf Polityki o zestawieniu na e-mail** — cztery wersje językowe,
+      ta sama data wersji. Do zrobienia niezależnie od reszty: łata lukę, która
+      istnieje dziś.
+- [ ] **Klauzula informacyjna pod formularzem** w aplikacji gościa — kto
+      przetwarza, po co, jak długo, jakie prawa.
+- [ ] **Rozstrzygnięcie prawnika: kto jest administratorem** adresu — restauracja
+      czy kelbroo. Blokuje brzmienie klauzuli i checkboxa.
+- [ ] **Rozstrzygnięcie prawnika: dane innych gości w zestawieniu** — pełna lista
+      pozycji czy wyłącznie pozycje nadawcy. Może zmienić treść dokumentu.
+- [ ] **Checkbox zgody** — nieodhaczony, o wysyłce, nie o „akceptacji polityki".
+      Tylko jeśli prawnik wskaże zgodę jako podstawę.
+- [ ] **Ślad zgody bez adresu** — wizyta, moment, wersja klauzuli.
+- [ ] **Klauzula w stopce wiadomości** razem z odnośnikiem do dokumentu.
+
 ## Decyzje do podjęcia
 
 Blokują zadania powyżej — wymagają twojej decyzji, nie kodu.

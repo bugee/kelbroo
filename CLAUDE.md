@@ -37,6 +37,7 @@ Przed implementacją czegokolwiek przeczytaj odpowiedni dokument:
 | [docs/03-customer-ordering.md](docs/03-customer-ordering.md) | System 3 — aplikacja gościa, zamawianie, płatności, oceny |
 | [docs/analiza-tryb-przedplacony.md](docs/analiza-tryb-przedplacony.md) | **Analiza, nie decyzja** — tryb „zapłać i odbierz" dla lokali bez kelnera |
 | [docs/analiza-platnosci-gosci.md](docs/analiza-platnosci-gosci.md) | **Analiza, nie decyzja** — płatności gości, zwroty, rozliczanie i ryzyka |
+| [docs/analiza-zgoda-na-zestawienie.md](docs/analiza-zgoda-na-zestawienie.md) | **Analiza, nie decyzja** — zgoda i obowiązek informacyjny przy zestawieniu na e-mail |
 
 **Projekt strony głównej** (referencja wizualna dla Systemu 1): [design/landing-page.html](design/landing-page.html) — samodzielny plik HTML, otwierany bezpośrednio w przeglądarce. **Nie jest już serwowany** — treść i style żyją w `apps/web-marketing`, a ten plik zostaje jako punkt odniesienia. Wersja opublikowana: https://claude.ai/code/artifact/e5cfa001-f874-412d-bc9d-847c606328c4
 

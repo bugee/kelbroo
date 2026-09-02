@@ -308,3 +308,54 @@ przez obsługę: „ta pozycja została zwrócona".
 bez potwierdzenia z systemu płatniczego — jest wystarczający, jeśli kiedyś stanie się
 dowodem w sporze. I czy powinniśmy w regulaminie wprost przypisać obowiązek zwrotu
 restauracji.
+
+## Część E. Zestawienie rachunku na e-mail gościa
+
+Funkcja **działa na produkcji**: gość wpisuje adres, dostaje listę „kto co
+zamówił" do rozliczenia delegacji, a adresu nie zapisujemy nigdzie. Komplet
+pytań, warianty rozwiązań i kolejność prac opisuje
+[analiza zgody przy zestawieniu](../analiza-zgoda-na-zestawienie.md) — poniżej
+samo streszczenie.
+
+### E1. Nie ma paragrafu, na który powołuje się kod
+
+Kod i pytanie D4 powyżej odsyłają do **Polityki §9 ust. 1**. Ten paragraf nie
+istnieje — Polityka kończy się na §8 i nie wspomina o zestawieniu ani słowem.
+
+**Czego potrzebujemy:** brzmienia paragrafu opisującego jednorazowe użycie
+adresu do wysyłki zestawienia, bez jego przechowywania.
+
+### E2. Kto jest administratorem tego adresu
+
+Polityka §1 ust. 2 mówi, że wobec danych z pracy lokalu administratorem jest
+restauracja. Adres podany przy rachunku powstaje właśnie tam — ale o celu
+i sposobie tej wysyłki decydujemy my.
+
+**Pytanie:** czy klauzula ma wskazywać restaurację, czy kelbroo? Jeśli
+restaurację — nie mamy w bazie jej tożsamości prawnej (jest nazwa handlowa
+i NIP organizacji, nie ma pełnej nazwy firmy ani adresu do spraw danych).
+
+### E3. Czy potrzebna jest zgoda i w jakim brzmieniu
+
+Gość sam wpisuje adres i sam klika „Wyślij zestawienie". **Pytanie:** czy to
+wystarcza jako jednoznaczne działanie, czy potrzebny jest osobny, nieodhaczony
+checkbox — a jeśli tak, prosimy o brzmienie. Nasze założenie: zgoda dotyczy
+**wysyłki**, nie „akceptacji polityki prywatności".
+
+### E4. Dane innych gości w treści zestawienia
+
+Zestawienie pokazuje pozycje **wszystkich uczestników wizyty** wraz z ich
+pseudonimami. Gość A wysyła więc na swoją skrzynkę dane gościa B, a zgoda A
+niczego w sprawie B nie rozstrzyga.
+
+**Pytanie:** czy wolno tak zostawić, czy dokument ma zawierać wyłącznie pozycje
+nadawcy i sumę rachunku.
+
+### E5. Jak wykazać zgodę, nie zapisując adresu
+
+Obiecujemy gościowi na dwóch ekranach, że adresu nie zapisujemy, i tak jest.
+Wykazanie zgody wprost wymagałoby powiązania jej z adresem.
+
+**Pytanie:** czy ślad bez adresu — identyfikator wizyty, moment i wersja
+pokazanej klauzuli — wystarcza do rozliczalności, czy potrzebny jest skrót
+adresu.
