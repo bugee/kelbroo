@@ -480,6 +480,22 @@ export async function acknowledgeCallAt(tableId: string): Promise<void> {
  * `wygasly` cofa datę końca — panel przechodzi wtedy w stan, w którym nowe
  * zamówienia są wstrzymane, a rozliczenia nadal działają.
  */
+/**
+ * Zdjęcia dań są funkcją planu, a panel chowa całą sekcję, gdy jej nie ma —
+ * bez tego przełącznika test klikałby w przycisk, którego nie ma na ekranie.
+ */
+export async function setMenuPhotos(enabled: boolean): Promise<void> {
+  await withClient(async (client) => {
+    const { rows } = await client.query('SELECT organization_id FROM restaurant WHERE slug = $1', [
+      E2E_SLUG,
+    ]);
+    await client.query('UPDATE subscription SET menu_photos_enabled = $2 WHERE organization_id = $1', [
+      rows[0]?.organization_id as string,
+      enabled,
+    ]);
+  });
+}
+
 export async function setSubscription(stan: 'aktywny' | 'wygasly' | 'proba'): Promise<void> {
   await withClient(async (client) => {
     const { rows } = await client.query('SELECT organization_id FROM restaurant WHERE slug = $1', [

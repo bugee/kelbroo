@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { imageSrc, removeItemImage, uploadItemImage } from '@/lib/api';
 
 /**
@@ -50,32 +50,64 @@ async function zmniejsz(plik: File): Promise<Blob> {
  *
  * Jedno, nie galeria: gość przegląda kartę, żeby wybrać, a nie żeby oglądać
  * album. Wgranie nowego zastępuje poprzednie — nie ma czego „dodawać".
+ *
+ * **Dwa tryby, bo danie ma zdjęcie, zanim ma identyfikator.** Przy edycji
+ * zapisanej pozycji plik idzie na serwer od razu po wybraniu: nie ma powodu,
+ * żeby czekał na „Zapisz", a formularz nie musi trzymać megabajtów w pamięci.
+ * Przy nowym daniu nie ma jeszcze czego opisać zdjęciem, więc plik czeka
+ * w przeglądarce i wgrywa go edytor zaraz po utworzeniu pozycji.
  */
 export function ItemImage({
   itemId,
   imageUrl,
   onChanged,
+  onPending,
 }: {
-  itemId: string;
+  /** `null` dla nowego dania — wtedy zdjęcie czeka na zapis. */
+  itemId: string | null;
   imageUrl: string | null;
   /** Sygnał dla listy pod spodem — **nie** zamyka edytora. */
   onChanged?: () => void;
+  /** Plik czekający na wgranie (albo `null`, gdy zdjęcie wycofano). */
+  onPending?: (plik: Blob | null) => void;
 }) {
   const wejscie = useRef<HTMLInputElement>(null);
   // Podgląd trzymamy lokalnie: wgranie zdjęcia nie ma przeładowywać formularza,
   // w którym ktoś właśnie poprawia opis dania.
-  const [aktualne, setAktualne] = useState(imageUrl);
+  const [zapisane, setZapisane] = useState(imageUrl);
+  // Adres `blob:` dla pliku, który jeszcze nie pojechał na serwer.
+  const [lokalny, setLokalny] = useState<string | null>(null);
   const [pracuje, setPracuje] = useState(false);
   const [blad, setBlad] = useState<string | null>(null);
+
+  // Adresy `blob:` żyją do końca życia karty, dopóki się ich nie zwolni —
+  // wybranie dziesięciu zdjęć po kolei zostawiłoby w pamięci dziesięć plików.
+  useEffect(
+    () => () => {
+      if (lokalny) URL.revokeObjectURL(lokalny);
+    },
+    [lokalny],
+  );
+
+  const podglad = lokalny ?? (zapisane ? imageSrc(zapisane) : null);
 
   const wybrano = async (plik: File | undefined) => {
     if (!plik) return;
     setPracuje(true);
     setBlad(null);
     try {
-      const wynik = await uploadItemImage(itemId, await zmniejsz(plik));
-      setAktualne(wynik.imageUrl);
-      onChanged?.();
+      const zmniejszone = await zmniejsz(plik);
+
+      if (itemId) {
+        const wynik = await uploadItemImage(itemId, zmniejszone);
+        setZapisane(wynik.imageUrl);
+        setLokalny(null);
+        onPending?.(null);
+        onChanged?.();
+      } else {
+        setLokalny(URL.createObjectURL(zmniejszone));
+        onPending?.(zmniejszone);
+      }
     } catch (przyczyna) {
       setBlad(przyczyna instanceof Error ? przyczyna.message : 'Nie udało się wgrać zdjęcia.');
     } finally {
@@ -86,11 +118,20 @@ export function ItemImage({
   };
 
   const usun = async () => {
+    // Plik, który nigdzie nie pojechał, wystarczy odpiąć — kasowanie na serwerze
+    // dotyczyłoby wtedy poprzedniego zdjęcia, a nie tego, które widać na ekranie.
+    if (lokalny) {
+      setLokalny(null);
+      onPending?.(null);
+      return;
+    }
+    if (!itemId || !zapisane) return;
+
     setPracuje(true);
     setBlad(null);
     try {
       await removeItemImage(itemId);
-      setAktualne(null);
+      setZapisane(null);
       onChanged?.();
     } catch (przyczyna) {
       setBlad(przyczyna instanceof Error ? przyczyna.message : 'Nie udało się usunąć zdjęcia.');
@@ -101,9 +142,9 @@ export function ItemImage({
 
   return (
     <div className="flex items-start gap-3">
-      {aktualne ? (
+      {podglad ? (
         <img
-          src={imageSrc(aktualne)}
+          src={podglad}
           alt=""
           className="size-20 shrink-0 rounded-[var(--radius-control)] object-cover"
         />
@@ -127,10 +168,10 @@ export function ItemImage({
           onClick={() => wejscie.current?.click()}
           className="mono min-h-9 rounded-[var(--radius-control)] bg-[var(--teal-wash)] px-3 text-xs font-semibold text-[var(--teal)] disabled:opacity-50"
         >
-          {pracuje ? 'Pracuję…' : aktualne ? 'Zmień zdjęcie' : 'Dodaj zdjęcie'}
+          {pracuje ? 'Pracuję…' : podglad ? 'Zmień zdjęcie' : 'Dodaj zdjęcie'}
         </button>
 
-        {aktualne && (
+        {podglad && (
           <button
             type="button"
             disabled={pracuje}
@@ -143,6 +184,7 @@ export function ItemImage({
 
         <p className="text-[10px] text-[var(--muted)]">
           Jedno zdjęcie na danie. Zmniejszymy je przed wysłaniem.
+          {lokalny && ' Wgramy je razem z zapisem dania.'}
         </p>
 
         {blad && (

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import {
   createItem,
   updateItem,
+  uploadItemImage,
   type AdminItem,
   type AdminMenu,
   type AdminModifierGroup,
@@ -19,6 +20,12 @@ interface Props {
   photosEnabled: boolean;
   onClose: () => void;
   onSaved: () => void;
+  /**
+   * Zdjęcie zapisanej pozycji idzie na serwer od razu, bez „Zapisz" — lista pod
+   * spodem musi się o tym dowiedzieć, bo inaczej po „Anuluj" pokazuje stan
+   * sprzed wgrania.
+   */
+  onItemChanged: () => void;
 }
 
 const emptyGroup = (locales: string[]): AdminModifierGroup => ({
@@ -29,7 +36,15 @@ const emptyGroup = (locales: string[]): AdminModifierGroup => ({
   modifiers: [],
 });
 
-export function ItemEditor({ menu, categoryId, item, photosEnabled, onClose, onSaved }: Props) {
+export function ItemEditor({
+  menu,
+  categoryId,
+  item,
+  photosEnabled,
+  onClose,
+  onSaved,
+  onItemChanged,
+}: Props) {
   const locales = menu.supportedLocales;
 
   const [translations, setTranslations] = useState<Translation[]>(
@@ -46,6 +61,20 @@ export function ItemEditor({ menu, categoryId, item, photosEnabled, onClose, onS
   const [groups, setGroups] = useState<AdminModifierGroup[]>(item?.modifierGroups ?? []);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  /**
+   * Zdjęcie wybrane dla **nowego** dania, które czeka na jego identyfikator.
+   * Przy edycji zapisanej pozycji zostaje `null` — tam plik idzie na serwer
+   * od razu po wybraniu.
+   */
+  const [zdjecieDoWgrania, setZdjecieDoWgrania] = useState<Blob | null>(null);
+  /**
+   * Identyfikator pozycji założonej w tym oknie.
+   *
+   * Potrzebny na jedną ścieżkę: danie zapisało się, a wgranie zdjęcia padło.
+   * Bez tego drugie kliknięcie „Zapisz" założyłoby **drugie takie samo danie**
+   * zamiast poprawić pierwsze.
+   */
+  const [utworzoneId, setUtworzoneId] = useState<string | null>(null);
 
   const setTranslation = (locale: string, field: 'name' | 'description', value: string) =>
     setTranslations((current) =>
@@ -82,11 +111,26 @@ export function ItemEditor({ menu, categoryId, item, photosEnabled, onClose, onS
         modifierGroups: groups,
       };
 
-      if (item) {
-        await updateItem(item.id, payload);
+      let id = item?.id ?? utworzoneId;
+      if (id) {
+        await updateItem(id, payload);
       } else {
-        await createItem(payload);
+        id = (await createItem(payload)).id;
+        setUtworzoneId(id);
       }
+
+      if (zdjecieDoWgrania) {
+        try {
+          await uploadItemImage(id, zdjecieDoWgrania);
+          setZdjecieDoWgrania(null);
+        } catch (cause) {
+          // Danie **jest** zapisane — mówimy to wprost, żeby nikt nie zaczynał
+          // od nowa. Okno zostaje otwarte, a kolejny „Zapisz" ponowi wgranie.
+          const powod = cause instanceof Error ? cause.message : 'nieznany błąd';
+          throw new Error(`Danie zapisane, ale zdjęcia nie udało się wgrać: ${powod}`);
+        }
+      }
+
       onSaved();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Nie udało się zapisać.');
@@ -164,14 +208,19 @@ export function ItemEditor({ menu, categoryId, item, photosEnabled, onClose, onS
         </div>
 
         {/*
-          Zdjęcie zapisuje się osobnym żądaniem, od razu po wybraniu pliku —
-          nie czeka na „Zapisz". Inaczej formularz musiałby trzymać megabajty
-          w pamięci i wysyłać je razem z resztą. Stąd też dostępne dopiero dla
-          pozycji już zapisanej: bez identyfikatora nie ma czego opisać zdjęciem.
+          Przy zapisanej pozycji zdjęcie leci osobnym żądaniem od razu po
+          wybraniu pliku — nie czeka na „Zapisz". Przy nowym daniu nie ma jeszcze
+          czego opisać zdjęciem, więc plik czeka w przeglądarce i wgrywamy go
+          zaraz po utworzeniu pozycji (patrz `save`).
         */}
-        {photosEnabled && item && (
+        {photosEnabled && (
           <Field label="Zdjęcie dania">
-            <ItemImage itemId={item.id} imageUrl={item.imageUrl} />
+            <ItemImage
+              itemId={item?.id ?? utworzoneId}
+              imageUrl={item?.imageUrl ?? null}
+              onPending={setZdjecieDoWgrania}
+              onChanged={onItemChanged}
+            />
           </Field>
         )}
 

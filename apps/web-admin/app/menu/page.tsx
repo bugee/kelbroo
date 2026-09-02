@@ -9,6 +9,7 @@ import {
   createCategory,
   fetchAdminMenu,
   fetchSubscription,
+  imageSrc,
   money,
   setItemAvailability,
   type AdminCategory,
@@ -29,6 +30,7 @@ function MenuEditor() {
   // Zdjęcia dań są funkcją planu. Pytamy o abonament raz przy wejściu na ekran —
   // plan nie zmienia się w trakcie edytowania karty.
   const [abonament, setAbonament] = useState<SubscriptionState | null>(null);
+  const photosEnabled = abonament?.menuPhotosEnabled ?? false;
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState<{
     category: AdminCategory;
@@ -146,6 +148,27 @@ function MenuEditor() {
                 .filter((item) => showArchived || !item.isArchived)
                 .map((item) => (
                   <li key={item.id} className="flex flex-wrap items-center gap-3 py-2">
+                    {/* Miniatura tylko tam, gdzie zdjęcia w ogóle działają.
+                        Bez niej z listy nie widać, którym daniom go jeszcze
+                        brakuje — a to pierwsze pytanie po wgraniu kilku. */}
+                    {photosEnabled && (
+                      <span
+                        aria-hidden="true"
+                        className="hidden shrink-0 sm:block"
+                        title={item.imageUrl ? undefined : 'Bez zdjęcia'}
+                      >
+                        {item.imageUrl ? (
+                          <img
+                            src={imageSrc(item.imageUrl)}
+                            alt=""
+                            className="size-9 rounded-[var(--radius-control)] object-cover"
+                          />
+                        ) : (
+                          <span className="block size-9 rounded-[var(--radius-control)] border border-dashed border-[var(--line-strong)]" />
+                        )}
+                      </span>
+                    )}
+
                     <span className="min-w-0 flex-1">
                       <span className={item.isArchived ? 'line-through opacity-60' : ''}>
                         {nameIn(item.translations, locale)}
@@ -207,8 +230,9 @@ function MenuEditor() {
           menu={menu}
           categoryId={editing.category.id}
           item={editing.item}
-          photosEnabled={abonament?.menuPhotosEnabled ?? false}
+          photosEnabled={photosEnabled}
           onClose={() => setEditing(null)}
+          onItemChanged={() => void refresh()}
           onSaved={() => {
             setEditing(null);
             void refresh();

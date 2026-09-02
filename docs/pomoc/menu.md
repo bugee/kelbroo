@@ -65,13 +65,21 @@ pustego ekranu** — gość zobaczy wtedy wersję w języku domyślnym lokalu.
 Funkcja planu **Pro i wyższych**. Jeśli masz niższy plan, a chcesz ją wypróbować,
 napisz na kontakt@kelbroo.com — da się ją włączyć bez zmiany abonamentu.
 
-Zdjęcie dodajesz w **edytuj** przy daniu, przyciskiem **Dodaj zdjęcie**. Jedno na
-pozycję: wgranie kolejnego zastępuje poprzednie. Karta z dwudziestoma daniami ma
-dać się przewinąć wzrokiem, a nie zamienić w album.
+Zdjęcie dodajesz przyciskiem **Dodaj zdjęcie** — zarówno przy zakładaniu nowego
+dania, jak i w **edytuj** przy daniu już zapisanym. Jedno na pozycję: wgranie
+kolejnego zastępuje poprzednie. Karta z dwudziestoma daniami ma dać się
+przewinąć wzrokiem, a nie zamienić w album.
 
-Zapisuje się od razu po wybraniu pliku — nie czeka na przycisk „Zapisz" i nie
-zamyka okna edycji. Dlatego zdjęcie da się dodać dopiero do pozycji już
-zapisanej.
+**Usuwasz je przyciskiem „Usuń zdjęcie"** pod podglądem. Danie zostaje, znika
+samo zdjęcie — a nowe wgrasz kiedy zechcesz.
+
+Przy **nowym daniu** zdjęcie czeka na kliknięcie „Zapisz" i idzie na serwer razem
+z pozycją — inaczej nie byłoby czego nim opisać. Przy daniu **już zapisanym**
+zapisuje się od razu po wybraniu pliku: nie czeka na „Zapisz" i nie zamyka okna
+edycji, więc „Anuluj" nie cofa wgranego zdjęcia.
+
+Na liście dań widać przy każdej pozycji małą miniaturę, a przy pozycjach bez
+zdjęcia — puste pole. Po niej poznasz, czemu jeszcze brakuje fotografii.
 
 **Nie musisz nic zmniejszać przed wgraniem.** Zdjęcie prosto z telefonu jest
 przygotowywane w przeglądarce: skracamy dłuższy bok do 1400 pikseli i zapisujemy
