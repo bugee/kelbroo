@@ -178,7 +178,8 @@ Scenariusz kolacji służbowej i spotkania rodzinnego: płaci jedna osoba, ale p
 
 - Gospodarz wybiera `Płacę za wszystkich` — wszyscy uczestnicy trafiają do jednej grupy rozliczeniowej.
 - Po rozliczeniu (w aplikacji lub u kelnera) pojawia się akcja **`Pobierz zestawienie (PDF)`**.
-- Zestawienie zawiera: pozycje pogrupowane po uczestnikach (nick, dania, suma częściowa), sumę całkowitą, napiwek, datę, nazwę lokalu i numer stolika.
+- Zestawienie zawiera: pozycje pogrupowane po uczestnikach (nick, dania, suma częściowa), sumę całkowitą, napiwek, **nazwę lokalu i datę — i nic poza tym**.
+- **Bez numeru stolika i numeru wizyty**: to nasza numeracja operacyjna, dla gościa nic nie znacząca, a na dokumencie idącym do cudzej księgowości wyglądająca jak identyfikatory, którymi nie jest. Z tego samego powodu **nie pada w nim słowo „rachunek"** — dokument nosi tytuł `Zestawienie zamówienia`, a rachunkiem jest paragon z kasy lokalu.
 - **Każdy uczestnik pobiera własne zestawienie**, niezależnie od gospodarza — to jego rozliczenie, nie tylko płatnika.
 - Dokument musi mieć widoczną adnotację: **to zestawienie informacyjne, nie paragon fiskalny.**
 - **Pobranie, nie wysyłka pocztą** (2026-09-02). Wysyłka wymagała adresu e-mail gościa, którego nie opisuje żaden nasz dokument — analiza w [analiza-zgoda-na-zestawienie.md](analiza-zgoda-na-zestawienie.md). Plik idzie prosto do telefonu: nie ma adresu do zebrania, zgody do odebrania ani śladu do przechowania.

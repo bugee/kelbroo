@@ -40,7 +40,7 @@ interface Grupa {
 }
 
 /**
- * Zestawienie rachunku jako plik PDF na telefon gościa.
+ * Zestawienie zamówienia jako plik PDF na telefon gościa.
  *
  * Scenariusz jest jeden i konkretny: kolację służbową płaci jedna osoba, a
  * rozliczyć trzeba, kto co zamówił (docs/03 §3.6c). Dlatego **każdy uczestnik
@@ -73,7 +73,9 @@ export class BillSummaryService {
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-|-$/g, '');
     const dzien = data.toISOString().slice(0, 10);
-    return `zestawienie-${slug || 'rachunek'}-${dzien}.pdf`;
+    // Lokal o nazwie bez znaków łacińskich zostawia sam człon z datą, zamiast
+    // wstawiać w nazwę pliku słowo, którego na dokumencie nie ma.
+    return ['zestawienie', slug, dzien].filter(Boolean).join('-') + '.pdf';
   }
 
   async pdf(
@@ -108,10 +110,7 @@ export class BillSummaryService {
 
       const wizyta = await tx.tableSession.findUniqueOrThrow({
         where: { id: guestSession.tableSessionId },
-        include: {
-          table: { select: { label: true } },
-          restaurant: { select: { name: true } },
-        },
+        include: { restaurant: { select: { name: true } } },
       });
 
       // Odrzucone i anulowane nie wchodzą — dokładnie ta sama reguła, którą
@@ -165,8 +164,6 @@ export class BillSummaryService {
       return {
         sessionId: wizyta.id,
         lokal: wizyta.restaurant.name,
-        stolik: wizyta.table.label,
-        numer: wizyta.sessionNumber,
         otwarta: wizyta.openedAt,
         waluta: wizyta.currency,
         totalCents: wizyta.totalCents,
@@ -194,12 +191,17 @@ export class BillSummaryService {
       doc.text(opis, doc.page.margins.left, y, { width: szerokosc - 90 });
     };
 
-    doc.font('plex-bold').fontSize(20).text('Zestawienie rachunku');
+    /*
+      Nagłówek niesie **wyłącznie lokal i datę**. Numer stolika i numer wizyty
+      są naszą numeracją operacyjną: gościowi nic nie mówią, a na dokumencie
+      idącym do cudzej księgowości wyglądają jak identyfikatory, którymi nie są.
+      Z tego samego powodu nie pada tu słowo „rachunek" — to zestawienie
+      zamówienia, a rachunkiem jest paragon z kasy lokalu.
+    */
+    doc.font('plex-bold').fontSize(20).text('Zestawienie zamówienia');
     doc.moveDown(0.4);
     doc.font('plex').fontSize(11).text(dane.lokal);
-    doc
-      .fillColor('#6b807e')
-      .text(`${dane.stolik} · rachunek #${dane.numer} · ${this.dataPolska(dane.otwarta)}`);
+    doc.fillColor('#6b807e').text(this.dataPolska(dane.otwarta));
     doc.fillColor('#000000');
 
     for (const grupa of dane.grupy) {

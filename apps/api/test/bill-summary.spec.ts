@@ -178,14 +178,18 @@ describe('treść zestawienia', () => {
     expect(dane.totalCents).toBe(7000);
   });
 
-  it('niesie nazwę lokalu, stolik i numer rachunku', async () => {
+  it('niesie nazwę lokalu i datę, i nic poza tym', async () => {
     const { guestSessionId } = await wizyta();
 
     const dane = await zestawienia.zestawienie(organizationId, guestSessionId);
 
     expect(dane.lokal).toBe('Pod Delegacją');
-    expect(dane.stolik).toBe('Stolik 12');
-    expect(dane.numer).toBeGreaterThan(0);
+    expect(dane.otwarta).toBeInstanceOf(Date);
+    // Numer stolika i numer wizyty to nasza numeracja operacyjna. Na dokumencie
+    // idącym do cudzej księgowości nie mają czego szukać, więc nie ma ich nawet
+    // w treści — nie da się ich przez pomyłkę narysować.
+    expect(dane).not.toHaveProperty('stolik');
+    expect(dane).not.toHaveProperty('numer');
   });
 
   it('nie robi zestawienia z pustej wizyty', async () => {
@@ -252,7 +256,7 @@ describe('plik', () => {
       'zestawienie-bistro-lodz-2026-09-02.pdf',
     );
     expect(BillSummaryService.nazwaPliku('!!!', new Date('2026-09-02T10:00:00Z'))).toBe(
-      'zestawienie-rachunek-2026-09-02.pdf',
+      'zestawienie-2026-09-02.pdf',
     );
   });
 });
