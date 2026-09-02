@@ -1042,6 +1042,7 @@ Z [product.md §7](product.md#7-wymagania-niefunkcjonalne-dotyczą-wszystkich-tr
 
 - [x] Zdjęcia dań: dodawanie przy zakładaniu pozycji, podmiana i usuwanie przy edycji
 - [x] Deklaracja gościa z prośby o rachunek (podział, płatność, faktura) w Powiadomieniach i na Sali
+- [x] Pobranie kodu stolika jako pliku PNG albo SVG
 - [x] Edycja stolika z ekranu kodów QR: numer, strefa i liczba miejsc
 - [x] Wydruk kodów QR do wycięcia: jeden kod na stronę, w ramce A5 albo A6
 - [x] Strona produktowa, podstrony i dokumenty prawne w czterech językach (PL/EN/DE/ES), cennik w euro

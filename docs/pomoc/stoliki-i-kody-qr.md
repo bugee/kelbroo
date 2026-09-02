@@ -64,6 +64,24 @@ W stopce każdego kafla, bardzo drobnym drukiem, jest oznaczenie wydruku
 poznasz, czy naklejka na stoliku jest jeszcze aktualna. Stoi na kaflu, a nie na
 stronie, bo kafle idą pod nożyczki osobno.
 
+## Pobranie kodu jako pliku
+
+Pod każdym kodem są dwa odnośniki: **pobierz PNG** i **SVG**. Przydają się, gdy
+kod ma trafić gdzieś poza nasz wydruk — do menu, na ulotkę, na projekt naklejki
+robiony w drukarni albo na stronę lokalu.
+
+- **PNG** — zwykły obrazek, wchodzi wszędzie: Word, Canva, poczta. Ma bok
+  2048 pikseli, czyli starcza na naklejkę wielkości kartki.
+- **SVG** — rysunek wektorowy: powiększysz go do rozmiaru witryny bez utraty
+  ostrości. **O ten poprosi drukarnia.**
+
+Plik nazywa się od stolika (`kelbroo-stolik-12.png`), więc w katalogu pobranych
+poznasz go bez otwierania.
+
+Pobrany kod ma **własny biały margines** dookoła. Na naszym wydruku otacza go
+biała karta, a w cudzym projekcie może nie otaczać nic — a kod dosunięty do
+kolorowego tła bywa nie do zeskanowania. Nie przycinaj tego marginesu.
+
 ## Nowy kod
 
 **nowy kod** unieważnia stary. Przydaje się, gdy kod wyciekł poza lokal — na przykład

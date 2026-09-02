@@ -5,6 +5,7 @@ import QRCode from 'qrcode';
 import { StaffShell } from '@/components/StaffShell';
 import { TableFields, type DaneStolika } from '@/components/TableFields';
 import { FORMATY, QrPrintSheet, type FormatWydruku } from '@/components/QrPrintSheet';
+import { pobierzPng, pobierzSvg } from '@/lib/qr-download';
 import {
   createTable,
   fetchTables,
@@ -186,6 +187,8 @@ function TableCard({
   onRegenerate: () => void;
   onToggleActive: () => void;
 }) {
+  const adresGoscia = guestUrlFor(table.qrToken);
+
   return (
     <article
       className={`flex flex-col items-center rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface)] p-4 text-center ${
@@ -255,12 +258,37 @@ function TableCard({
       </div>
 
       {/*
+        Kod jako plik, do wklejenia w cudzą grafikę: menu, ulotkę, projekt
+        naklejki od drukarni. PNG wchodzi wszędzie, SVG skaluje się bez utraty
+        ostrości — drukarnia poprosi o ten drugi. Pobrany plik ma **własny
+        margines**: na wydruku dookoła kodu jest biała karta, a w cudzym
+        projekcie nie ma jej nic.
+      */}
+      <p className="mono mt-2 flex items-center gap-2 text-xs text-[var(--muted)] print:hidden">
+        pobierz
+        <button
+          type="button"
+          onClick={() => void pobierzPng(adresGoscia, table.label)}
+          className="min-h-11 px-1 text-[var(--teal)] underline"
+        >
+          PNG
+        </button>
+        <button
+          type="button"
+          onClick={() => void pobierzSvg(adresGoscia, table.label)}
+          className="min-h-11 px-1 text-[var(--teal)] underline"
+        >
+          SVG
+        </button>
+      </p>
+
+      {/*
         Ten sam adres, który niesie kod QR — sposób na sprawdzenie karty bez
         sięgania po telefon. Poza wydrukiem: naklejka ma prowadzić gościa
         skanowaniem, a wypisany link tylko zachęcałby do przepisywania go ręcznie.
       */}
       <a
-        href={guestUrlFor(table.qrToken)}
+        href={adresGoscia}
         target="_blank"
         rel="noreferrer"
         className="mono mt-2 min-h-11 px-2 text-xs text-[var(--teal)] underline print:hidden"

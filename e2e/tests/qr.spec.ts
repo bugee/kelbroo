@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import { expect, test } from '@playwright/test';
 import { GUEST_URL } from '../playwright.config';
 import { ACCOUNTS } from '../fixtures/accounts';
@@ -184,6 +185,47 @@ test.describe('stoliki i kody QR', () => {
         `${GUEST_URL}/t/${fixture.qrToken}`,
       );
       await expect(poZmianie.getByText('wydruk v1')).toBeVisible();
+    } finally {
+      await fixture.cleanup();
+    }
+  });
+
+  test('kod stolika da się pobrać jako plik PNG i SVG', async ({ page }) => {
+    const fixture = await seedMenuAndTable();
+
+    try {
+      await page.goto('/login');
+      await page.getByLabel('E-mail').fill(ACCOUNTS.owner.email);
+      await page.getByLabel('Hasło', { exact: true }).fill(ACCOUNTS.owner.password);
+      await page.getByRole('button', { name: 'Zaloguj' }).click();
+      await expect(page).toHaveURL(/\/queue$/);
+      await page.goto('/qr');
+
+      const karta = page.locator('article').filter({ hasText: fixture.tableLabel });
+      const slug = fixture.tableLabel.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+
+      for (const [format, sygnatura] of [
+        ['PNG', Buffer.from([0x89, 0x50, 0x4e, 0x47])],
+        ['SVG', Buffer.from('<svg')],
+      ] as const) {
+        const pobranie = page.waitForEvent('download');
+        await karta.getByRole('button', { name: format, exact: true }).click();
+        const plik = await pobranie;
+
+        // Nazwa ma się dać odczytać w katalogu pobranych bez otwierania pliku.
+        expect(plik.suggestedFilename()).toBe(`kelbroo-${slug}.${format.toLowerCase()}`);
+
+        // Sedno: to ma być **obrazek**, a nie pusty plik albo strona błędu.
+        const sciezka = await plik.path();
+        const bajty = await readFile(sciezka);
+        expect(bajty.subarray(0, sygnatura.length)).toEqual(sygnatura);
+        expect(bajty.length).toBeGreaterThan(200);
+
+        // Rozdzielczość PNG-a czyta się z nagłówka IHDR. Plik ma trafić na
+        // naklejkę wielkości kartki, więc miniaturka byłaby tu bezużyteczna,
+        // a poznać ją można dopiero po wydrukowaniu.
+        if (format === 'PNG') expect(bajty.readUInt32BE(16)).toBe(2048);
+      }
     } finally {
       await fixture.cleanup();
     }
