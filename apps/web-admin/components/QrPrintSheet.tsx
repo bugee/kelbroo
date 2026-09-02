@@ -3,21 +3,23 @@ import type { AdminTable } from '@/lib/api';
 export type FormatWydruku = 'a5' | 'a6';
 
 export const FORMATY: { id: FormatWydruku; etykieta: string; opis: string }[] = [
-  { id: 'a5', etykieta: 'A5', opis: '2 na stronie A4' },
-  { id: 'a6', etykieta: 'A6', opis: '4 na stronie A4' },
+  { id: 'a5', etykieta: 'A5', opis: 'jeden kod na stronę' },
+  { id: 'a6', etykieta: 'A6', opis: 'jeden kod na stronę' },
 ];
 
 /**
- * Arkusz kodów do wycięcia.
+ * Naklejki z kodami do wycięcia — po jednej na stronę.
  *
  * Osobne znaczniki niż karty na ekranie, a nie te same z nadpisaniami `print:`.
  * To dwie różne rzeczy: na ekranie zarządza się stolikami, na papierze powstaje
  * naklejka, którą gość czyta z odległości metra. Wspólny komponent oznaczałby
  * kilkanaście reguł walczących ze sobą przy każdej zmianie układu.
  *
- * Kafel wypełnia dokładnie połowę (A5) albo ćwiartkę (A4) strony, a przerywana
- * ramka jest linią cięcia. Wymiary siedzą w `globals.css` — w milimetrach, bo
- * to jedyna jednostka, w której da się rozmawiać o papierze.
+ * Jeden kod na stronę, wyśrodkowany, w ramce o wymiarze **dokładnie** A5 albo
+ * A6 — ramka jest linią cięcia, więc jej wymiar jest formatem naklejki.
+ * Kilka kodów na kartce mieściło się gęściej, ale wychodziło ciasno i nie dało
+ * się ich obciąć równo. Wymiary siedzą w `globals.css`, w milimetrach: to
+ * jedyna jednostka, w której da się rozmawiać o papierze.
  */
 export function QrPrintSheet({
   tables,
@@ -32,13 +34,7 @@ export function QrPrintSheet({
     <div className={`arkusz arkusz-${format} hidden print:grid`}>
       {tables.map((table) => (
         <section key={table.id} className="kafel">
-          {/*
-            Kafel to miejsce na stronie, a `kafel-karta` to sama naklejka.
-            Rozdzielone, bo w formacie A5 karta jest **obrócona o 90°**: po
-            przecięciu A4 wzdłuż wychodzą dwa paski 210×148 mm, a naklejka ma
-            być pionowa, czyli 148×210 mm. Bez osobnego pudełka nie ma czego
-            obrócić razem ze stopką.
-          */}
+          {/* Kafel to strona, `kafel-karta` to naklejka na jej środku. */}
           <div className="kafel-karta">
             <div className="kafel-tresc">
               <div

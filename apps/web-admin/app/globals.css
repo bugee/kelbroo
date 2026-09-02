@@ -52,66 +52,55 @@
     padding: 0;
   }
 
-  /* Arkusz do wycięcia wypełnia stronę **co do milimetra**, więc drukarka nie
-     może dołożyć własnego marginesu — inaczej linie cięcia przestają trafiać
-     w krawędzie kafli i wszystko jedzie o kilka milimetrów. */
+  /* Arkusz nie może dostać marginesu drukarki: naklejka ma wyjść w dokładnym
+     formacie A5 albo A6, a przeskalowana strona zmieniłaby jej wymiary. */
   @page {
     size: A4;
     margin: 0;
   }
 
-  /* Szerokość wpisana wprost, a kolumny w ułamkach: `repeat(2, 105mm)` sumuje
-     się do 210 mm dokładnie i przy zaokrągleniu przeglądarki potrafi zepchnąć
-     drugą kolumnę na kolejną stronę. Wiersze po 148 mm zamiast 148,5 zostawiają
-     milimetr luzu na tej samej zasadzie. */
   .arkusz {
-    display: grid;
     width: 210mm;
-    grid-auto-rows: 148mm;
-  }
-  .arkusz-a5 {
-    grid-template-columns: 1fr;
-  }
-  .arkusz-a6 {
-    grid-template-columns: 1fr 1fr;
   }
 
+  /*
+    Jedna naklejka na stronę.
+    296 mm zamiast 297: kartka wypełniona co do milimetra potrafi przy
+    zaokrągleniu przeglądarki wystawić się o ułamek poza stronę, a wtedy
+    drukarka dokłada pustą kartkę. Milimetr luzu przesuwa środek o pół
+    milimetra — niewidocznie — i zamyka tę furtkę.
+  */
   .kafel {
-    position: relative;
-    /* Linia cięcia. Sąsiednie kafle dokładają swoją — na papierze to jedna
-       kreska o włos grubsza, a nie dwie osobne. */
-    border: 1px dashed #b0b0b0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 296mm;
     break-inside: avoid;
-    overflow: hidden;
     background: #ffffff;
     color: #000000;
     text-align: center;
   }
+  /* Łamanie **przed**, a nie po: `break-after` na ostatniej naklejce dołożyłby
+     pustą stronę na końcu — dokładnie to, czego tu unikamy. */
+  .kafel + .kafel {
+    break-before: page;
+  }
 
-  /*
-    Sama naklejka. Ustawiona bezwzględnie i wyśrodkowana przez `translate`,
-    bo `transform` nie zmienia rozmiaru, jaki element zajmuje w układzie:
-    obrócone pudełko 148×210 dalej liczy się jako 148 szerokie i wypadłoby
-    z kafla, gdyby środkował je zwykły flex.
-  */
+  /* Sama naklejka: ramka jest linią cięcia, a jej wymiar **jest** formatem. */
   .kafel-karta {
-    position: absolute;
-    top: 50%;
-    left: 50%;
+    position: relative;
     display: flex;
     flex-direction: column;
+    border: 1px dashed #b0b0b0;
+    overflow: hidden;
+  }
+  .arkusz-a5 .kafel-karta {
+    width: 148mm;
+    height: 210mm;
   }
   .arkusz-a6 .kafel-karta {
     width: 105mm;
     height: 148mm;
-    transform: translate(-50%, -50%);
-  }
-  /* A5 pionowo: pasek na stronie jest poziomy (210×148), a naklejka ma być
-     pionowa, więc kartę 148×210 obracamy o ćwierć obrotu. */
-  .arkusz-a5 .kafel-karta {
-    width: 148mm;
-    height: 210mm;
-    transform: translate(-50%, -50%) rotate(90deg);
   }
 
   .kafel-tresc {
@@ -177,8 +166,11 @@
      z bliska przy sprawdzaniu, czy naklejka jest aktualna, i nie rzucać się
      w oczy przy stoliku. */
   .kafel-stopka {
+    /* Poza układem, żeby nie zabierała miejsca treści: kod z napisami ma być
+       na środku **ramki**, a nie na środku tego, co po stopce zostało. */
+    position: absolute;
+    inset: auto 0 3mm;
     margin: 0;
-    padding: 0 4mm 3mm;
     font-size: 6pt;
     color: #999999;
   }

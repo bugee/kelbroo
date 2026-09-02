@@ -99,20 +99,35 @@ test.describe('stoliki i kody QR', () => {
       await expect(kafel.getByText('Zeskanuj i zamów')).toBeVisible();
 
       /**
-       * Naklejka A5 jest **pionowa**, choć pasek na stronie jest poziomy.
-       * Sprawdzamy to porównaniem własnej szerokości karty z tą, którą zajmuje
-       * na stronie: obrót o ćwierć obrotu zamienia je miejscami. Napis „obrót"
-       * w arkuszu stylów niczego by nie dowiódł — liczy się, co wychodzi na
-       * papier, a bez tego cięcie wzdłuż daje naklejkę położoną na boku.
+       * Naklejka ma **dokładny wymiar formatu** i leży na środku strony.
+       *
+       * Ramka jest linią cięcia, więc jej wymiar jest wymiarem naklejki —
+       * gdyby arkusz przeskalował się choćby o procent, wycięta kartka
+       * przestałaby być A5 albo A6. Mierzymy w milimetrach, bo tylko w nich
+       * da się rozmawiać o papierze.
        */
       const wymiary = () =>
-        kafel.locator('.kafel-karta').evaluate((el) => ({
-          wlasna: (el as HTMLElement).offsetWidth,
-          naStronie: Math.round(el.getBoundingClientRect().width),
-        }));
+        kafel.locator('.kafel-karta').evaluate((el) => {
+          const mm = (px: number) => Math.round(px / 3.7795275591);
+          const karta = el.getBoundingClientRect();
+          const strona = el.closest('.kafel')!.getBoundingClientRect();
+          return {
+            szerokosc: mm(karta.width),
+            wysokosc: mm(karta.height),
+            lewy: mm(karta.left - strona.left),
+            prawy: mm(strona.right - karta.right),
+            gorny: mm(karta.top - strona.top),
+            dolny: mm(strona.bottom - karta.bottom),
+            strona: mm(strona.height),
+          };
+        });
 
       const a6 = await wymiary();
-      expect(Math.abs(a6.naStronie - a6.wlasna)).toBeLessThan(4);
+      expect([a6.szerokosc, a6.wysokosc]).toEqual([105, 148]);
+      expect(a6.lewy).toBe(a6.prawy);
+      expect(a6.gorny).toBe(a6.dolny);
+      // Jedna naklejka na stronę: kafel jest wysoki na całą kartkę A4.
+      expect(a6.strona).toBeGreaterThanOrEqual(290);
 
       await page.emulateMedia({ media: 'screen' });
       await page.getByRole('button', { name: /Drukuj A5/ }).click();
@@ -120,7 +135,9 @@ test.describe('stoliki i kody QR', () => {
       await page.emulateMedia({ media: 'print' });
 
       const a5 = await wymiary();
-      expect(a5.naStronie).toBeGreaterThan(a5.wlasna * 1.3);
+      expect([a5.szerokosc, a5.wysokosc]).toEqual([148, 210]);
+      expect(a5.lewy).toBe(a5.prawy);
+      expect(a5.gorny).toBe(a5.dolny);
       // Wersja wydruku ma być na kaflu, bo kafle idą pod nożyczki osobno.
       await expect(kafel.getByText('wydruk v1')).toBeVisible();
 

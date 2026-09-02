@@ -36,17 +36,18 @@ Puste pole **strefa** kasuje strefę. Stolik trafia wtedy z powrotem do „Sala�
 
 Do wyboru są **dwa formaty do wycięcia**, oba na zwykłym papierze A4:
 
-| Przycisk | Co wychodzi | Do czego |
+| Przycisk | Rozmiar naklejki | Do czego |
 |---|---|---|
-| **Drukuj A5** | 2 kody na stronie | stojak na stoliku, tablica przy wejściu |
-| **Drukuj A6** | 4 kody na stronie | naklejka na blacie, mniejsze stoliki |
+| **Drukuj A5** | 148 × 210 mm | stojak na stoliku, tablica przy wejściu |
+| **Drukuj A6** | 105 × 148 mm | naklejka na blacie, mniejsze stoliki |
 
-Kafle wypełniają stronę co do milimetra, a przerywana kreska między nimi jest
-linią cięcia — tnie się po niej nożem albo gilotyną, bez odmierzania.
+**Jeden kod na stronę.** Każdy stolik dostaje własną kartkę A4, a na jej środku
+stoi naklejka w ramce. Przerywana ramka jest linią cięcia — wycinasz po niej
+i masz kartkę dokładnie w formacie A5 albo A6.
 
-**A5 tniesz w poprzek, na dwa paski, i obracasz każdy o ćwierć obrotu.** Napis
-jest wydrukowany bokiem właśnie po to: po obróceniu naklejka jest pionowa,
-a nie położona. **A6** tniesz na krzyż, na cztery kartki, i nic nie obracasz.
+Zużywa to więcej papieru niż kilka kodów na kartce, ale wycięte naklejki mają
+równe marginesy i ten sam rozmiar co do milimetra, a o to chodzi przy czymś,
+co ma stać na stoliku przez rok.
 
 Na kaflu jest kod, numer stolika, strefa (jeśli ją wpisałeś) i napis
 **Zeskanuj i zamów** — na tyle duży, żeby gość przeczytał go, siedząc.
