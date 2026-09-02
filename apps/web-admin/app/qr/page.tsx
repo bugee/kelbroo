@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import QRCode from 'qrcode';
 import { StaffShell } from '@/components/StaffShell';
 import { TableFields, type DaneStolika } from '@/components/TableFields';
+import { FORMATY, QrPrintSheet, type FormatWydruku } from '@/components/QrPrintSheet';
 import {
   createTable,
   fetchTables,
@@ -25,6 +26,16 @@ function Tables() {
   const [error, setError] = useState<string | null>(null);
   // `null` — nic nie edytujemy, `'nowy'` — zakładamy stolik, id — poprawiamy ten.
   const [edytowany, setEdytowany] = useState<string | null>(null);
+  const [format, setFormat] = useState<FormatWydruku>('a6');
+  // Okno drukowania otwieramy dopiero, gdy klasa formatu jest w DOM — inaczej
+  // pierwszy wydruk po zmianie formatu wyszedłby w poprzednim układzie.
+  const [doDruku, setDoDruku] = useState(false);
+
+  useEffect(() => {
+    if (!doDruku) return;
+    setDoDruku(false);
+    window.print();
+  }, [doDruku]);
 
   const refresh = useCallback(async () => {
     try {
@@ -93,13 +104,24 @@ function Tables() {
           Nowy stolik
         </button>
 
-        <button
-          type="button"
-          onClick={() => window.print()}
-          className="min-h-11 rounded-[var(--radius-control)] border border-[var(--line)] px-4 text-sm font-semibold"
-        >
-          Drukuj arkusz
-        </button>
+        {/* Format jest częścią decyzji „drukuję", nie osobnym ustawieniem —
+            stąd dwa przyciski zamiast listy i przycisku obok niej. */}
+        {FORMATY.map((wariant) => (
+          <button
+            key={wariant.id}
+            type="button"
+            onClick={() => {
+              setFormat(wariant.id);
+              setDoDruku(true);
+            }}
+            className="min-h-11 rounded-[var(--radius-control)] border border-[var(--line)] px-4 text-sm font-semibold"
+          >
+            Drukuj {wariant.etykieta}
+            <span className="mono ml-1.5 text-xs font-normal text-[var(--muted)]">
+              {wariant.opis}
+            </span>
+          </button>
+        ))}
 
         <span className="mono ml-auto text-xs text-[var(--muted)]">
           aktywnych {data.activeCount} z {data.tableLimit} w planie
@@ -117,7 +139,9 @@ function Tables() {
         </div>
       )}
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 print:grid-cols-2 print:gap-6">
+      <QrPrintSheet tables={data.tables} codes={codes} format={format} />
+
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 print:hidden">
         {data.tables.map((table) => (
           <TableCard
             key={table.id}
@@ -164,7 +188,7 @@ function TableCard({
 }) {
   return (
     <article
-      className={`flex break-inside-avoid flex-col items-center rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface)] p-4 text-center ${
+      className={`flex flex-col items-center rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface)] p-4 text-center ${
         table.isActive ? '' : 'opacity-50'
       }`}
     >
@@ -183,9 +207,9 @@ function TableCard({
         {table.seats ? ` · ${table.seats} os.` : ''} · wydruk v{table.qrVersion}
       </p>
 
-      <p className="mono mt-2 text-[10px] leading-tight text-[var(--muted)] print:text-[8px]">
-        Zeskanuj i zamów
-      </p>
+      {/* Zapowiedź tego, co wyjdzie na naklejce. Sam wydruk składa
+          `QrPrintSheet` — ta karta służy do zarządzania i na papier nie idzie. */}
+      <p className="mono mt-2 text-[10px] leading-tight text-[var(--muted)]">Zeskanuj i zamów</p>
 
       {edytowany && (
         <>

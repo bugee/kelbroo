@@ -34,13 +34,30 @@ Puste pole **strefa** kasuje strefę. Stolik trafia wtedy z powrotem do „Sala�
 
 ## Wydruk
 
-**Drukuj arkusz** przygotowuje wszystkie kody na jednej stronie, gotowe do
-wydrukowania na zwykłej drukarce. Kod drukuje się na białym tle niezależnie od
-tego, czy pracujesz w jasnym, czy ciemnym motywie.
+Do wyboru są **dwa formaty do wycięcia**, oba na zwykłym papierze A4:
 
-Przy każdym kodzie jest oznaczenie wydruku (`wydruk v1`). Rośnie ono za każdym
-razem, gdy wygenerujesz nowy kod — dzięki temu widać, czy kod na stoliku jest
-jeszcze aktualny.
+| Przycisk | Co wychodzi | Do czego |
+|---|---|---|
+| **Drukuj A5** | 2 kody na stronie | stojak na stoliku, tablica przy wejściu |
+| **Drukuj A6** | 4 kody na stronie | naklejka na blacie, mniejsze stoliki |
+
+Kafle wypełniają stronę co do milimetra, a przerywana kreska między nimi jest
+linią cięcia — tnie się po niej nożem albo gilotyną, bez odmierzania.
+
+Na kaflu jest kod, numer stolika, strefa (jeśli ją wpisałeś) i napis
+**Zeskanuj i zamów** — na tyle duży, żeby gość przeczytał go, siedząc.
+
+Kod drukuje się na białym tle niezależnie od tego, czy pracujesz w jasnym, czy
+ciemnym motywie.
+
+**Ustaw w drukarce margines „brak" albo „minimalny".** Domyślny margines
+przeglądarki przeskalowałby arkusz i linie cięcia przestałyby trafiać
+w krawędzie.
+
+W stopce każdego kafla, bardzo drobnym drukiem, jest oznaczenie wydruku
+(`wydruk v1`). Rośnie ono za każdym razem, gdy wygenerujesz nowy kod — po nim
+poznasz, czy naklejka na stoliku jest jeszcze aktualna. Stoi na kaflu, a nie na
+stronie, bo kafle idą pod nożyczki osobno.
 
 ## Nowy kod
 

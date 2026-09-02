@@ -35,10 +35,61 @@ test.describe('stoliki i kody QR', () => {
       await expect(link).toHaveAttribute('href', `${GUEST_URL}/t/${fixture.qrToken}`);
       await expect(link).toHaveAttribute('target', '_blank');
 
-      // Naklejka ma prowadzić skanowaniem, więc link znika przy druku.
+      // Karta z ekranu **w ogóle nie idzie na papier** — wydruk składa osobny
+      // arkusz do wycięcia. Naklejka ma prowadzić skanowaniem, więc odnośnik,
+      // przyciski i cała karta zarządzania przy druku znikają.
       await page.emulateMedia({ media: 'print' });
       await expect(link).toBeHidden();
-      await expect(karta.getByText('Zeskanuj i zamów')).toBeVisible();
+      await expect(karta).toBeHidden();
+    } finally {
+      await fixture.cleanup();
+    }
+  });
+
+  test('arkusz do wycięcia drukuje się w wybranym formacie', async ({ page }) => {
+    const fixture = await seedMenuAndTable();
+
+    try {
+      await page.goto('/login');
+      await page.getByLabel('E-mail').fill(ACCOUNTS.owner.email);
+      await page.getByLabel('Hasło', { exact: true }).fill(ACCOUNTS.owner.password);
+      await page.getByRole('button', { name: 'Zaloguj' }).click();
+      await expect(page).toHaveURL(/\/queue$/);
+      await page.goto('/qr');
+
+      // Okno drukowania zatrzymałoby test — sprawdzamy sam układ, który
+      // przycisk ustawia przed jego otwarciem.
+      await page.addInitScript(() => {
+        window.print = () => undefined;
+      });
+      await page.reload();
+
+      const arkusz = page.locator('.arkusz');
+      const kafel = arkusz.locator('.kafel').filter({ hasText: fixture.tableLabel });
+
+      await page.getByRole('button', { name: /Drukuj A5/ }).click();
+      await expect(arkusz).toHaveClass(/arkusz-a5/);
+
+      await page.getByRole('button', { name: /Drukuj A6/ }).click();
+      await expect(arkusz).toHaveClass(/arkusz-a6/);
+
+      // Arkusz istnieje wyłącznie na papierze — na ekranie nie ma go widać.
+      await expect(arkusz).toBeHidden();
+
+      await page.emulateMedia({ media: 'print' });
+      await expect(kafel).toBeVisible();
+      await expect(kafel.getByText('Zeskanuj i zamów')).toBeVisible();
+      // Wersja wydruku ma być na kaflu, bo kafle idą pod nożyczki osobno.
+      await expect(kafel.getByText('wydruk v1')).toBeVisible();
+
+      // Zachęta większa od wersji wydruku — po to była ta zmiana.
+      const zacheta = await kafel
+        .getByText('Zeskanuj i zamów')
+        .evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+      const stopka = await kafel
+        .getByText('wydruk v1')
+        .evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+      expect(zacheta).toBeGreaterThan(stopka * 2);
     } finally {
       await fixture.cleanup();
     }

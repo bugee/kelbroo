@@ -51,4 +51,109 @@
     max-width: none;
     padding: 0;
   }
+
+  /* Arkusz do wycięcia wypełnia stronę **co do milimetra**, więc drukarka nie
+     może dołożyć własnego marginesu — inaczej linie cięcia przestają trafiać
+     w krawędzie kafli i wszystko jedzie o kilka milimetrów. */
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
+  /* Szerokość wpisana wprost, a kolumny w ułamkach: `repeat(2, 105mm)` sumuje
+     się do 210 mm dokładnie i przy zaokrągleniu przeglądarki potrafi zepchnąć
+     drugą kolumnę na kolejną stronę. Wiersze po 148 mm zamiast 148,5 zostawiają
+     milimetr luzu na tej samej zasadzie. */
+  .arkusz {
+    display: grid;
+    width: 210mm;
+    grid-auto-rows: 148mm;
+  }
+  .arkusz-a5 {
+    grid-template-columns: 1fr;
+  }
+  .arkusz-a6 {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .kafel {
+    display: flex;
+    flex-direction: column;
+    /* Linia cięcia. Sąsiednie kafle dokładają swoją — na papierze to jedna
+       kreska o włos grubsza, a nie dwie osobne. */
+    border: 1px dashed #b0b0b0;
+    break-inside: avoid;
+    overflow: hidden;
+    background: #ffffff;
+    color: #000000;
+    text-align: center;
+  }
+  .kafel-tresc {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4mm;
+    padding: 6mm;
+  }
+  /* Kod na białym tle niezależnie od motywu panelu — czytnik telefonu wymaga
+     kontrastu ciemny-na-jasnym. */
+  .kafel-kod > svg {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  .arkusz-a5 .kafel-kod {
+    width: 82mm;
+  }
+  .arkusz-a6 .kafel-kod {
+    width: 54mm;
+  }
+
+  .kafel-numer {
+    margin: 0;
+    line-height: 1.1;
+  }
+  .arkusz-a5 .kafel-numer {
+    font-size: 40pt;
+  }
+  .arkusz-a6 .kafel-numer {
+    font-size: 24pt;
+  }
+
+  .kafel-strefa {
+    margin: -2mm 0 0;
+    color: #555555;
+  }
+  .arkusz-a5 .kafel-strefa {
+    font-size: 15pt;
+  }
+  .arkusz-a6 .kafel-strefa {
+    font-size: 11pt;
+  }
+
+  /* Zdanie, które gość czyta z odległości metra, siedząc przy stoliku —
+     dlatego jest większe niż strefa i numer wydruku razem wzięte. */
+  .kafel-zacheta {
+    margin: 0;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+  .arkusz-a5 .kafel-zacheta {
+    font-size: 26pt;
+  }
+  .arkusz-a6 .kafel-zacheta {
+    font-size: 16pt;
+  }
+
+  /* Wersja wydruku: informacja dla obsługi, nie dla gościa. Ma dać się odczytać
+     z bliska przy sprawdzaniu, czy naklejka jest aktualna, i nie rzucać się
+     w oczy przy stoliku. */
+  .kafel-stopka {
+    margin: 0;
+    padding: 0 4mm 3mm;
+    font-size: 6pt;
+    color: #999999;
+  }
 }
