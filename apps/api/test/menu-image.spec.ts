@@ -8,7 +8,7 @@
  * w bazie, bo takiego śmiecia nikt już nie znajdzie.
  */
 import { randomUUID } from 'node:crypto';
-import { mkdtemp, readdir } from 'node:fs/promises';
+import { chmod, mkdtemp, readdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -135,6 +135,30 @@ describe('bramka planu', () => {
     const item = await danie();
 
     expect((await images.upload(staff, item.id, jpeg())).imageUrl).toMatch(/\.jpg$/);
+  });
+});
+
+describe('katalog bez prawa zapisu', () => {
+  /**
+   * Tak wyglądał błąd na produkcji: wolumen Dockera powstał jako `root`, a API
+   * chodzi jako zwykły użytkownik. Odczyt działał, więc **zdjęcia wgrane
+   * wcześniej się wyświetlały** — psuło się dopiero wgrywanie, gołym 500 bez
+   * słowa wyjaśnienia. Test pilnuje, żeby komunikat mówił, co jest nie tak.
+   */
+  it('mówi, o co chodzi, zamiast wywracać się bez słowa', async () => {
+    await ustawFunkcje(true);
+    const item = await danie();
+    const zamkniety = await mkdtemp(path.join(tmpdir(), 'kelbroo-media-ro-'));
+    const poprzedni = process.env.MEDIA_ROOT;
+
+    await chmod(zamkniety, 0o500);
+    process.env.MEDIA_ROOT = zamkniety;
+    try {
+      await expect(images.upload(staff, item.id, jpeg())).rejects.toThrow(/katalog/i);
+    } finally {
+      process.env.MEDIA_ROOT = poprzedni;
+      await chmod(zamkniety, 0o700);
+    }
   });
 });
 

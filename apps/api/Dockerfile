@@ -56,8 +56,21 @@ COPY --from=build /app/apps/api/dist ./dist
 # a schemat jest wkompilowany w wygenerowanego klienta. Migracje i seed mają
 # własny cel `migrate` powyżej.
 
-RUN addgroup -S kelbroo && adduser -S kelbroo -G kelbroo && chown -R kelbroo:kelbroo /app
-USER kelbroo
+# `su-exec` zdejmuje uprawnienia roota po naprawieniu praw do wolumenu ze
+# zdjęciami — patrz `docker-entrypoint.sh`. Bez tego kroku kontener musiałby
+# albo chodzić jako root, albo zostawić wgrywanie zdjęć zepsute.
+RUN apk add --no-cache su-exec \
+ && addgroup -S kelbroo && adduser -S kelbroo -G kelbroo \
+ && chown -R kelbroo:kelbroo /app
+
+# Katalog na zdjęcia **w obrazie**, z właścicielem: przy świeżym wolumenie Docker
+# przepisuje z obrazu prawa punktu montowania, więc nowe wdrożenie działa bez
+# żadnej naprawy. Entrypoint zostaje dla wolumenów, które już istnieją.
+ENV MEDIA_ROOT=/media
+RUN mkdir -p /media && chown kelbroo:kelbroo /media
+
+COPY apps/api/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
 EXPOSE 4000
+ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["node", "dist/main.js"]

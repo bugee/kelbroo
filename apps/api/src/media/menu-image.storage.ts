@@ -1,7 +1,13 @@
 import { randomUUID } from 'node:crypto';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 
 /** Największe zdjęcie, jakie przyjmujemy. Panel zmniejsza je jeszcze przed wysłaniem. */
 export const MAX_BAJTOW = 3 * 1024 * 1024;
@@ -80,8 +86,18 @@ export class LocalDiskImageStorage extends MenuImageStorage {
     // więc przewidywalna ścieżka pozwalałaby zgadywać cudze zdjęcia. Zawartość
     // menu nie jest tajna, ale zgadywanie po nazwach lokalu już by nią było.
     const nazwa = `${randomUUID()}.${ext}`;
-    await mkdir(this.katalog, { recursive: true });
-    await writeFile(path.join(this.katalog, nazwa), bajty);
+    try {
+      await mkdir(this.katalog, { recursive: true });
+      await writeFile(path.join(this.katalog, nazwa), bajty);
+    } catch (przyczyna) {
+      // Najczęstsza przyczyna: wolumen Dockera założony jako `root`, a proces
+      // chodzi jako `kelbroo`. Goła pięćsetka nie mówi o tym nic, a objaw myli
+      // — stare zdjęcia dalej się wyświetlają, bo odczyt działa.
+      this.logger.error(`Zapis zdjęcia w ${this.katalog} nie powiódł się: ${String(przyczyna)}`);
+      throw new InternalServerErrorException(
+        'Serwer nie może zapisać pliku w katalogu na zdjęcia. Sprawdź prawa do katalogu z mediami.',
+      );
+    }
     return nazwa;
   }
 

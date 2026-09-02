@@ -1000,6 +1000,38 @@ chodzi co dziesięć minut** i pyta operatora o zamówienia wiszące dłużej ni
 „Wpłata odzyskana przez uzgadnianie". Ta wiadomość jest zarazem sygnałem, że
 **powiadomienia nie działają** i przyczyna zostaje do naprawienia.
 
+## Wgranie zdjęcia dania kończy się błędem 500
+
+Objaw myli, bo połowa funkcji działa: **zdjęcia wgrane wcześniej wyświetlają się
+normalnie**, a każde nowe wgranie z panelu wraca z `500`.
+
+Przyczyną jest właściciel katalogu z plikami. Wolumen Dockera zamontowany pod
+ścieżką, której obraz nie tworzy, powstaje jako `root:root`, a API chodzi jako
+`kelbroo`. Odczyt działa (pliki mają `644`), zapis nie. Ten sam efekt daje
+zadanie `migrate`, które chodzi jako root i wgrywa zdjęcia restauracji
+pokazowej.
+
+**Naprawia się samo przy wdrożeniu od 2026-09-02.** Kontener API startuje jako
+root wyłącznie po to, żeby ustawić właściciela katalogu, i schodzi na `kelbroo`
+przed uruchomieniem procesu ([apps/api/docker-entrypoint.sh](../apps/api/docker-entrypoint.sh)).
+Wystarczy przebudować obraz:
+
+```bash
+docker compose -f docker-compose.prod.yml up -d --build api
+```
+
+Sprawdzenie, że zadziałało:
+
+```bash
+# Katalog należy do kelbroo, a proces nie chodzi jako root.
+docker compose -f docker-compose.prod.yml exec api ls -ld /media
+docker compose -f docker-compose.prod.yml exec api id -un
+```
+
+Gdyby błąd wrócił, w logu API stoi dokładna przyczyna razem ze ścieżką —
+komunikat `Zapis zdjęcia w … nie powiódł się`. Sam panel mówi wtedy „Serwer nie
+może zapisać pliku w katalogu na zdjęcia" zamiast gołej pięćsetki.
+
 ## Alarmy o awariach
 
 Od 2026-08-27 API samo zgłasza część awarii pocztą na adres z `MAIL_NOTIFY`
