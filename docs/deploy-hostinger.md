@@ -1017,16 +1017,24 @@ przed uruchomieniem procesu ([apps/api/docker-entrypoint.sh](../apps/api/docker-
 Wystarczy przebudować obraz:
 
 ```bash
-docker compose -f docker-compose.prod.yml up -d --build api
+docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build api
 ```
 
 Sprawdzenie, że zadziałało:
 
 ```bash
-# Katalog należy do kelbroo, a proces nie chodzi jako root.
-docker compose -f docker-compose.prod.yml exec api ls -ld /media
-docker compose -f docker-compose.prod.yml exec api id -un
+# 1. Katalog należy do kelbroo.
+docker compose -f docker-compose.prod.yml --env-file .env.prod exec api ls -ld /media
+
+# 2. Proces API chodzi jako kelbroo, nie jako root.
+docker compose -f docker-compose.prod.yml --env-file .env.prod top api
 ```
+
+> **`exec … id -un` odpowie `root` i tak ma być.** `docker compose exec` uruchamia
+> **nowy** proces z domyślnym użytkownikiem obrazu, a ten jest rootem celowo —
+> inaczej entrypoint nie miałby czym poprawić praw do wolumenu. Właściciela
+> **działającego** procesu pokazuje `top`: kolumna `UID` przy `node dist/main.js`
+> ma być inna niż 0.
 
 Gdyby błąd wrócił, w logu API stoi dokładna przyczyna razem ze ścieżką —
 komunikat `Zapis zdjęcia w … nie powiódł się`. Sam panel mówi wtedy „Serwer nie
