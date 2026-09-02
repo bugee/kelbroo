@@ -77,8 +77,7 @@
   }
 
   .kafel {
-    display: flex;
-    flex-direction: column;
+    position: relative;
     /* Linia cięcia. Sąsiednie kafle dokładają swoją — na papierze to jedna
        kreska o włos grubsza, a nie dwie osobne. */
     border: 1px dashed #b0b0b0;
@@ -88,6 +87,33 @@
     color: #000000;
     text-align: center;
   }
+
+  /*
+    Sama naklejka. Ustawiona bezwzględnie i wyśrodkowana przez `translate`,
+    bo `transform` nie zmienia rozmiaru, jaki element zajmuje w układzie:
+    obrócone pudełko 148×210 dalej liczy się jako 148 szerokie i wypadłoby
+    z kafla, gdyby środkował je zwykły flex.
+  */
+  .kafel-karta {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    display: flex;
+    flex-direction: column;
+  }
+  .arkusz-a6 .kafel-karta {
+    width: 105mm;
+    height: 148mm;
+    transform: translate(-50%, -50%);
+  }
+  /* A5 pionowo: pasek na stronie jest poziomy (210×148), a naklejka ma być
+     pionowa, więc kartę 148×210 obracamy o ćwierć obrotu. */
+  .arkusz-a5 .kafel-karta {
+    width: 148mm;
+    height: 210mm;
+    transform: translate(-50%, -50%) rotate(90deg);
+  }
+
   .kafel-tresc {
     display: flex;
     flex: 1;
@@ -105,7 +131,7 @@
     height: auto;
   }
   .arkusz-a5 .kafel-kod {
-    width: 82mm;
+    width: 66mm;
   }
   .arkusz-a6 .kafel-kod {
     width: 54mm;
@@ -116,7 +142,7 @@
     line-height: 1.1;
   }
   .arkusz-a5 .kafel-numer {
-    font-size: 40pt;
+    font-size: 34pt;
   }
   .arkusz-a6 .kafel-numer {
     font-size: 24pt;
@@ -141,7 +167,7 @@
     letter-spacing: 0.01em;
   }
   .arkusz-a5 .kafel-zacheta {
-    font-size: 26pt;
+    font-size: 22pt;
   }
   .arkusz-a6 .kafel-zacheta {
     font-size: 16pt;

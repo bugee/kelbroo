@@ -32,20 +32,29 @@ export function QrPrintSheet({
     <div className={`arkusz arkusz-${format} hidden print:grid`}>
       {tables.map((table) => (
         <section key={table.id} className="kafel">
-          <div className="kafel-tresc">
-            <div
-              className="kafel-kod"
-              dangerouslySetInnerHTML={{ __html: codes[table.id] ?? '' }}
-            />
-            <h2 className="kafel-numer">{table.label}</h2>
-            {table.zone && <p className="kafel-strefa">{table.zone}</p>}
-            <p className="kafel-zacheta">Zeskanuj i zamów</p>
-          </div>
+          {/*
+            Kafel to miejsce na stronie, a `kafel-karta` to sama naklejka.
+            Rozdzielone, bo w formacie A5 karta jest **obrócona o 90°**: po
+            przecięciu A4 wzdłuż wychodzą dwa paski 210×148 mm, a naklejka ma
+            być pionowa, czyli 148×210 mm. Bez osobnego pudełka nie ma czego
+            obrócić razem ze stopką.
+          */}
+          <div className="kafel-karta">
+            <div className="kafel-tresc">
+              <div
+                className="kafel-kod"
+                dangerouslySetInnerHTML={{ __html: codes[table.id] ?? '' }}
+              />
+              <h2 className="kafel-numer">{table.label}</h2>
+              {table.zone && <p className="kafel-strefa">{table.zone}</p>}
+              <p className="kafel-zacheta">Zeskanuj i zamów</p>
+            </div>
 
-          {/* Stopka kafla, nie strony: kafle idą pod nożyczki i każdy musi
-              nieść własną wersję wydruku. Po niej obsługa pozna, czy naklejka
-              na stoliku jest jeszcze aktualna. */}
-          <p className="kafel-stopka">wydruk v{table.qrVersion}</p>
+            {/* Stopka karty, nie strony: kafle idą pod nożyczki i każdy musi
+                nieść własną wersję wydruku. Po niej obsługa pozna, czy naklejka
+                na stoliku jest jeszcze aktualna. */}
+            <p className="kafel-stopka">wydruk v{table.qrVersion}</p>
+          </div>
         </section>
       ))}
     </div>

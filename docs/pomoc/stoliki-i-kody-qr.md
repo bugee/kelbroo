@@ -44,6 +44,10 @@ Do wyboru są **dwa formaty do wycięcia**, oba na zwykłym papierze A4:
 Kafle wypełniają stronę co do milimetra, a przerywana kreska między nimi jest
 linią cięcia — tnie się po niej nożem albo gilotyną, bez odmierzania.
 
+**A5 tniesz w poprzek, na dwa paski, i obracasz każdy o ćwierć obrotu.** Napis
+jest wydrukowany bokiem właśnie po to: po obróceniu naklejka jest pionowa,
+a nie położona. **A6** tniesz na krzyż, na cztery kartki, i nic nie obracasz.
+
 Na kaflu jest kod, numer stolika, strefa (jeśli ją wpisałeś) i napis
 **Zeskanuj i zamów** — na tyle duży, żeby gość przeczytał go, siedząc.
 

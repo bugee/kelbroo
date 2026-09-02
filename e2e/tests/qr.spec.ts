@@ -79,6 +79,30 @@ test.describe('stoliki i kody QR', () => {
       await page.emulateMedia({ media: 'print' });
       await expect(kafel).toBeVisible();
       await expect(kafel.getByText('Zeskanuj i zamów')).toBeVisible();
+
+      /**
+       * Naklejka A5 jest **pionowa**, choć pasek na stronie jest poziomy.
+       * Sprawdzamy to porównaniem własnej szerokości karty z tą, którą zajmuje
+       * na stronie: obrót o ćwierć obrotu zamienia je miejscami. Napis „obrót"
+       * w arkuszu stylów niczego by nie dowiódł — liczy się, co wychodzi na
+       * papier, a bez tego cięcie wzdłuż daje naklejkę położoną na boku.
+       */
+      const wymiary = () =>
+        kafel.locator('.kafel-karta').evaluate((el) => ({
+          wlasna: (el as HTMLElement).offsetWidth,
+          naStronie: Math.round(el.getBoundingClientRect().width),
+        }));
+
+      const a6 = await wymiary();
+      expect(Math.abs(a6.naStronie - a6.wlasna)).toBeLessThan(4);
+
+      await page.emulateMedia({ media: 'screen' });
+      await page.getByRole('button', { name: /Drukuj A5/ }).click();
+      await expect(arkusz).toHaveClass(/arkusz-a5/);
+      await page.emulateMedia({ media: 'print' });
+
+      const a5 = await wymiary();
+      expect(a5.naStronie).toBeGreaterThan(a5.wlasna * 1.3);
       // Wersja wydruku ma być na kaflu, bo kafle idą pod nożyczki osobno.
       await expect(kafel.getByText('wydruk v1')).toBeVisible();
 
