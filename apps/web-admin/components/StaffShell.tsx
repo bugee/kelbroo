@@ -166,7 +166,10 @@ function Shell({
   };
 
   return (
-    <div className="min-h-dvh">
+    /* `print:min-h-0` nie jest kosmetyką: `100dvh` przy druku rozwija się do
+       wysokości strony i wychodzi o ułamek milimetra poza nią, przez co arkusz
+       kodów kończył się pustą stroną. */
+    <div className="min-h-dvh print:min-h-0">
       <header className="sticky top-0 z-20 border-b border-[var(--line)] bg-[var(--surface)] px-4 py-2 print:hidden">
         <div className="mx-auto flex max-w-6xl items-center gap-2 sm:gap-3">
           <span className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--teal)]">

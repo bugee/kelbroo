@@ -77,6 +77,24 @@ test.describe('stoliki i kody QR', () => {
       await expect(arkusz).toBeHidden();
 
       await page.emulateMedia({ media: 'print' });
+      // Strona A4 przy druku ma 1123 px — dokładnie tyle, ile rozwija się `dvh`.
+      await page.setViewportSize({ width: 794, height: 1123 });
+
+      /**
+       * Nic nie może sięgać niżej niż ostatni kafel.
+       *
+       * Element rozciągnięty na wysokość okna (`min-h-dvh` z ramy panelu)
+       * wychodził przy druku o ułamek milimetra poza stronę i drukarka dokładała
+       * za to **pustą kartkę na końcu** — przy każdym arkuszu, w obu formatach.
+       * Liczba stron w PDF-ie tego nie pokazuje, bo generator dobiera okno
+       * dokładnie do strony; widać to dopiero na wysokości treści.
+       */
+      const ponizejArkusza = await page.evaluate(() => {
+        const dol = document.querySelector('.arkusz')!.getBoundingClientRect().bottom;
+        return Math.round(document.body.getBoundingClientRect().bottom - dol);
+      });
+      expect(ponizejArkusza).toBeLessThanOrEqual(1);
+
       await expect(kafel).toBeVisible();
       await expect(kafel.getByText('Zeskanuj i zamów')).toBeVisible();
 
