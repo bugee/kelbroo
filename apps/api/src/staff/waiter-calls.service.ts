@@ -35,9 +35,12 @@ export class WaiterCallsService {
         include: {
           table: { select: { label: true } },
           acknowledgedByStaff: { select: { name: true } },
-          // Przy prośbie o rachunek gość zadeklarował formę płatności i fakturę.
-          // Kelner czyta to tutaj, zanim wstanie — inaczej wraca po terminal.
-          tableSession: { select: { paymentPreference: true, invoiceRequested: true } },
+          // Przy prośbie o rachunek gość zadeklarował sposób podziału, formę
+          // płatności i fakturę. Kelner czyta to tutaj, **zanim wstanie** —
+          // inaczej idzie do stolika i wraca po terminal albo po drugi rachunek.
+          tableSession: {
+            select: { splitMode: true, paymentPreference: true, invoiceRequested: true },
+          },
         },
       });
 
@@ -50,6 +53,15 @@ export class WaiterCallsService {
         status: call.status,
         createdAt: call.createdAt,
         acknowledgedBy: call.acknowledgedByStaff?.name ?? null,
+        /**
+         * Podział wysyłamy **tylko przy zadeklarowanym rachunku**.
+         *
+         * `splitMode` ma domyślnie `none` i nie odróżnia „gość wybrał jeden
+         * rachunek" od „nikt jeszcze o nic nie pytał". Deklaracja istnieje
+         * dokładnie wtedy, gdy jest forma płatności — tę ustawia wyłącznie
+         * prośba o rachunek.
+         */
+        splitMode: call.tableSession?.paymentPreference ? call.tableSession.splitMode : null,
         paymentPreference: call.tableSession?.paymentPreference ?? null,
         invoiceRequested: call.tableSession?.invoiceRequested ?? false,
       }));

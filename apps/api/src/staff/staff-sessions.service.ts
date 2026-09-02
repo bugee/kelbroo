@@ -88,7 +88,10 @@ export class StaffSessionsService {
                 dueCents: session.totalCents - session.paidCents,
                 currency: session.currency,
                 orderCount: session._count.orders,
-                /// Zadeklarowane przez gościa przy prośbie o rachunek.
+                /// Zadeklarowane przez gościa przy prośbie o rachunek. `splitMode`
+                /// domyślnie jest `none`, więc sam z siebie nie odróżnia wyboru
+                /// gościa od braku pytania — czyta się go razem z `paymentPreference`.
+                splitMode: session.splitMode,
                 paymentPreference: session.paymentPreference,
                 invoiceRequested: session.invoiceRequested,
                 participants: session.participants.map((p) => ({

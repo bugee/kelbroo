@@ -14,6 +14,23 @@ trafi na kuchnię, dopóki obsługa nie przyjmie zamówienia z tego ekranu. Przy
 wyłączonym — zamówienie idzie na kuchnię od razu, a ten ekran pokazuje wyłącznie
 wezwania i prośby o rachunek.
 
+### Co gość wybrał, prosząc o rachunek
+
+Przy prośbie o rachunek pytamy gościa o trzy rzeczy i wszystkie trzy stoją
+wytłuszczone przy zgłoszeniu, w tej samej kolejności, w jakiej je wyklikał:
+
+`Każdy za siebie · kartą · faktura VAT`
+
+1. **Sposób podziału** — jeden rachunek, każdy za siebie albo po równo. Mówi,
+   ile wydruków wziąć ze sobą.
+2. **Forma płatności** — kartą, gotówką albo obie naraz. Mówi, czy brać terminal.
+3. **Faktura VAT** — pojawia się tylko wtedy, gdy gość o nią poprosił. Danych
+   do faktury nie zbieramy w aplikacji: bierzesz je przy stoliku.
+
+To samo zdanie widzisz na **Sali**, przy karcie stolika — kelner pracujący z sali
+nie musi wracać do Powiadomień. Pojawia się dopiero po prośbie o rachunek;
+dopóki jej nie ma, nie ma czego pokazywać.
+
 ## Kuchnia
 
 Ekran dla osoby przy wydawce. Widać na nim wyłącznie zamówienia **już potwierdzone** —
@@ -36,6 +53,9 @@ i dwie możliwości:
 Stolik **zajęty** pokazuje, ile trwa wizyta, ilu jest gości, kwotę **Do zapłaty**
 oraz znaki rozpoznawcze gości (nick i symbol). Gospodarz wizyty ma przy nicku
 oznaczenie `host`.
+
+Jeśli goście poprosili o rachunek, pod kwotą stoi ich deklaracja — podział,
+forma płatności i faktura, dokładnie ta sama, którą widać w Powiadomieniach.
 
 Gość, który zamknął kartę w przeglądarce, **nie musi skanować kodu ponownie** —
 wchodząc na `menu.kelbroo.com` wraca do swojej wizyty razem z historią zamówień,

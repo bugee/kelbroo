@@ -14,6 +14,7 @@ import {
   minutesSince,
   money,
   PAYMENT_LABEL,
+  SPLIT_LABEL,
   rejectOrder,
   resolveCall,
   openTable,
@@ -249,10 +250,22 @@ function Calls() {
             <span className="mono text-sm text-[var(--muted)]">
               czeka {minutesSince(call.createdAt)} min
               {call.acknowledgedBy && ` · idzie ${call.acknowledgedBy}`}
-              {/* Bez tego kelner idzie do stolika i wraca po terminal. */}
-              {call.paymentPreference && ` · ${PAYMENT_LABEL[call.paymentPreference]}`}
-              {call.invoiceRequested && ' · faktura VAT'}
             </span>
+
+            {/*
+              Deklaracja gościa w osobnym wierszu, nie doklejona do czasu
+              oczekiwania: to jedyna informacja na tym ekranie, na podstawie
+              której kelner decyduje, co ze sobą zabrać. Doklejona do „czeka
+              3 min" ginie w szarym ciągu.
+            */}
+            {call.paymentPreference && (
+              <span className="mono block text-sm font-semibold text-[var(--ink)]">
+                {SPLIT_LABEL[call.splitMode ?? 'none']}
+                {' · '}
+                {PAYMENT_LABEL[call.paymentPreference]}
+                {call.invoiceRequested && ' · faktura VAT'}
+              </span>
+            )}
           </span>
 
           {/* Otwarcie stolika zdejmuje blokadę i zamyka samo zgłoszenie —

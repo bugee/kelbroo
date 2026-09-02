@@ -75,6 +75,7 @@ export interface StaffSession {
   currency: string;
   orderCount: number;
   /** Zadeklarowane przez gościa przy prośbie o rachunek. */
+  splitMode: SplitMode;
   paymentPreference: PaymentPreference | null;
   invoiceRequested: boolean;
   participants: {
@@ -192,6 +193,21 @@ export interface OrderEventView {
 
 export type SplitMode = 'none' | 'per_person' | 'per_item' | 'equal' | 'groups';
 
+/**
+ * Etykiety podziału rachunku — **te same słowa, które widział gość**.
+ *
+ * Gość mówi „wybrałem jeden rachunek", więc kelner musi przeczytać dokładnie
+ * to samo. Dwie listy w dwóch aplikacjach rozjechałyby się przy pierwszej
+ * zmianie brzmienia, a rozjazd byłby widoczny dopiero przy stoliku.
+ */
+export const SPLIT_LABEL: Record<SplitMode, string> = {
+  none: 'Jeden rachunek',
+  per_person: 'Każdy za siebie',
+  per_item: 'Po pozycjach',
+  equal: 'Po równo',
+  groups: 'Grupami',
+};
+
 export interface SplitPlan {
   id: string;
   number: number;
@@ -241,6 +257,7 @@ export interface WaiterCall {
   createdAt: string;
   acknowledgedBy: string | null;
   /** Deklaracja gościa przy prośbie o rachunek; `null` przy innych zgłoszeniach. */
+  splitMode: SplitMode | null;
   paymentPreference: PaymentPreference | null;
   invoiceRequested: boolean;
 }

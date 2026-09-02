@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { GUEST_URL } from '../playwright.config';
+import { ACCOUNTS } from '../fixtures/accounts';
 import { acknowledgeCallAt, blockTable, seedMenuAndTable, setHostApproval } from '../fixtures/db';
 
 /**
@@ -341,6 +342,49 @@ test('karta i gotówka pojawia się dopiero przy dzielonym rachunku', async ({ p
     await page.getByRole('button', { name: 'Każdy za siebie' }).click();
 
     await expect(page.getByRole('button', { name: 'Karta i gotówka' })).toBeVisible();
+  } finally {
+    await fixture.cleanup();
+  }
+});
+
+/**
+ * Deklaracja gościa dociera do kelnera.
+ *
+ * Trzy odpowiedzi z prośby o rachunek decydują, co kelner ze sobą zabierze:
+ * ile rachunków wydrukować, czy brać terminal i czy pytać o dane do faktury.
+ * Gość klika je w aplikacji, a widzieć musi je **obsługa** — i to na obu
+ * ekranach, bo jeden kelner pracuje z kolejki powiadomień, a drugi z sali.
+ * Sama poprawna odpowiedź API nic tu nie znaczy, dopóki nie stoi na ekranie.
+ */
+test('to, co gość wyklikał przy rachunku, widzi kelner w Powiadomieniach i na Sali', async ({
+  page,
+}) => {
+  const fixture = await seedMenuAndTable();
+  const deklaracja = /Każdy za siebie · kartą · faktura VAT/;
+
+  try {
+    await page.goto(`${GUEST_URL}/t/${fixture.qrToken}`);
+    await expect(page.getByText(fixture.dishName)).toBeVisible();
+    await page.getByRole('button', { name: 'Rachunek', exact: true }).click();
+
+    await page.getByRole('button', { name: 'Poproś o rachunek' }).click();
+    await page.getByRole('button', { name: 'Każdy za siebie' }).click();
+    await page.getByRole('button', { name: 'Kartą' }).click();
+    await page.getByRole('button', { name: 'Tak, poproszę fakturę' }).click();
+    await expect(page.getByText(/Kelner już wie/)).toBeVisible();
+
+    await page.goto('/login');
+    await page.getByLabel('E-mail').fill(ACCOUNTS.owner.email);
+    await page.getByLabel('Hasło', { exact: true }).fill(ACCOUNTS.owner.password);
+    await page.getByRole('button', { name: 'Zaloguj' }).click();
+    await expect(page).toHaveURL(/\/queue$/);
+
+    const zgloszenie = page.locator('li').filter({ hasText: fixture.tableLabel }).first();
+    await expect(zgloszenie.getByText(deklaracja)).toBeVisible();
+
+    await page.goto('/tables');
+    const stolik = page.locator('article').filter({ hasText: fixture.tableLabel }).first();
+    await expect(stolik.getByText(deklaracja)).toBeVisible();
   } finally {
     await fixture.cleanup();
   }

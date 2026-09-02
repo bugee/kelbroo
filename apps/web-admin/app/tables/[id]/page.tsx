@@ -9,18 +9,11 @@ import {
   money,
   setItemShares,
   setSplitMode,
+  SPLIT_LABEL,
   settleSplitGroup,
   type SplitMode,
   type SplitPlan,
 } from '@/lib/api';
-
-const MODE_LABEL: Record<SplitMode, string> = {
-  none: 'Jeden rachunek',
-  per_person: 'Każdy za siebie',
-  per_item: 'Po pozycjach',
-  equal: 'Po równo',
-  groups: 'Grupami',
-};
 
 const MODES: SplitMode[] = ['none', 'per_person', 'per_item', 'equal', 'groups'];
 
@@ -109,7 +102,7 @@ function Split({ sessionId }: { sessionId: string }) {
                 : 'border-[var(--line)]'
             }`}
           >
-            {MODE_LABEL[mode]}
+            {SPLIT_LABEL[mode]}
           </button>
         ))}
       </div>

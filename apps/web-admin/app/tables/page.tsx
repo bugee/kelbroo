@@ -11,6 +11,7 @@ import {
   minutesSince,
   money,
   PAYMENT_LABEL,
+  SPLIT_LABEL,
   decidePendingGuest,
   moveSession,
   openTable,
@@ -154,13 +155,22 @@ function Room() {
                     {money(session.dueCents, session.currency)}
                   </p>
 
-                  {/* Deklaracja gościa z prośby o rachunek — kelner ma ją przed
-                      oczami w chwili przyjmowania pieniędzy. */}
-                  {(session.paymentPreference || session.invoiceRequested) && (
-                    <p className="mono mt-1 text-xs text-[var(--muted)]">
-                      {session.paymentPreference && PAYMENT_LABEL[session.paymentPreference]}
-                      {session.paymentPreference && session.invoiceRequested && ' · '}
-                      {session.invoiceRequested && 'faktura VAT'}
+                  {/*
+                    Deklaracja gościa z prośby o rachunek — kelner ma ją przed
+                    oczami w chwili przyjmowania pieniędzy. Trzy rzeczy w tej
+                    kolejności, bo w takiej gość je wyklikał: jak dzielimy, czym
+                    płacimy, czy faktura.
+
+                    Bramka na `paymentPreference`, nie na `splitMode`: ten drugi
+                    ma domyślnie `none` i sam z siebie nie odróżnia „gość wybrał
+                    jeden rachunek" od „nikt jeszcze o nic nie pytał".
+                  */}
+                  {session.paymentPreference && (
+                    <p className="mono mt-1 text-xs font-semibold text-[var(--ink)]">
+                      {SPLIT_LABEL[session.splitMode]}
+                      {' · '}
+                      {PAYMENT_LABEL[session.paymentPreference]}
+                      {session.invoiceRequested && ' · faktura VAT'}
                     </p>
                   )}
 
