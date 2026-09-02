@@ -1076,6 +1076,24 @@ export const createTable = (payload: { label: string; zone?: string; seats?: num
     body: JSON.stringify(payload),
   });
 
+/**
+ * Poprawka opisu stolika: numer, strefa, liczba miejsc.
+ *
+ * **Nie rusza kodu QR** — token zostaje, więc naklejka na stoliku działa dalej.
+ * Zmienia się to, co widać w panelu, w kuchni i na arkuszu do wydruku.
+ *
+ * Pola pomijamy zamiast wysyłać puste napisy: serwer czyta brak `zone` jako
+ * „bez strefy", a `''` odrzuciłby walidator.
+ */
+export const updateTable = (
+  id: string,
+  payload: { label: string; zone?: string; seats?: number },
+) =>
+  authorized<{ id: string }>(`/management/tables/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
+
 export const regenerateQr = (id: string) =>
   authorized<{ qrToken: string; qrVersion: number }>(`/management/tables/${id}/regenerate-qr`, {
     method: 'POST',

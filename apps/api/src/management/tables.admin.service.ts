@@ -84,10 +84,20 @@ export class TablesAdminService {
       });
       if (!table) throw new NotFoundException('Stolik nie istnieje.');
 
-      await tx.table.update({
-        where: { id },
-        data: { label: dto.label, zone: dto.zone ?? null, seats: dto.seats ?? null },
-      });
+      try {
+        await tx.table.update({
+          where: { id },
+          data: { label: dto.label, zone: dto.zone ?? null, seats: dto.seats ?? null },
+        });
+      } catch (error) {
+        // Ta sama kolizja co przy zakładaniu, tylko trafia się częściej:
+        // numery poprawia się zwykle po to, żeby przenumerować salę, a wtedy
+        // nowa nazwa bywa zajęta przez stolik, który dopiero ma ją oddać.
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+          throw new ConflictException(`Stolik „${dto.label}" już istnieje.`);
+        }
+        throw error;
+      }
       return { id };
     });
   }

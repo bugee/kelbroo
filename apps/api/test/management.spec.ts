@@ -4,7 +4,7 @@
  * Testy budują własną restaurację i sprawdzają reguły, których złamanie widać
  * dopiero u gościa albo dopiero po miesiącu w raportach.
  */
-import { randomUUID } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { PrismaClient } from '@prisma/client';
 import { PrismaService } from '../src/prisma/prisma.service';
@@ -281,7 +281,63 @@ describe('stoliki', () => {
 
     await expect(tablesAdmin.setActive(staff, busy!.id, false)).rejects.toThrow(/otwarty rachunek/);
   });
+
+  /**
+   * Stolik zakładany **prosto w bazie**, a nie przez `create`.
+   *
+   * Plan testowy ma limit dwóch stolików i wyczerpują go testy powyżej. Edycja
+   * limitu nie dotyczy, więc zakładanie stolików przez API tylko przewracałoby
+   * te testy nawzajem. `isActive: false` trzyma je poza liczeniem aktywnych.
+   */
+  async function stolikDoEdycji(label: string, zone: string | null = 'Sala') {
+    return direct.table.create({
+      data: {
+        organizationId,
+        restaurantId: staff.restaurantId!,
+        label,
+        zone,
+        qrToken: randomBytes(16).toString('base64url'),
+        isActive: false,
+      },
+    });
+  }
+
+  it('poprawia numer, strefę i liczbę miejsc', async () => {
+    const table = await stolikDoEdycji(`Edycja ${randomUUID().slice(0, 6)}`);
+    const nowyNumer = `Taras ${randomUUID().slice(0, 6)}`;
+
+    await tablesAdmin.update(staff, table.id, { label: nowyNumer, zone: 'Taras', seats: 4 });
+
+    const zapisany = (await tablesAdmin.list(staff)).tables.find((t) => t.id === table.id);
+    expect(zapisany).toMatchObject({ label: nowyNumer, zone: 'Taras', seats: 4 });
+    // Zmiana opisu **nie rusza kodu**: naklejka na stoliku ma dalej działać,
+    // bo zmienił się numer, a nie stolik.
+    expect(zapisany?.qrToken).toBe(table.qrToken);
+    expect(zapisany?.qrVersion).toBe(1);
+  });
+
+  it('czyści strefę, gdy się ją skasuje', async () => {
+    const table = await stolikDoEdycji(`Bez strefy ${randomUUID().slice(0, 6)}`, 'Piętro');
+
+    // Puste pole w formularzu ma **usunąć** strefę, a nie zostawić poprzednią.
+    await tablesAdmin.update(staff, table.id, { label: table.label });
+
+    const zapisany = (await tablesAdmin.list(staff)).tables.find((t) => t.id === table.id);
+    expect(zapisany?.zone).toBeNull();
+  });
+
+  it('odmawia numeru, który nosi już inny stolik', async () => {
+    const zajety = await stolikDoEdycji(`Zajęty ${randomUUID().slice(0, 6)}`);
+    const zmieniany = await stolikDoEdycji(`Zmieniany ${randomUUID().slice(0, 6)}`);
+
+    // Bez tego przenumerowanie sali kończyło się gołą pięćsetką z Prismy,
+    // a przenumerowanie jest **najczęstszym** powodem wchodzenia w edycję.
+    await expect(tablesAdmin.update(staff, zmieniany.id, { label: zajety.label })).rejects.toThrow(
+      /już istnieje/,
+    );
+  });
 });
+
 
 describe('ustawienia lokalu', () => {
   it('nie pozwala ustawić języka domyślnego spoza obsługiwanych', async () => {

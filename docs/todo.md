@@ -1041,6 +1041,7 @@ Z [product.md §7](product.md#7-wymagania-niefunkcjonalne-dotyczą-wszystkich-tr
 ## Zrobione
 
 - [x] Zdjęcia dań: dodawanie przy zakładaniu pozycji, podmiana i usuwanie przy edycji
+- [x] Edycja stolika z ekranu kodów QR: numer, strefa i liczba miejsc
 - [x] Strona produktowa, podstrony i dokumenty prawne w czterech językach (PL/EN/DE/ES), cennik w euro
 - [x] Przełącznik jasnej/ciemnej palety na stronie produktowej
 - [x] Monorepo, schemat bazy, RLS z testem izolacji najemców

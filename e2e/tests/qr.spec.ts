@@ -43,4 +43,39 @@ test.describe('stoliki i kody QR', () => {
       await fixture.cleanup();
     }
   });
+
+  test('numer i strefa stolika są edytowalne, a kod zostaje ten sam', async ({ page }) => {
+    const fixture = await seedMenuAndTable();
+    const nowyNumer = `${fixture.tableLabel} bis`;
+
+    try {
+      await page.goto('/login');
+      await page.getByLabel('E-mail').fill(ACCOUNTS.owner.email);
+      await page.getByLabel('Hasło', { exact: true }).fill(ACCOUNTS.owner.password);
+      await page.getByRole('button', { name: 'Zaloguj' }).click();
+      await expect(page).toHaveURL(/\/queue$/);
+      await page.goto('/qr');
+
+      const karta = page.locator('article').filter({ hasText: fixture.tableLabel });
+      await karta.getByRole('button', { name: 'edytuj' }).click();
+
+      await karta.getByLabel('Numer stolika').fill(nowyNumer);
+      await karta.getByLabel('Strefa').fill('Taras');
+      await karta.getByRole('button', { name: 'Zapisz' }).click();
+
+      const poZmianie = page.locator('article').filter({ hasText: nowyNumer });
+      await expect(poZmianie.getByRole('heading', { name: nowyNumer })).toBeVisible();
+      await expect(poZmianie.getByText('Taras')).toBeVisible();
+
+      // Sedno: zmiana opisu **nie unieważnia naklejki**. Token zostaje ten sam,
+      // więc kod wydrukowany wczoraj dalej prowadzi do tego stolika.
+      await expect(poZmianie.getByRole('link', { name: 'otwórz menu gościa' })).toHaveAttribute(
+        'href',
+        `${GUEST_URL}/t/${fixture.qrToken}`,
+      );
+      await expect(poZmianie.getByText('wydruk v1')).toBeVisible();
+    } finally {
+      await fixture.cleanup();
+    }
+  });
 });

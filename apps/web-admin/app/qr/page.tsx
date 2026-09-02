@@ -3,12 +3,14 @@
 import { useCallback, useEffect, useState } from 'react';
 import QRCode from 'qrcode';
 import { StaffShell } from '@/components/StaffShell';
+import { TableFields, type DaneStolika } from '@/components/TableFields';
 import {
   createTable,
   fetchTables,
   guestUrlFor,
   regenerateQr,
   setTableActive,
+  updateTable,
   type AdminTable,
   type AdminTables,
 } from '@/lib/api';
@@ -21,6 +23,8 @@ function Tables() {
   const [data, setData] = useState<AdminTables | null>(null);
   const [codes, setCodes] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
+  // `null` — nic nie edytujemy, `'nowy'` — zakładamy stolik, id — poprawiamy ten.
+  const [edytowany, setEdytowany] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     try {
@@ -62,6 +66,17 @@ function Tables() {
     }
   };
 
+  /**
+   * Zapis z formularza. Błąd **wraca do formularza**, a nie na górę ekranu:
+   * najczęstszy to zajęty numer, a poprawia się go w polu, które właśnie widać.
+   */
+  const zapisz = async (akcja: () => Promise<unknown>) => {
+    await akcja();
+    setEdytowany(null);
+    setError(null);
+    await refresh();
+  };
+
   if (error && !data) return <p className="text-[var(--orange)]">{error}</p>;
   if (!data) return <p className="mono text-sm text-[var(--muted)]">Wczytuję…</p>;
 
@@ -72,14 +87,7 @@ function Tables() {
       <div className="mb-4 flex flex-wrap items-center gap-3 print:hidden">
         <button
           type="button"
-          onClick={() =>
-            void run(async () => {
-              const label = window.prompt('Nazwa stolika, np. „Stolik 12":');
-              if (!label) return;
-              const zone = window.prompt('Strefa (opcjonalnie), np. „Taras":') ?? undefined;
-              await createTable({ label, zone: zone || undefined });
-            })
-          }
+          onClick={() => setEdytowany('nowy')}
           className="min-h-11 rounded-[var(--radius-control)] bg-[var(--teal)] px-4 text-sm font-semibold text-white"
         >
           Nowy stolik
@@ -98,12 +106,27 @@ function Tables() {
         </span>
       </div>
 
+      {edytowany === 'nowy' && (
+        <div className="mb-4 max-w-sm rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface)] p-4 print:hidden">
+          <h2 className="text-sm font-semibold">Nowy stolik</h2>
+          <TableFields
+            zapisz={(dane: DaneStolika) => zapisz(() => createTable(dane))}
+            anuluj={() => setEdytowany(null)}
+            etykietaZapisu="Dodaj stolik"
+          />
+        </div>
+      )}
+
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 print:grid-cols-2 print:gap-6">
         {data.tables.map((table) => (
           <TableCard
             key={table.id}
             table={table}
             svg={codes[table.id]}
+            edytowany={edytowany === table.id}
+            onEdit={() => setEdytowany(table.id)}
+            onCancelEdit={() => setEdytowany(null)}
+            onSave={(dane: DaneStolika) => zapisz(() => updateTable(table.id, dane))}
             onRegenerate={() =>
               void run(async () => {
                 const confirmed = window.confirm(
@@ -123,11 +146,19 @@ function Tables() {
 function TableCard({
   table,
   svg,
+  edytowany,
+  onEdit,
+  onCancelEdit,
+  onSave,
   onRegenerate,
   onToggleActive,
 }: {
   table: AdminTable;
   svg: string | undefined;
+  edytowany: boolean;
+  onEdit: () => void;
+  onCancelEdit: () => void;
+  onSave: (dane: DaneStolika) => Promise<void>;
   onRegenerate: () => void;
   onToggleActive: () => void;
 }) {
@@ -156,7 +187,33 @@ function TableCard({
         Zeskanuj i zamów
       </p>
 
+      {edytowany && (
+        <>
+          <TableFields
+            poczatkowe={table}
+            zapisz={onSave}
+            anuluj={onCancelEdit}
+            etykietaZapisu="Zapisz"
+          />
+          {/* Numer stoi na naklejce, a naklejki nikt nie przedrukuje sam z siebie.
+              Kod zostaje ten sam, więc wystarczy wydrukować arkusz na nowo. */}
+          <p className="mono mt-2 text-[10px] leading-tight text-[var(--muted)]">
+            Zmiana numeru nie unieważnia kodu — wydrukuj arkusz jeszcze raz, żeby naklejka zgadzała
+            się z panelem.
+          </p>
+        </>
+      )}
+
       <div className="mt-3 flex gap-2 print:hidden">
+        {!edytowany && (
+          <button
+            type="button"
+            onClick={onEdit}
+            className="mono min-h-11 px-2 text-xs text-[var(--teal)]"
+          >
+            edytuj
+          </button>
+        )}
         <button
           type="button"
           onClick={onRegenerate}

@@ -5,11 +5,32 @@ od razu wiadomo, dokąd zanieść.
 
 ## Dodawanie stolika
 
-**Nowy stolik** pyta o nazwę (np. „Stolik 12”) i opcjonalnie strefę („Taras”).
-Strefa służy wyłącznie do porządku na liście i na ekranie Sala.
+**Nowy stolik** otwiera formularz z trzema polami: numer (np. „Stolik 12”),
+strefa („Taras”) i liczba miejsc. Wymagany jest tylko numer. Strefa i liczba
+miejsc służą do porządku na liście, na ekranie Sala i przy przesadzaniu gości.
 
 W prawym górnym rogu widzisz, ile stolików mieści Twój plan (`aktywnych 8 z 12
 w planie`). Po wyczerpaniu limitu dołożenie kolejnego wymaga wyższego planu.
+
+## Zmiana numeru, strefy i liczby miejsc
+
+**edytuj** przy kodzie otwiera ten sam formularz co przy zakładaniu, wypełniony
+bieżącymi wartościami. Przydaje się przy przenumerowaniu sali, przy wystawianiu
+stolików na taras na sezon i wtedy, gdy przy stoliku dostawiono krzesła.
+
+**Zmiana opisu nie unieważnia kodu.** Token zostaje ten sam, więc naklejka
+z wczoraj dalej prowadzi do tego stolika, a `wydruk v1` się nie zmienia. Jeśli
+numer jest wydrukowany na naklejce, **wydrukuj arkusz jeszcze raz** — inaczej
+naklejka będzie mówiła co innego niż panel.
+
+Nowy numer trafia wszędzie sam: na bon w kuchni, na ekran Sala i do podglądu
+zamówienia. Nie ma tam kopii numeru, tylko odwołanie do stolika, więc ekrany
+pokazują go przy najbliższym odświeżeniu — najdalej po kilkunastu sekundach.
+
+Dwa stoliki nie mogą nosić tego samego numeru — przy przenumerowaniu sali
+nadaj najpierw nazwę tymczasową albo zacznij od tego stolika, który numer oddaje.
+
+Puste pole **strefa** kasuje strefę. Stolik trafia wtedy z powrotem do „Sala”.
 
 ## Wydruk
 
