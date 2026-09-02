@@ -1115,22 +1115,24 @@ Z [product.md §7](product.md#7-wymagania-niefunkcjonalne-dotyczą-wszystkich-tr
 ## Zgodność zestawienia na e-mail z RODO
 
 Analiza: [analiza-zgoda-na-zestawienie.md](analiza-zgoda-na-zestawienie.md).
-Funkcja działa na produkcji, a **Polityka prywatności nie opisuje jej ani
-słowem** — kod powołuje się na §9, którego nie ma.
+Wysyłka pocztą **została wycofana 2 września 2026** — gość pobiera zestawienie
+jako PDF prosto na telefon. Otwarte zostaje to, co dotyczy samego dokumentu:
+Polityka nie opisuje go ani słowem, a zestawienie niesie pozycje **wszystkich**
+uczestników wizyty.
 
-- [ ] **Paragraf Polityki o zestawieniu na e-mail** — cztery wersje językowe,
-      ta sama data wersji. Do zrobienia niezależnie od reszty: łata lukę, która
-      istnieje dziś.
-- [ ] **Klauzula informacyjna pod formularzem** w aplikacji gościa — kto
+- [x] **Wysyłka pocztą wycofana** (2026-09-02), w jej miejsce **pobranie PDF-a**
+      na telefon gościa. Nie zbieramy adresu, więc nie ma czego opisywać ani
+      na co zbierać zgód — problem znika u źródła.
+- [ ] **Paragraf Polityki o zestawieniu** — dokument z danymi wizyty opuszcza
+      aplikację, choć nie zostawia śladu. Cztery wersje językowe.
+- [ ] **Klauzula informacyjna pod przyciskiem** w aplikacji gościa — kto
       przetwarza, po co, jak długo, jakie prawa.
 - [ ] **Rozstrzygnięcie prawnika: kto jest administratorem** adresu — restauracja
       czy kelbroo. Blokuje brzmienie klauzuli i checkboxa.
 - [ ] **Rozstrzygnięcie prawnika: dane innych gości w zestawieniu** — pełna lista
       pozycji czy wyłącznie pozycje nadawcy. Może zmienić treść dokumentu.
-- [ ] **Checkbox zgody** — nieodhaczony, o wysyłce, nie o „akceptacji polityki".
-      Tylko jeśli prawnik wskaże zgodę jako podstawę.
-- [ ] **Ślad zgody bez adresu** — wizyta, moment, wersja klauzuli.
-- [ ] **Klauzula w stopce wiadomości** razem z odnośnikiem do dokumentu.
+- [ ] **Checkbox zgody i ślad zgody** — dopiero gdyby wysyłka pocztą wróciła.
+      Przy pobraniu nie ma adresu, na który zgoda miałaby się zgadzać.
 
 ## Decyzje do podjęcia
 

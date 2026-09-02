@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import { expect, test, type Page } from '@playwright/test';
 import { GUEST_URL } from '../playwright.config';
 import { ACCOUNTS } from '../fixtures/accounts';
@@ -240,20 +241,25 @@ test('kelner rozlicza stolik i wizyta się zamyka', async ({ browser }) => {
     await expect(panel.getByText('Do zapłaty')).toHaveCount(0, { timeout: 20_000 });
 
     /**
-     * Zestawienie na e-mail — moment, w którym gość go potrzebuje.
+     * Zestawienie do pobrania — moment, w którym gość go potrzebuje.
      *
      * Rachunek jest zapłacony, gość odświeża stronę i widzi ekran rozliczenia.
-     * Formularz musi tam być: to najczęstsza chwila na „prześlij mi to, muszę
-     * rozliczyć delegację", a token wizyty jest jeszcze ważny.
+     * Przycisk musi tam być: to najczęstsza chwila na „muszę to mieć do
+     * delegacji", a token wizyty jest jeszcze ważny.
      *
-     * SMTP w testach nie istnieje, więc sprawdzamy potwierdzenie w aplikacji —
-     * treść wiadomości pokrywają testy jednostkowe.
+     * Sprawdzamy **prawdziwe pobranie**, nie komunikat: plik ma dojechać do
+     * telefonu i być PDF-em, a nie stroną błędu z rozszerzeniem `.pdf`.
      */
     await gosc.reload();
     await expect(gosc.getByText('Rachunek rozliczony')).toBeVisible({ timeout: 20_000 });
-    await gosc.getByPlaceholder('twoj@adres.pl').fill('delegacja@firma.test');
-    await gosc.getByRole('button', { name: 'Wyślij zestawienie' }).click();
-    await expect(gosc.getByText('Zestawienie wysłane')).toBeVisible({ timeout: 20_000 });
+
+    const pobranie = gosc.waitForEvent('download');
+    await gosc.getByRole('button', { name: /Pobierz zestawienie/ }).click();
+    const plik = await pobranie;
+
+    expect(plik.suggestedFilename()).toMatch(/^zestawienie-.*\.pdf$/);
+    const bajty = await readFile(await plik.path());
+    expect(bajty.subarray(0, 5).toString()).toBe('%PDF-');
   } finally {
     await setStaffConfirmation(true);
     await goscContext.close();

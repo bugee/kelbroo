@@ -172,16 +172,16 @@ Model i arytmetyka: [architecture.md §14](architecture.md#14-podział-rachunku)
 - Podział jest zablokowany po pierwszej płatności w ramach wizyty — komunikat wyjaśnia dlaczego.
 - Rozliczenie następuje u kelnera; aplikacja pokazuje, kto już zapłacił, a kto jeszcze nie.
 
-### 3.6c Jedna osoba płaci — zestawienie na e-mail
+### 3.6c Jedna osoba płaci — zestawienie do pobrania
 
 Scenariusz kolacji służbowej i spotkania rodzinnego: płaci jedna osoba, ale potrzebne jest rozliczenie, kto co zamówił.
 
 - Gospodarz wybiera `Płacę za wszystkich` — wszyscy uczestnicy trafiają do jednej grupy rozliczeniowej.
-- Po rozliczeniu (w aplikacji lub u kelnera) pojawia się akcja **`Wyślij zestawienie na e-mail`**.
-- Zestawienie zawiera: pozycje pogrupowane po uczestnikach (awatar, nick, dania, suma częściowa), sumę całkowitą, datę, nazwę lokalu i numer stolika.
-- **Każdy uczestnik może wysłać sobie własne zestawienie** na swój adres, niezależnie od gospodarza — to jego rozliczenie, nie tylko płatnika.
-- E-mail podawany **doraźnie, wyłącznie do tej wysyłki**: bez zakładania konta, bez zapisu na stałe, bez zgód marketingowych. Pole opisane wprost: „Użyjemy tego adresu tylko do wysłania zestawienia."
+- Po rozliczeniu (w aplikacji lub u kelnera) pojawia się akcja **`Pobierz zestawienie (PDF)`**.
+- Zestawienie zawiera: pozycje pogrupowane po uczestnikach (nick, dania, suma częściowa), sumę całkowitą, napiwek, datę, nazwę lokalu i numer stolika.
+- **Każdy uczestnik pobiera własne zestawienie**, niezależnie od gospodarza — to jego rozliczenie, nie tylko płatnika.
 - Dokument musi mieć widoczną adnotację: **to zestawienie informacyjne, nie paragon fiskalny.**
+- **Pobranie, nie wysyłka pocztą** (2026-09-02). Wysyłka wymagała adresu e-mail gościa, którego nie opisuje żaden nasz dokument — analiza w [analiza-zgoda-na-zestawienie.md](analiza-zgoda-na-zestawienie.md). Plik idzie prosto do telefonu: nie ma adresu do zebrania, zgody do odebrania ani śladu do przechowania.
 
 ### 3.7 Przywołanie kelnera
 
@@ -214,9 +214,9 @@ Wywoływana automatycznie po statusie `wydane` (z opóźnieniem ~15 min, by goś
 - **Brak rejestracji.** Sesja anonimowa: podpisany token w `localStorage` powiązany ze stolikiem i restauracją.
 - Sesja urządzenia (`GuestSession`) dołącza do wizyty przy stoliku (`TableSession`) — kilka telefonów przy jednym stoliku ma osobne sesje i wspólny rachunek.
 - **Nick i awatar to tożsamość na czas wizyty, nie konto.** Generator nicków nie proponuje imion ani nazwisk, więc nick nie jest daną osobową; awatary pochodzą z zamkniętego zestawu ilustracji, bez uploadu zdjęć. Uczestnik znika wraz z zamknięciem rachunku.
-- **E-mail do zestawienia rachunku** przyjmowany doraźnie, użyty jednorazowo do wysyłki i niezapisywany do celów marketingowych. Nie tworzy konta ani profilu.
+- **Zestawienie rachunku pobiera się jako plik**, bez podawania adresu e-mail — od 2026-09-02 nie zbieramy od gościa żadnej danej kontaktowej.
 - Czas życia sesji: do zamknięcia rachunku przez obsługę lub X godzin bezczynności (konfigurowalne, domyślnie 4h).
-- Dane osobowe zbierane wyłącznie opcjonalnie (e-mail do paragonu) — zgodnie z zasadą minimalizacji RODO.
+- Zgodnie z zasadą minimalizacji: **aplikacja gościa nie zbiera żadnej danej kontaktowej.**
 - Widoczna polityka prywatności i informacja, jakie dane są przetwarzane.
 - Brak cookies śledzących bez zgody; analityka wyłącznie anonimowa/agregowana.
 - Historia zamówień gościa dostępna tylko w ramach bieżącej sesji na tym urządzeniu.
@@ -267,7 +267,7 @@ kelbroo nie chce mieć. Skan kodu QR otwierający stronę zostaje jedyną ście�
 - [x] Pozycje nieprzypisane do uczestnika blokują rozliczenie w trybie „po pozycjach". *(2026-08-27; przypisuje kelner z panelu — ekran gościa zostaje na później)*
 - [ ] Pozycja dodana przez kelnera jest w aplikacji gościa oznaczona jako dodana przez obsługę.
 - [ ] Gość nie może edytować pozycji zamówionej przez inną osobę przy stoliku.
-- [x] Każdy uczestnik może wysłać sobie własne zestawienie na e-mail, niezależnie od tego, kto zapłacił. *(2026-08-27)*
+- [x] Każdy uczestnik pobiera własne zestawienie jako PDF, niezależnie od tego, kto zapłacił. *(2026-08-27, wysyłka pocztą zastąpiona pobraniem 2026-09-02)*
 - [x] Zestawienie e-mail zawiera adnotację, że nie jest paragonem fiskalnym. *(2026-08-27)*
 - [ ] Ocena z niską notą (1–2) generuje natychmiastowe powiadomienie dla managera.
 - [ ] Aplikacja przechodzi audyt dostępności WCAG 2.1 AA.

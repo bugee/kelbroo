@@ -1,16 +1,13 @@
 /**
- * Zestawienie rachunku na e-mail.
- *
- * Trzy rzeczy trzeba tu pilnować i każda z innego powodu.
+ * Zestawienie rachunku pobierane jako PDF.
  *
  * **Zestawienie musi sumować się do rachunku.** Gość bierze je do rozliczenia
- * delegacji, więc kwota inna niż zapłacona jest gorsza niż brak zestawienia.
+ * delegacji, więc kwota inna niż zapłacona jest gorsza niż brak zestawienia —
+ * i to sprawdza większość tego pliku, na treści dokumentu, nie na jego bajtach.
  *
- * **Nazwy pochodzą od gościa.** Nick i nazwa dania wchodzą do wiadomości HTML,
- * a szablon wstawia akapity surowo — bez ucieczki mielibyśmy wstrzyknięcie
- * znaczników do poczty wysyłanej z naszego adresu.
- *
- * **To wejście wysyła pocztę na cudze polecenie**, więc musi mieć limit.
+ * Sam plik testujemy wąsko: że **jest** PDF-em i że nie jest pusty. Tekst
+ * w PDF-ie siedzi w podzbiorze kroju pisma, więc szukanie w bajtach napisu
+ * „Żurek" niczego by nie dowiodło — wygląd sprawdza się otwierając plik.
  */
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
@@ -18,22 +15,11 @@ import { PrismaClient } from '@prisma/client';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { BillSummaryService } from '../src/guest/bill-summary.service';
 import { GuestSessionService } from '../src/guest/guest-session.service';
-import type { MailService } from '../src/mail/mail.service';
 
 const direct = new PrismaClient({ datasourceUrl: process.env.DIRECT_DATABASE_URL });
 const prisma = new PrismaService();
 
-let wyslane: { to: string; subject: string; text: string; html?: string }[] = [];
-const poczta = {
-  adresStrony: 'https://kelbroo.test',
-  skrzynkaKelbroo: 'kontakt@kelbroo.test',
-  send: async (wiadomosc: { to: string; subject: string; text: string; html?: string }) => {
-    wyslane.push(wiadomosc);
-    return true;
-  },
-} as unknown as MailService;
-
-let zestawienia: BillSummaryService;
+const zestawienia = new BillSummaryService(prisma);
 let organizationId: string;
 let restaurantId: string;
 let tableId: string;
@@ -166,9 +152,6 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
-  wyslane = [];
-  // Nowy serwis na każdy test — licznik wysyłek żyje w jego pamięci.
-  zestawienia = new BillSummaryService(prisma, poczta);
   await direct.tableSession.deleteMany({ where: { organizationId } });
 });
 
@@ -181,40 +164,31 @@ describe('treść zestawienia', () => {
   it('grupuje pozycje po uczestnikach i sumuje do rachunku', async () => {
     const { guestSessionId } = await wizyta();
 
-    await zestawienia.send(organizationId, guestSessionId, 'ksiegowosc@firma.test');
+    const dane = await zestawienia.zestawienie(organizationId, guestSessionId);
 
-    const [wiadomosc] = wyslane;
-    expect(wiadomosc.to).toBe('ksiegowosc@firma.test');
-    expect(wiadomosc.text).toContain('Wesoły Borsuk');
-    expect(wiadomosc.text).toContain('2× Żurek — 40,00 PLN');
-    expect(wiadomosc.text).toContain('Szybki Jeż');
-    expect(wiadomosc.text).toContain('1× Pierogi ruskie — 30,00 PLN');
+    expect(dane.grupy.map((grupa) => grupa.nazwa)).toEqual(['Wesoły Borsuk', 'Szybki Jeż']);
+    expect(dane.grupy[0].pozycje).toEqual([
+      { nazwa: 'Żurek', ilosc: 2, kwotaCents: 4000 },
+    ]);
+    expect(dane.grupy[0].sumaCents).toBe(4000);
+    expect(dane.grupy[1].sumaCents).toBe(3000);
     // Suma z zestawienia musi zgadzać się z rachunkiem co do grosza — po to
     // gość je bierze.
-    expect(wiadomosc.text).toContain('Razem: 70,00 PLN');
-  });
-
-  it('mówi wprost, że nie jest paragonem fiskalnym', async () => {
-    const { guestSessionId } = await wizyta();
-
-    await zestawienia.send(organizationId, guestSessionId, 'gosc@test.local');
-
-    // Wymóg z docs/03 §3.6c. Bez tego zdania dokument wygląda jak paragon,
-    // a nim nie jest — paragon wystawia kasa lokalu.
-    expect(wyslane[0].text).toMatch(/nie jest paragonem fiskalnym/i);
+    expect(dane.grupy.reduce((suma, grupa) => suma + grupa.sumaCents, 0)).toBe(dane.totalCents);
+    expect(dane.totalCents).toBe(7000);
   });
 
   it('niesie nazwę lokalu, stolik i numer rachunku', async () => {
     const { guestSessionId } = await wizyta();
 
-    await zestawienia.send(organizationId, guestSessionId, 'gosc@test.local');
+    const dane = await zestawienia.zestawienie(organizationId, guestSessionId);
 
-    expect(wyslane[0].text).toContain('Pod Delegacją');
-    expect(wyslane[0].text).toContain('Stolik 12');
-    expect(wyslane[0].subject).toContain('Pod Delegacją');
+    expect(dane.lokal).toBe('Pod Delegacją');
+    expect(dane.stolik).toBe('Stolik 12');
+    expect(dane.numer).toBeGreaterThan(0);
   });
 
-  it('nie wysyła zestawienia z pustej wizyty', async () => {
+  it('nie robi zestawienia z pustej wizyty', async () => {
     const session = await direct.tableSession.create({
       data: {
         organizationId,
@@ -238,97 +212,47 @@ describe('treść zestawienia', () => {
       },
     });
 
-    await expect(
-      zestawienia.send(organizationId, guestSession.id, 'gosc@test.local'),
-    ).rejects.toThrow(/żadnego zamówienia/);
-    expect(wyslane).toHaveLength(0);
+    await expect(zestawienia.pdf(organizationId, guestSession.id)).rejects.toThrow(
+      /żadnego zamówienia/,
+    );
   });
 });
 
-describe('nazwy pochodzące od gościa', () => {
-  it('trafiają do HTML-a po ucieczce', async () => {
-    // Nick wpisuje gość, a szablon wstawia akapity surowo. Bez ucieczki byłby
-    // to zastrzyk znaczników do poczty wychodzącej z naszego adresu.
+describe('plik', () => {
+  it('jest PDF-em, a nie czymś z rozszerzeniem .pdf', async () => {
+    const { guestSessionId } = await wizyta();
+
+    const { plik, nazwa } = await zestawienia.pdf(organizationId, guestSessionId);
+
+    expect(plik.subarray(0, 5).toString()).toBe('%PDF-');
+    // Pusty dokument z osadzonym krojem waży kilka kilobajtów; zestawienie
+    // z pozycjami wyraźnie więcej. Wartość graniczna łapie regres „plik jest,
+    // ale nic w nim nie ma".
+    expect(plik.length).toBeGreaterThan(8_000);
+    expect(nazwa).toMatch(/^zestawienie-pod-delegacja-\d{4}-\d{2}-\d{2}\.pdf$/);
+  });
+
+  it('radzi sobie z polskimi znakami i znacznikami w nazwach od gościa', async () => {
+    // Nick i nazwa dania pochodzą od gościa. W PDF-ie nie ma czego wstrzyknąć,
+    // ale krój musi mieć te znaki — wbudowane kroje PDF-a nie mają polskich
+    // diakrytyków i „Żurek" wyszedłby jako „urek".
     const { guestSessionId } = await wizyta({
-      nick: '<script>alert(1)</script>',
-      danie: 'Żurek <b>staropolski</b>',
+      nick: 'Zażółć <b>gęślą</b> jaźń',
+      danie: 'Żurek na zakwasie ze śliwką',
     });
 
-    await zestawienia.send(organizationId, guestSessionId, 'gosc@test.local');
+    const { plik } = await zestawienia.pdf(organizationId, guestSessionId);
 
-    const html = wyslane[0].html ?? '';
-    expect(html).not.toContain('<script>');
-    expect(html).toContain('&lt;script&gt;');
-    expect(html).toContain('Żurek &lt;b&gt;staropolski&lt;/b&gt;');
-  });
-});
-
-describe('limit wysyłek', () => {
-  it('przepuszcza kilka poprawek adresu, ale nie robi z nas przekaźnika', async () => {
-    const { guestSessionId } = await wizyta();
-
-    for (let i = 0; i < 3; i += 1) {
-      await zestawienia.send(organizationId, guestSessionId, `gosc${i}@test.local`);
-    }
-
-    await expect(
-      zestawienia.send(organizationId, guestSessionId, 'jeszcze@test.local'),
-    ).rejects.toThrow(/kilka razy/);
-    expect(wyslane).toHaveLength(3);
+    expect(plik.subarray(0, 5).toString()).toBe('%PDF-');
+    expect(plik.length).toBeGreaterThan(8_000);
   });
 
-  it('liczy się osobno dla każdego gościa przy stoliku', async () => {
-    // Limit na sesję gościa, nie na wizytę ani na adres IP: cały lokal wychodzi
-    // jednym łączem, a każdy przy stoliku ma prawo do własnego zestawienia.
-    const pierwszy = await wizyta();
-    const drugi = await wizyta();
-
-    for (let i = 0; i < 3; i += 1) {
-      await zestawienia.send(organizationId, pierwszy.guestSessionId, 'a@test.local');
-    }
-    await expect(
-      zestawienia.send(organizationId, drugi.guestSessionId, 'b@test.local'),
-    ).resolves.toBeUndefined();
-  });
-});
-
-describe('nieudana wysyłka', () => {
-  it('nie mówi gościowi, że wysłała, i nie zabiera mu limitu', async () => {
-    // Serwer poczty skonfigurowany, ale odmawia — na produkcji to awaria.
-    process.env.SMTP_HOST = 'smtp.nieistnieje.test';
-    const zepsuta = new BillSummaryService(prisma, {
-      ...poczta,
-      skonfigurowana: true,
-      send: async () => false,
-    } as unknown as MailService);
-
-    try {
-      const { guestSessionId } = await wizyta();
-
-      // Cisza byłaby najgorszym wyjściem: gość czeka na coś, co nie przyjdzie,
-      // i dowiaduje się o tym dopiero przy rozliczaniu delegacji.
-      await expect(zepsuta.send(organizationId, guestSessionId, 'gosc@test.local')).rejects.toThrow(
-        /Nie udało się wysłać/,
-      );
-    } finally {
-      delete process.env.SMTP_HOST;
-    }
-  });
-
-  it('milczy, gdy poczty w ogóle nie skonfigurowano', async () => {
-    // Lokalnie i w testach SMTP nie istnieje i to normalny stan — ta sama
-    // zasada, co w całej reszcie aplikacji. Awarią jest dopiero odmowa serwera,
-    // który miał działać.
-    const bezPoczty = new BillSummaryService(prisma, {
-      ...poczta,
-      skonfigurowana: false,
-      send: async () => false,
-    } as unknown as MailService);
-
-    const { guestSessionId } = await wizyta();
-
-    await expect(
-      bezPoczty.send(organizationId, guestSessionId, 'gosc@test.local'),
-    ).resolves.toBeUndefined();
+  it('nazwa pliku znosi lokal bez znaków łacińskich', () => {
+    expect(BillSummaryService.nazwaPliku('Bistro Łódź', new Date('2026-09-02T10:00:00Z'))).toBe(
+      'zestawienie-bistro-lodz-2026-09-02.pdf',
+    );
+    expect(BillSummaryService.nazwaPliku('!!!', new Date('2026-09-02T10:00:00Z'))).toBe(
+      'zestawienie-rachunek-2026-09-02.pdf',
+    );
   });
 });

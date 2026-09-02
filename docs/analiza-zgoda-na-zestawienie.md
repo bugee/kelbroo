@@ -10,9 +10,21 @@ podpis był tani i konkretny: nazywa luki, wypisuje warianty i kończy się list
 pytań gotową do wysłania. Wszystkie oceny prawne poniżej są **naszym odczytaniem
 do potwierdzenia**, nie opinią.
 
+> **Aktualizacja 2 września 2026.** Ścieżka e-mailowa została **wycofana**,
+> a w jej miejsce weszło **pobranie zestawienia jako pliku PDF** na telefon
+> gościa. To rozwiązuje problem u źródła: nie zbieramy adresu, więc nie ma
+> czego opisywać, na co zbierać zgody ani czego wykazywać. Dokument zostaje
+> jako zapis rozumowania i **wraca do gry**, gdyby wysyłka pocztą kiedyś była
+> potrzebna — wtedy §§3–7 opisują, co trzeba wtedy zrobić.
+>
+> Nie unieważnia to **§2**: paragraf Polityki o zestawieniu i tak warto mieć,
+> bo dokument z danymi wizyty opuszcza aplikację, choć nie zostawia śladu.
+
 ---
 
 ## 1. Co działa dzisiaj
+
+_Opis stanu z 2 września 2026, **przed** wycofaniem wysyłki pocztą._
 
 Gość na ekranie rachunku wpisuje adres i klika **Wyślij zestawienie**. Dostaje
 listę „kto co zamówił" razem z sumą — do rozliczenia delegacji.

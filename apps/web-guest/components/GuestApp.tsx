@@ -15,7 +15,7 @@ import {
   lineTotal,
   moveToken,
   requestBill,
-  sendBillSummary,
+  downloadBillSummary,
   requestTableOpen,
   submitOrder,
   type ActiveCall,
@@ -1311,7 +1311,7 @@ function FinishedVisit({ qrToken }: { qrToken: string }) {
       {/*
         Najczęstszy moment na zestawienie: kelner rozliczył przy stoliku, gość
         odświeżył stronę i widzi ten ekran. Token wizyty wciąż jest ważny, więc
-        rachunek da się jeszcze wysłać.
+        zestawienie da się jeszcze pobrać.
       */}
       <div className="mt-6 w-full max-w-sm text-left">
         <BillSummary qrToken={qrToken} />
@@ -1332,68 +1332,36 @@ function FinishedVisit({ qrToken }: { qrToken: string }) {
 }
 
 /**
- * Zestawienie „kto co zamówił" na e-mail.
+ * Zestawienie rachunku do pobrania.
  *
- * Scenariusz jest jeden: kolację służbową płaci jedna osoba, a rozliczyć trzeba,
- * kto co zamówił. Dlatego **każdy przy stoliku wysyła sobie własną kopię** —
- * to jego rozliczenie delegacji, nie przywilej płatnika.
- *
- * Pole startuje puste i takie zostaje: adresu nie zapamiętujemy ani na serwerze,
- * ani w telefonie. Podpis mówi o tym wprost, bo gość podający e-mail w aplikacji
- * restauracji ma prawo zakładać najgorsze.
+ * **Plik, nie wiadomość.** Wcześniej gość wpisywał tu adres e-mail i dostawał
+ * zestawienie pocztą; ta ścieżka jest wstrzymana, bo zbierała adres osoby
+ * fizycznej, którego nie opisuje żaden nasz dokument (analiza w `docs/`).
+ * Pobranie omija problem w całości: gość dostaje plik do telefonu, a my nie
+ * dostajemy nic — nie ma adresu, nie ma zgody do zebrania, nie ma śladu.
  */
 function BillSummary({ qrToken }: { qrToken: string }) {
-  const [email, setEmail] = useState('');
-  const [wysylanie, setWysylanie] = useState(false);
+  const [pobieranie, setPobieranie] = useState(false);
   const [blad, setBlad] = useState<string | null>(null);
-  const [gotowe, setGotowe] = useState(false);
 
-  if (gotowe) {
-    return (
-      <section
-        role="status"
-        className="mx-4 mt-4 rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface)] p-4"
-      >
-        <p className="text-sm font-semibold">Zestawienie wysłane</p>
-        <p className="mt-1 text-xs text-[var(--muted)]">
-          Sprawdź skrzynkę — także folder z ofertami. Adresu nie zapisaliśmy.
-        </p>
-      </section>
-    );
-  }
-
-  const wyslij = async () => {
-    setWysylanie(true);
+  const pobierz = async () => {
+    setPobieranie(true);
     setBlad(null);
     try {
-      await sendBillSummary(qrToken, email.trim());
-      setGotowe(true);
+      await downloadBillSummary(qrToken);
     } catch (przyczyna) {
-      setBlad(przyczyna instanceof Error ? przyczyna.message : 'Nie udało się wysłać.');
+      setBlad(przyczyna instanceof Error ? przyczyna.message : 'Nie udało się pobrać zestawienia.');
     } finally {
-      setWysylanie(false);
+      setPobieranie(false);
     }
   };
 
   return (
     <section className="mx-4 mt-4 rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface)] p-4">
-      <p className="text-sm font-semibold">Zestawienie na e-mail</p>
+      <p className="text-sm font-semibold">Zestawienie do rozliczenia</p>
       <p className="mt-1 text-xs text-[var(--muted)]">
         Kto co zamówił i ile to kosztowało — gotowe do rozliczenia delegacji.
       </p>
-
-      <label className="mt-3 block">
-        <span className="sr-only">Adres e-mail</span>
-        <input
-          type="email"
-          inputMode="email"
-          autoComplete="email"
-          value={email}
-          onChange={(zdarzenie) => setEmail(zdarzenie.target.value)}
-          placeholder="twoj@adres.pl"
-          className="min-h-12 w-full rounded-[var(--radius-control)] border border-[var(--line-strong)] bg-[var(--surface)] px-3 text-sm"
-        />
-      </label>
 
       {blad && (
         <p role="alert" className="mt-2 text-sm text-[var(--orange)]">
@@ -1403,16 +1371,16 @@ function BillSummary({ qrToken }: { qrToken: string }) {
 
       <button
         type="button"
-        disabled={wysylanie || !email.includes('@')}
-        onClick={() => void wyslij()}
+        disabled={pobieranie}
+        onClick={() => void pobierz()}
         className="mono mt-3 min-h-11 w-full rounded-[var(--radius-control)] bg-[var(--teal-wash)] text-sm font-semibold text-[var(--teal)] disabled:opacity-40"
       >
-        {wysylanie ? 'Wysyłam…' : 'Wyślij zestawienie'}
+        {pobieranie ? 'Przygotowuję…' : 'Pobierz zestawienie (PDF)'}
       </button>
 
       <p className="mt-2 text-xs text-[var(--muted)]">
-        Użyjemy tego adresu tylko do wysłania zestawienia. Nie zakładamy konta i nigdzie go nie
-        zapisujemy. Zestawienie nie jest paragonem fiskalnym.
+        Plik zapisze się w Twoim telefonie. Nie prosimy o e-mail i nie zostawiamy po tym żadnych
+        danych. Zestawienie nie jest paragonem fiskalnym.
       </p>
     </section>
   );

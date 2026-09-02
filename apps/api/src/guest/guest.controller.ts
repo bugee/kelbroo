@@ -6,13 +6,14 @@ import {
   HttpStatus,
   Param,
   Post,
+  Res,
   UseGuards,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import {
   ArrayMaxSize,
   IsArray,
   IsBoolean,
-  IsEmail,
   IsIn,
   IsInt,
   IsOptional,
@@ -108,19 +109,6 @@ class CallDto {
 class AccessDecisionDto {
   @IsIn(['approve', 'reject'])
   decision!: 'approve' | 'reject';
-}
-
-class BillSummaryDto {
-  /**
-   * Adres podawany doraźnie, wyłącznie do tej wysyłki.
-   *
-   * Nigdzie go nie zapisujemy — ani w bazie, ani w logu (docs/legal, Polityka §9).
-   * Górna granica długości jest po to, żeby polem nie dało się przemycić treści
-   * do wiadomości.
-   */
-  @IsEmail()
-  @MaxLength(160)
-  email!: string;
 }
 
 class BillRequestDto {
@@ -252,20 +240,31 @@ export class GuestController {
   }
 
   /**
-   * Zestawienie „kto co zamówił" na e-mail.
+   * Zestawienie „kto co zamówił" jako plik PDF.
    *
-   * Każdy uczestnik wysyła sobie własną kopię, niezależnie od tego, kto zapłacił —
-   * to jego rozliczenie delegacji, nie przywilej płatnika. Adres jest jednorazowy
-   * i nie zostaje po nim ślad.
+   * Każdy uczestnik pobiera własną kopię, niezależnie od tego, kto zapłacił —
+   * to jego rozliczenie delegacji, nie przywilej płatnika.
+   *
+   * **Pobranie, nie wysyłka.** Wcześniej to samo zestawienie szło pocztą, ale
+   * wymagało adresu e-mail gościa, którego nie opisuje żaden nasz dokument
+   * (docs/analiza-zgoda-na-zestawienie.md). Plik idzie prosto do telefonu, więc
+   * nie ma czego zbierać ani czego opisywać — i nie ma po nim śladu.
    *
    * Bez `ThrottlerGuard`: cały lokal wychodzi zwykle jednym łączem, więc limit
-   * po adresie IP dławiłby dwudziestu gości z powodu pierwszego. Limit siedzi
-   * w serwisie i liczy się **na sesję gościa**.
+   * po adresie IP dławiłby dwudziestu gości z powodu pierwszego. Nie ma tu też
+   * limitu na sesję — generowanie pliku nikomu nic nie wysyła, a gość pobierający
+   * zestawienie drugi raz zwykle po prostu zgubił pierwsze.
    */
-  @Post('bill-summary')
-  @HttpCode(HttpStatus.OK)
-  async sendBillSummary(@Guest() guest: ResolvedGuest, @Body() dto: BillSummaryDto) {
-    await this.billSummary.send(guest.organizationId, guest.guestSessionId, dto.email);
-    return { sent: true };
+  @Get('bill-summary.pdf')
+  async billSummaryPdf(@Guest() guest: ResolvedGuest, @Res() response: Response) {
+    const { plik, nazwa } = await this.billSummary.pdf(guest.organizationId, guest.guestSessionId);
+
+    response.setHeader('content-type', 'application/pdf');
+    // `attachment`, nie `inline`: gość ma dostać plik do katalogu pobranych,
+    // a nie podgląd w karcie, z której trzeba go dopiero zapisać.
+    response.setHeader('content-disposition', `attachment; filename="${nazwa}"`);
+    // Rachunek zmienia się z każdym zamówieniem — nic tu nie wolno cachować.
+    response.setHeader('cache-control', 'no-store');
+    response.send(plik);
   }
 }

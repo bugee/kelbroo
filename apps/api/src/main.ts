@@ -30,6 +30,11 @@ async function bootstrap(): Promise<void> {
       .map((origin) => origin.trim())
       .filter(Boolean),
     allowedHeaders: ['content-type', 'authorization', 'x-guest-token'],
+    // Nazwa pobieranego pliku przychodzi w `content-disposition`, a ten nagłówek
+    // **nie jest** domyślnie widoczny dla skryptu przy żądaniu międzyźródłowym.
+    // Na produkcji API stoi pod tym samym originem, więc problem widać wyłącznie
+    // lokalnie — czyli tam, gdzie łatwo go przeoczyć.
+    exposedHeaders: ['content-disposition'],
     credentials: true,
   });
   app.useGlobalFilters(new DomainExceptionFilter());

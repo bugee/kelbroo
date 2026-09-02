@@ -457,23 +457,39 @@ export function connectVisit(
 }
 
 /**
- * Zestawienie „kto co zamówił" na e-mail.
+ * Zestawienie „kto co zamówił" jako plik PDF.
  *
- * Adres jest jednorazowy: idzie do serwera, ląduje w wiadomości i nigdzie nie
- * zostaje. Aplikacja też go nie zapamiętuje — pole startuje puste za każdym razem,
- * bo zapamiętany adres byłby przechowywaniem danych osobowych w telefonie gościa,
- * którego nikt o to nie prosił.
+ * **Pobranie, nie wysyłka.** Plik idzie prosto do telefonu, więc nie pytamy
+ * o adres e-mail i nie mamy czego zapisywać ani opisywać w dokumentach —
+ * patrz `docs/analiza-zgoda-na-zestawienie.md`.
+ *
+ * Adresu nie da się otworzyć zwykłym odnośnikiem: token gościa jedzie
+ * w nagłówku, a `<a href>` nagłówków nie ustawia. Stąd pobranie przez `fetch`
+ * i sztuczny odnośnik na blobie.
  */
-export async function sendBillSummary(qrToken: string, email: string): Promise<void> {
+export async function downloadBillSummary(qrToken: string): Promise<void> {
   const token = readToken(qrToken);
   if (!token) throw new Error('Sesja wygasła — zeskanuj kod QR ponownie.');
 
-  const response = await fetch(`${API}/guest/bill-summary`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', 'x-guest-token': token },
-    body: JSON.stringify({ email }),
+  const response = await fetch(`${API}/guest/bill-summary.pdf`, {
+    headers: { 'x-guest-token': token },
   });
-  await parse<{ sent: boolean }>(response);
+  if (!response.ok) {
+    // Błąd przychodzi JSON-em, nie PDF-em — czytamy go tą samą drogą co wszędzie.
+    await parse<never>(response);
+    return;
+  }
+
+  const naglowek = response.headers.get('content-disposition') ?? '';
+  const nazwa = /filename="([^"]+)"/.exec(naglowek)?.[1] ?? 'zestawienie.pdf';
+
+  const adres = URL.createObjectURL(await response.blob());
+  const link = document.createElement('a');
+  link.href = adres;
+  link.download = nazwa;
+  link.click();
+  // Bez tego adres `blob:` trzyma plik w pamięci do końca życia karty.
+  URL.revokeObjectURL(adres);
 }
 
 /**

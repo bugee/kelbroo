@@ -1,25 +1,36 @@
-import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-  Logger,
-  ServiceUnavailableException,
-} from '@nestjs/common';
+import { existsSync } from 'node:fs';
+import path from 'node:path';
+import { BadRequestException, ConflictException, Injectable, Logger } from '@nestjs/common';
+import PDFDocument from 'pdfkit';
 import { PrismaService } from '../prisma/prisma.service';
-import { MailService } from '../mail/mail.service';
-import { escapeHtml, ramka, tekstem, type Ramka } from '../mail/templates';
 
 /**
- * Ile razy jeden gość może wysłać zestawienie ze swojej wizyty.
+ * Kroje pisma wkompilowane w obraz, nie pobierane z sieci.
  *
- * Limit jest **na sesję gościa, nie na adres IP**. Cały lokal wychodzi zwykle
- * przez jedno łącze, więc limit po IP dławiłby dwudziestu gości z powodu
- * pierwszego — a to jest wejście, które **wysyła pocztę na cudze polecenie**
- * i bez żadnego limitu zostawiać go nie można.
- *
- * Trzy, bo człowiek wysyła raz, czasem drugi po literówce w adresie.
+ * Wbudowane kroje PDF-a nie mają polskich znaków — „Żurek" wyszedłby jako
+ * „urek". IBM Plex Sans jest krojem tekstowym marki (CLAUDE.md) i ma komplet
+ * diakrytyków; leży w `assets/fonts` razem z licencją OFL, bo dokument
+ * z rozjechanymi nazwami dań nie nadaje się do rozliczenia delegacji.
  */
-const LIMIT_NA_GOSCIA = 3;
+/**
+ * Skompilowana aplikacja ma je w `dist/assets`, a testy chodzą po źródłach
+ * i widzą `apps/api/assets`. Sprawdzamy oba, zamiast liczyć na jeden —
+ * ścieżka dobra tylko w testach to awaria widoczna dopiero na produkcji.
+ */
+function font(nazwa: string): string {
+  const kandydaci = [
+    path.join(__dirname, '..', 'assets', 'fonts', nazwa),
+    path.join(__dirname, '..', '..', 'assets', 'fonts', nazwa),
+  ];
+  const znaleziony = kandydaci.find((sciezka) => existsSync(sciezka));
+  if (!znaleziony) {
+    throw new Error(`Brak kroju pisma ${nazwa}. Szukano w: ${kandydaci.join(', ')}`);
+  }
+  return znaleziony;
+}
+
+const FONT = font('IBMPlexSans_400Regular.ttf');
+const FONT_POGRUBIONY = font('IBMPlexSans_600SemiBold.ttf');
 
 /** Nagłówek listy pozycji jednego uczestnika. */
 interface Grupa {
@@ -29,17 +40,19 @@ interface Grupa {
 }
 
 /**
- * Zestawienie rachunku wysyłane gościowi na e-mail.
+ * Zestawienie rachunku jako plik PDF na telefon gościa.
  *
  * Scenariusz jest jeden i konkretny: kolację służbową płaci jedna osoba, a
  * rozliczyć trzeba, kto co zamówił (docs/03 §3.6c). Dlatego **każdy uczestnik
- * może wysłać sobie własną kopię**, niezależnie od tego, kto zapłacił — to jego
+ * może pobrać własną kopię**, niezależnie od tego, kto zapłacił — to jego
  * rozliczenie, nie przywilej płatnika.
  *
- * **Adresu nie zapisujemy nigdzie.** Nie jest kolumną w bazie, nie trafia do
- * dziennika ani do logu — przechodzi przez pamięć procesu do serwera poczty
- * i znika. Tak opisuje to polityka prywatności §9 ust. 1 i tak ma zostać:
- * zapisanie go zamieniłoby wysyłkę zestawienia w zbieranie bazy adresowej.
+ * **Plik powstaje i znika w jednym żądaniu.** Nie zapisujemy go na dysku, nie
+ * zbieramy adresu e-mail, nie zostaje po nim żaden ślad poza wpisem w logu
+ * z identyfikatorem wizyty. Wcześniej to samo zestawienie szło pocztą; ścieżka
+ * e-mailowa jest wstrzymana, bo zbierała adres osoby fizycznej, którego nie
+ * opisuje żaden dokument — patrz [analiza](../../../../docs/analiza-zgoda-na-zestawienie.md).
+ * Pobranie omija ten problem w całości: gość dostaje plik, a my nie dostajemy nic.
  *
  * Dokument **nie jest paragonem fiskalnym** i mówi to wprost w treści. Paragon
  * wystawia kasa lokalu; zestawienie z kelbroo służy rozliczeniu delegacji.
@@ -48,64 +61,42 @@ interface Grupa {
 export class BillSummaryService {
   private readonly logger = new Logger(BillSummaryService.name);
 
-  /**
-   * Licznik wysyłek per sesja gościa.
-   *
-   * W pamięci procesu, tak jak licznik żądań i zadania cykliczne — przy jednej
-   * instancji API to wystarcza. Restart kasuje licznik, więc uparty nadawca
-   * zyskuje kolejne trzy wysyłki; przy koszcie „trzy wiadomości na restart"
-   * nie warto za to płacić zapisem w bazie przy każdym rachunku.
-   */
-  private readonly wyslane = new Map<string, number>();
+  constructor(private readonly prisma: PrismaService) {}
 
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly mail: MailService,
-  ) {}
-
-  async send(organizationId: string, guestSessionId: string, email: string): Promise<void> {
-    const adres = email.trim();
-
-    const zuzyte = this.wyslane.get(guestSessionId) ?? 0;
-    if (zuzyte >= LIMIT_NA_GOSCIA) {
-      throw new ConflictException(
-        'Wysłaliśmy już to zestawienie kilka razy. Poproś obsługę, jeśli nie dotarło.',
-      );
-    }
-
-    const tresc = await this.zbierz(organizationId, guestSessionId);
-
-    const poszlo = await this.mail.send({
-      to: adres,
-      subject: `Zestawienie rachunku — ${tresc.lokal}`,
-      text: tekstem(tresc.ramka),
-      html: ramka(tresc.ramka),
-    });
-
-    /**
-     * Tu wiadomość **jest** operacją, więc jej niepowodzenie nie może zniknąć
-     * w logu — inaczej gość czyta „wysłane", czeka na coś, co nigdy nie przyjdzie,
-     * i dowiaduje się o tym dopiero przy rozliczaniu delegacji.
-     *
-     * Brak skonfigurowanego SMTP to co innego niż nieudana wysyłka: lokalnie
-     * i w testach poczty nie ma i to normalny stan, ten sam co w całej reszcie
-     * aplikacji. Awarią jest dopiero odmowa serwera, który miał działać.
-     */
-    if (!poszlo && this.mail.skonfigurowana) {
-      throw new ServiceUnavailableException(
-        'Nie udało się wysłać zestawienia. Spróbuj za chwilę albo poproś obsługę.',
-      );
-    }
-
-    // Licznik rośnie dopiero po wysyłce: nieudana próba nie zabiera gościowi
-    // limitu, a nadużyciem nie jest, bo żadna wiadomość wtedy nie wyszła.
-    this.wyslane.set(guestSessionId, zuzyte + 1);
-
-    // Bez adresu w logu. Wystarczy, że wiadomo, z której wizyty poszło.
-    this.logger.log(`Zestawienie wysłane z wizyty ${tresc.sessionId}`);
+  /** Nazwa pliku, po której gość pozna go w katalogu pobranych. */
+  static nazwaPliku(lokal: string, data: Date): string {
+    const slug = lokal
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/ł/gi, 'l')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
+    const dzien = data.toISOString().slice(0, 10);
+    return `zestawienie-${slug || 'rachunek'}-${dzien}.pdf`;
   }
 
-  private async zbierz(organizationId: string, guestSessionId: string) {
+  async pdf(
+    organizationId: string,
+    guestSessionId: string,
+  ): Promise<{ plik: Buffer; nazwa: string }> {
+    const dane = await this.zestawienie(organizationId, guestSessionId);
+    const plik = await this.rysuj(dane);
+
+    // Bez adresu, bo żadnego nie ma. Wystarczy, że wiadomo, z której wizyty.
+    this.logger.log(`Zestawienie pobrane z wizyty ${dane.sessionId}`);
+    return { plik, nazwa: BillSummaryService.nazwaPliku(dane.lokal, dane.otwarta) };
+  }
+
+  /**
+   * Treść dokumentu, osobno od jego rysowania.
+   *
+   * Publiczna, bo to **ona** jest tym, co musi się zgadzać co do grosza —
+   * i to ją sprawdzają testy. Rysowanie jest warstwą prezentacji: da się je
+   * obejrzeć, ale nie da się go sensownie zasertować przez bajty PDF-a,
+   * w którym tekst siedzi w podzbiorze kroju pisma.
+   */
+  async zestawienie(organizationId: string, guestSessionId: string) {
     return this.prisma.withTenant(organizationId, async (tx) => {
       const guestSession = await tx.guestSession.findUnique({
         where: { id: guestSessionId },
@@ -171,46 +162,93 @@ export class BillSummaryService {
         }
       }
 
-      const waluta = wizyta.currency;
-      const akapity = [
-        `<strong>${escapeHtml(wizyta.restaurant.name)}</strong><br>` +
-          `${escapeHtml(wizyta.table.label)} · rachunek #${wizyta.sessionNumber} · ` +
-          this.dataPolska(wizyta.openedAt),
-        ...[...grupy.values()].map((grupa) => this.grupaHtml(grupa, waluta)),
-        `<strong>Razem: ${this.kwota(wizyta.totalCents, waluta)}</strong>` +
-          (wizyta.tipCents > 0 ? `<br>w tym napiwek ${this.kwota(wizyta.tipCents, waluta)}` : ''),
-      ];
-
-      const ramkaMaila: Ramka = {
-        adresStrony: this.mail.adresStrony,
-        naglowek: 'Zestawienie rachunku',
-        akapity,
-        stopka: [
-          'To zestawienie ma charakter <strong>informacyjny i nie jest paragonem ' +
-            'fiskalnym</strong>. Paragon wystawia kasa lokalu.',
-          'Adresu, na który przyszła ta wiadomość, nie zapisaliśmy. Użyliśmy go ' +
-            'wyłącznie do tej jednej wysyłki.',
-        ],
+      return {
+        sessionId: wizyta.id,
+        lokal: wizyta.restaurant.name,
+        stolik: wizyta.table.label,
+        numer: wizyta.sessionNumber,
+        otwarta: wizyta.openedAt,
+        waluta: wizyta.currency,
+        totalCents: wizyta.totalCents,
+        tipCents: wizyta.tipCents,
+        grupy: [...grupy.values()],
       };
-
-      return { ramka: ramkaMaila, lokal: wizyta.restaurant.name, sessionId: wizyta.id };
     });
   }
 
-  private grupaHtml(grupa: Grupa, waluta: string): string {
-    // Nazwa uczestnika i nazwa dania pochodzą od gościa — obie przez ucieczkę.
-    // Szablon wstawia akapity surowo, więc to jedyne miejsce, które je chroni.
-    const pozycje = grupa.pozycje
-      .map(
-        (pozycja) =>
-          `${pozycja.ilosc}× ${escapeHtml(pozycja.nazwa)} — ${this.kwota(pozycja.kwotaCents, waluta)}`,
-      )
-      .join('<br>');
+  private rysuj(dane: Awaited<ReturnType<BillSummaryService['zestawienie']>>): Promise<Buffer> {
+    const doc = new PDFDocument({ size: 'A4', margin: 56 });
+    doc.registerFont('plex', FONT);
+    doc.registerFont('plex-bold', FONT_POGRUBIONY);
 
-    return (
-      `<strong>${escapeHtml(grupa.nazwa)}</strong><br>${pozycje}<br>` +
-      `<strong>Razem: ${this.kwota(grupa.sumaCents, waluta)}</strong>`
-    );
+    const szerokosc = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+    const kwota = (cents: number) => this.kwota(cents, dane.waluta);
+
+    /** Wiersz z nazwą po lewej i kwotą po prawej, w jednej linii bazowej. */
+    const wiersz = (opis: string, wartosc: string, pogrubiony = false) => {
+      const y = doc.y;
+      doc.font(pogrubiony ? 'plex-bold' : 'plex');
+      // Kwota najpierw: `text` przesuwa `doc.y`, więc opis rysowany wcześniej
+      // zepchnąłby ją o wiersz niżej przy dłuższej nazwie dania.
+      doc.text(wartosc, doc.page.margins.left, y, { width: szerokosc, align: 'right' });
+      doc.text(opis, doc.page.margins.left, y, { width: szerokosc - 90 });
+    };
+
+    doc.font('plex-bold').fontSize(20).text('Zestawienie rachunku');
+    doc.moveDown(0.4);
+    doc.font('plex').fontSize(11).text(dane.lokal);
+    doc
+      .fillColor('#6b807e')
+      .text(`${dane.stolik} · rachunek #${dane.numer} · ${this.dataPolska(dane.otwarta)}`);
+    doc.fillColor('#000000');
+
+    for (const grupa of dane.grupy) {
+      doc.moveDown(1);
+      doc.fontSize(12).font('plex-bold').text(grupa.nazwa);
+      doc.moveDown(0.3).fontSize(11);
+      for (const pozycja of grupa.pozycje) {
+        wiersz(`${pozycja.ilosc}× ${pozycja.nazwa}`, kwota(pozycja.kwotaCents));
+      }
+      doc.moveDown(0.2);
+      wiersz('Razem', kwota(grupa.sumaCents), true);
+    }
+
+    doc.moveDown(1.2);
+    doc
+      .moveTo(doc.page.margins.left, doc.y)
+      .lineTo(doc.page.margins.left + szerokosc, doc.y)
+      .strokeColor('#d8e4e2')
+      .stroke();
+    doc.moveDown(0.6).fontSize(13);
+    wiersz('Razem', kwota(dane.totalCents), true);
+    if (dane.tipCents > 0) {
+      doc.fontSize(10).fillColor('#6b807e');
+      wiersz('w tym napiwek', kwota(dane.tipCents));
+      doc.fillColor('#000000');
+    }
+
+    doc.moveDown(2);
+    doc
+      .font('plex')
+      .fontSize(9)
+      .fillColor('#6b807e')
+      .text(
+        'To zestawienie ma charakter informacyjny i nie jest paragonem fiskalnym. ' +
+          'Paragon wystawia kasa lokalu.',
+        { width: szerokosc },
+      )
+      .moveDown(0.4)
+      .text('Dokument powstał na Twoje żądanie i nie zostawiliśmy po nim żadnych danych.', {
+        width: szerokosc,
+      });
+
+    return new Promise((resolve, reject) => {
+      const kawalki: Buffer[] = [];
+      doc.on('data', (kawalek: Buffer) => kawalki.push(kawalek));
+      doc.on('end', () => resolve(Buffer.concat(kawalki)));
+      doc.on('error', reject);
+      doc.end();
+    });
   }
 
   /** Kwoty są w groszach — dzielimy dopiero przy wyświetleniu. */
