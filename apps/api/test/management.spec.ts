@@ -363,3 +363,73 @@ describe('ustawienia lokalu', () => {
     expect(result.removedLocales).toEqual(['en']);
   });
 });
+
+describe('alergeny', () => {
+  // Wcześniejszy test zawęża lokal do samego polskiego. Przywracamy angielski,
+  // bo cały sens alergenów per język widać dopiero przy dwóch.
+  beforeAll(async () => {
+    await restaurantAdmin.update(staff, { supportedLocales: ['pl', 'en'] });
+  });
+
+  /**
+   * Alergeny są **jedynym źródłem tej informacji w aplikacji** i odpowiada za
+   * nie lokal, nie kelbroo (docs/03 §5). Dlatego pilnujemy tu dwóch rzeczy:
+   * że lista jedzie językiem, w którym ją wpisano, i że **nie podstawia się
+   * pod inny język** — polska lista pod niemiecką nazwą wygląda na
+   * przeczytaną, a nią nie jest.
+   */
+  async function daniePoDwaJezyki(alergenyEn: string[] | undefined) {
+    const { id } = await menuAdmin.createItem(staff, {
+      categoryId,
+      priceCents: 3200,
+      vatPercent: 8,
+      translations: [
+        { locale: 'pl', name: `Pierogi ${randomUUID().slice(0, 6)}`, allergens: ['gluten', 'mleko'] },
+        { locale: 'en', name: 'Dumplings', ...(alergenyEn ? { allergens: alergenyEn } : {}) },
+      ],
+    });
+    return id;
+  }
+
+  /** Karta gościa w danym języku, zawężona do jednego dania. */
+  async function daniePoJezyku(id: string, locale: string) {
+    return (await menuService.forRestaurant(direct, staff.restaurantId!, locale, 'pl'))
+      .flatMap((kategoria) => kategoria.items)
+      .find((pozycja) => pozycja.id === id);
+  }
+
+  it('każdy język ma własną listę', async () => {
+    const id = await daniePoDwaJezyki(['gluten', 'milk']);
+
+    expect((await daniePoJezyku(id, 'pl'))?.allergens).toEqual(['gluten', 'mleko']);
+    expect((await daniePoJezyku(id, 'en'))?.allergens).toEqual(['gluten', 'milk']);
+  });
+
+  it('nie podstawia listy z innego języka, gdy w tym jej nie wpisano', async () => {
+    const id = await daniePoDwaJezyki(undefined);
+
+    const en = await daniePoJezyku(id, 'en');
+
+    // Pusto **mimo** że polska lista istnieje. Gość zobaczy wtedy odesłanie
+    // do obsługi, a nie słowa, których może nie rozumieć.
+    expect(en?.name).toBe('Dumplings');
+    expect(en?.allergens).toEqual([]);
+  });
+
+  it('wraca do panelu przy tłumaczeniu, z którego przyszła', async () => {
+    const id = await daniePoDwaJezyki(['gluten', 'milk']);
+
+    const zapisane = (await menuAdmin.fullMenu(staff)).categories
+      .flatMap((kategoria) => kategoria.items)
+      .find((pozycja) => pozycja.id === id);
+
+    expect(zapisane?.translations.find((t) => t.locale === 'pl')?.allergens).toEqual([
+      'gluten',
+      'mleko',
+    ]);
+    expect(zapisane?.translations.find((t) => t.locale === 'en')?.allergens).toEqual([
+      'gluten',
+      'milk',
+    ]);
+  });
+});

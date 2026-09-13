@@ -1,7 +1,13 @@
 import { expect, test } from '@playwright/test';
 import { GUEST_URL } from '../playwright.config';
 import { ACCOUNTS } from '../fixtures/accounts';
-import { acknowledgeCallAt, blockTable, seedMenuAndTable, setHostApproval } from '../fixtures/db';
+import {
+  acknowledgeCallAt,
+  blockTable,
+  seedMenuAndTable,
+  setAllergens,
+  setHostApproval,
+} from '../fixtures/db';
 
 /**
  * Ścieżka gościa od skanu kodu QR.
@@ -385,6 +391,45 @@ test('to, co gość wyklikał przy rachunku, widzi kelner w Powiadomieniach i na
     await page.goto('/tables');
     const stolik = page.locator('article').filter({ hasText: fixture.tableLabel }).first();
     await expect(stolik.getByText(deklaracja)).toBeVisible();
+  } finally {
+    await fixture.cleanup();
+  }
+});
+
+/**
+ * Alergeny na ekranie szczegółów dania.
+ *
+ * To **jedyne źródło tej informacji, jakie gość ma w aplikacji**, a odpowiada
+ * za nią lokal (docs/03 §5). Puste miejsce przy daniu bez wpisanej listy gość
+ * z uczuleniem odczyta jako „nie ma alergenów" — i to jest awaria, której nikt
+ * nie zobaczy w logu. Dlatego pilnujemy, że zamiast pustki stoi tam odesłanie
+ * do obsługi, i że po wpisaniu listy znika ono na rzecz samych alergenów.
+ */
+test('danie bez wpisanych alergenów odsyła gościa do obsługi', async ({ page }) => {
+  const fixture = await seedMenuAndTable();
+
+  try {
+    await page.goto(`${GUEST_URL}/t/${fixture.qrToken}`);
+    await page.getByText(fixture.dishName).first().click();
+
+    await expect(page.getByText(/Listę alergenów tego dania poda obsługa/)).toBeVisible();
+    await expect(page.getByText(/^Alergeny:/)).toHaveCount(0);
+  } finally {
+    await fixture.cleanup();
+  }
+});
+
+test('wpisana lista zastępuje odesłanie do obsługi', async ({ page }) => {
+  const fixture = await seedMenuAndTable();
+
+  try {
+    await setAllergens(fixture.dishName, 'pl', ['gluten', 'mleko']);
+
+    await page.goto(`${GUEST_URL}/t/${fixture.qrToken}`);
+    await page.getByText(fixture.dishName).first().click();
+
+    await expect(page.getByText('Alergeny: gluten, mleko')).toBeVisible();
+    await expect(page.getByText(/poda obsługa/)).toHaveCount(0);
   } finally {
     await fixture.cleanup();
   }

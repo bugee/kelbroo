@@ -73,7 +73,9 @@ Jak wariant A, ale na ekranie koszyka gość wybiera: `Zapłać teraz` albo `Zap
 
 ### 3.3 Szczegóły dania
 
-- Duże zdjęcie, pełny opis, cena, kaloryczność, alergeny (rozwijana lista), tagi.
+- Duże zdjęcie, pełny opis, cena, kaloryczność, alergeny, tagi.
+- **Alergeny są per język karty**, nie jedna lista na danie: lista w cudzym języku wygląda na przeczytaną i nią nie jest, a to jedyne źródło tej informacji, jakie gość ma w aplikacji.
+- **Brak wpisanej listy nie oznacza „danie bez alergenów".** Ekran szczegółów pokazuje wtedy odesłanie do obsługi w języku gościa — pusto na ekranie gość z uczuleniem odczytałby jako brak alergenów.
 - **Modyfikatory:** grupy wyboru z walidacją (min/max), widoczna dopłata przy każdej opcji, cena aktualizowana na żywo.
 - Pole "Uwagi do dania" (np. "bez cebuli") — z limitem znaków.
 - Selektor ilości i przycisk `Dodaj do zamówienia — 42,00 zł` (cena zawsze na przycisku).

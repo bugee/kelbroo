@@ -32,6 +32,21 @@ export class TranslationDto {
   @MaxLength(500)
   @IsOptional()
   description?: string;
+
+  /**
+   * Alergeny **w języku tego tłumaczenia**.
+   *
+   * Na tłumaczeniu, a nie na daniu: lista w cudzym języku wygląda na
+   * przeczytaną, a nią nie jest — a to jedyne źródło tej informacji, jakie
+   * gość ma w aplikacji. Pusta lista znaczy „zapytaj obsługę".
+   *
+   * Kategorie i modyfikatory dzielą ten sam DTO i po prostu jej nie wysyłają.
+   */
+  @IsArray()
+  @IsString({ each: true })
+  @ArrayMaxSize(20)
+  @IsOptional()
+  allergens?: string[];
 }
 
 export class CategoryDto {
@@ -130,12 +145,6 @@ export class MenuItemDto {
   @IsBoolean()
   @IsOptional()
   isFeatured?: boolean;
-
-  @IsArray()
-  @IsString({ each: true })
-  @ArrayMaxSize(20)
-  @IsOptional()
-  allergens?: string[];
 
   @IsArray()
   @IsString({ each: true })

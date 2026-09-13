@@ -72,10 +72,9 @@ export class MenuAdminService {
             isArchived: item.isArchived,
             isFeatured: item.isFeatured,
             imageUrl: item.imageUrl,
-            allergens: item.allergens,
             dietaryTags: item.dietaryTags,
             prepTimeMinutes: item.prepTimeMinutes,
-            translations: strip(item.translations),
+            translations: stripDanie(item.translations),
             modifierGroups: item.modifierGroups.map((group) => ({
               id: group.id,
               minSelect: group.minSelect,
@@ -192,7 +191,6 @@ export class MenuAdminService {
           sortOrder: dto.sortOrder ?? 0,
           isAvailable: dto.isAvailable ?? true,
           isFeatured: dto.isFeatured ?? false,
-          allergens: dto.allergens ?? [],
           dietaryTags: dto.dietaryTags ?? [],
           prepTimeMinutes: dto.prepTimeMinutes ?? null,
           translations: {
@@ -231,7 +229,6 @@ export class MenuAdminService {
           ...(dto.sortOrder !== undefined ? { sortOrder: dto.sortOrder } : {}),
           ...(dto.isAvailable !== undefined ? { isAvailable: dto.isAvailable } : {}),
           ...(dto.isFeatured !== undefined ? { isFeatured: dto.isFeatured } : {}),
-          allergens: dto.allergens ?? [],
           dietaryTags: dto.dietaryTags ?? [],
           prepTimeMinutes: dto.prepTimeMinutes ?? null,
           translations: {
@@ -426,6 +423,23 @@ const strip = (translations: { locale: string; name: string; description?: strin
     locale: translation.locale,
     name: translation.name,
     description: translation.description ?? null,
+  }));
+
+/**
+ * Tłumaczenia dania niosą dodatkowo alergeny — osobno od `strip`, bo kategorie
+ * i modyfikatory ich nie mają i nie ma powodu, żeby dostawały puste pole.
+ */
+const stripDanie = (
+  translations: {
+    locale: string;
+    name: string;
+    description?: string | null;
+    allergens: string[];
+  }[],
+) =>
+  translations.map((translation) => ({
+    ...strip([translation])[0],
+    allergens: translation.allergens,
   }));
 
 /** 8% → 0.0800. Trzymamy Decimal, nie float — stawka bierze udział w kwotach. */

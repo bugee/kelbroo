@@ -93,6 +93,19 @@ Przyjmujemy JPG, PNG i WebP, do 3 MB po zmniejszeniu.
 
 ## Alergeny
 
-Wpisujesz je przy daniu i gość widzi je pod nazwą. To jego jedyne źródło tej
-informacji w aplikacji, więc warto wypełnić rzetelnie — odpowiada za nie lokal,
-nie kelbroo.
+Wpisujesz je **osobno w każdym języku karty**, po przecinku, w polu pod nazwą
+i opisem dania: `gluten, mleko, orzechy`. Gość widzi je na ekranie szczegółów
+dania, w tym języku, w którym czyta kartę.
+
+**Osobno w każdym języku, a nie raz na danie** — bo polska lista pokazana
+Niemcowi wygląda na przeczytaną, a nią nie jest. To jedyne źródło tej informacji
+w aplikacji i odpowiada za nie lokal, nie kelbroo.
+
+**Puste pole nie znaczy „danie bez alergenów".** Gość zobaczy wtedy zdanie
+„Listę alergenów tego dania poda obsługa — zapytaj kelnera", w swoim języku.
+To jest uczciwe wobec gościa z uczuleniem i wobec Twojej obsługi: pusto na
+ekranie ktoś odczyta jako brak alergenów, a takiej pomyłki nie widać w żadnym
+raporcie.
+
+Jeśli więc danie **naprawdę** nie zawiera alergenów, i tak lepiej to wpisać
+wprost (np. `brak`), niż zostawić puste pole.

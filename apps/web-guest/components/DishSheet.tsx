@@ -2,14 +2,17 @@
 
 import { useState } from 'react';
 import { formatMoney, imageSrc, type CartLine, type Dish, type Modifier } from '@/lib/api';
+import { etykietaAlergenow, odeslanieDoObslugi } from '@/lib/allergeny';
 
 interface Props {
   dish: Dish;
+  /** Język, w którym gość czyta kartę — decyduje o brzmieniu informacji o alergenach. */
+  locale: string;
   onAdd: (line: CartLine) => void;
   onClose: () => void;
 }
 
-export function DishSheet({ dish, onAdd, onClose }: Props) {
+export function DishSheet({ dish, locale, onAdd, onClose }: Props) {
   const [selected, setSelected] = useState<Modifier[]>([]);
   const [quantity, setQuantity] = useState(1);
   const [note, setNote] = useState('');
@@ -98,10 +101,18 @@ export function DishSheet({ dish, onAdd, onClose }: Props) {
         <h2 className="text-xl">{dish.name}</h2>
         {dish.description && <p className="mt-1 text-sm text-[var(--muted)]">{dish.description}</p>}
 
-        {dish.allergens.length > 0 && (
+        {/*
+          Pusta lista **nie znaczy „bez alergenów"**, tylko „nikt ich nie
+          wpisał" — a gość z uczuleniem, który nie widzi nic, odczyta to jako
+          pierwsze. Dlatego zamiast pustego miejsca stoi odesłanie do obsługi,
+          w tym samym języku, w którym gość czyta kartę.
+        */}
+        {dish.allergens.length > 0 ? (
           <p className="mono mt-3 text-xs text-[var(--muted)]">
-            Alergeny: {dish.allergens.join(', ')}
+            {etykietaAlergenow(locale)}: {dish.allergens.join(', ')}
           </p>
+        ) : (
+          <p className="mono mt-3 text-xs text-[var(--orange)]">{odeslanieDoObslugi(locale)}</p>
         )}
 
         {dish.modifierGroups.map((group) => (

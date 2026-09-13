@@ -396,6 +396,7 @@ export function GuestApp({ qrToken }: { qrToken: string }) {
       {openDish && (
         <DishSheet
           dish={openDish}
+          locale={entry.restaurant.locale}
           onClose={() => setOpenDish(null)}
           onAdd={(line) => {
             setCart((c) => [...c, line]);

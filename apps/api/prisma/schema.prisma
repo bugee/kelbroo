@@ -656,7 +656,6 @@ model MenuItem {
   /// nie może zobaczyć jednego jako drugiego.
   isArchived      Boolean  @default(false) @map("is_archived")
   sortOrder       Int      @default(0) @map("sort_order")
-  allergens       String[] @default([])
   dietaryTags     String[] @default([]) @map("dietary_tags")
   calories        Int?
   prepTimeMinutes Int?     @map("prep_time_minutes")
@@ -683,6 +682,11 @@ model MenuItemTranslation {
   locale         String
   name           String
   description    String?
+  /// Lista w **języku tego tłumaczenia**, nie jedna na danie: alergeny są
+  /// jedynym źródłem tej informacji w aplikacji, a lista w cudzym języku
+  /// wygląda na przeczytaną i nią nie jest. Pusta znaczy „zapytaj obsługę"
+  /// i tak mówi o niej ekran gościa.
+  allergens      String[] @default([])
 
   menuItem MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
 

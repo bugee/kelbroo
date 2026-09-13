@@ -496,6 +496,28 @@ export async function setMenuPhotos(enabled: boolean): Promise<void> {
   });
 }
 
+/**
+ * Alergeny dla dania, **w jednym języku**.
+ *
+ * Lista jest na tłumaczeniu, nie na daniu, więc fixture musi wskazać język —
+ * i właśnie ta możliwość „po polsku tak, po angielsku nie" jest tu przedmiotem
+ * testu, a nie szczegółem technicznym.
+ */
+export async function setAllergens(
+  dishName: string,
+  locale: string,
+  allergens: string[],
+): Promise<void> {
+  await withClient(async (client) => {
+    await client.query(
+      `UPDATE menu_item_translation SET allergens = $3
+        WHERE locale = $2
+          AND menu_item_id = (SELECT menu_item_id FROM menu_item_translation WHERE name = $1 LIMIT 1)`,
+      [dishName, locale, allergens],
+    );
+  });
+}
+
 export async function setSubscription(stan: 'aktywny' | 'wygasly' | 'proba'): Promise<void> {
   await withClient(async (client) => {
     const { rows } = await client.query('SELECT organization_id FROM restaurant WHERE slug = $1', [

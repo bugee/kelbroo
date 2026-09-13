@@ -50,13 +50,19 @@ export function ItemEditor({
   const [translations, setTranslations] = useState<Translation[]>(
     locales.map((locale) => {
       const existing = item?.translations.find((t) => t.locale === locale);
-      return { locale, name: existing?.name ?? '', description: existing?.description ?? '' };
+      return {
+        locale,
+        name: existing?.name ?? '',
+        description: existing?.description ?? '',
+        // Alergeny wpisuje się po przecinku, więc w formularzu żyją jako tekst
+        // i zamieniają się w listę dopiero przy zapisie.
+        allergens: existing?.allergens ?? [],
+      };
     }),
   );
   const [priceZl, setPriceZl] = useState(item ? (item.priceCents / 100).toFixed(2) : '');
   const [vatPercent, setVatPercent] = useState(String(item?.vatPercent ?? 8));
   const [prepTime, setPrepTime] = useState(String(item?.prepTimeMinutes ?? ''));
-  const [allergens, setAllergens] = useState((item?.allergens ?? []).join(', '));
   const [dietaryTags, setDietaryTags] = useState((item?.dietaryTags ?? []).join(', '));
   const [groups, setGroups] = useState<AdminModifierGroup[]>(item?.modifierGroups ?? []);
   const [error, setError] = useState<string | null>(null);
@@ -81,6 +87,14 @@ export function ItemEditor({
       current.map((entry) => (entry.locale === locale ? { ...entry, [field]: value } : entry)),
     );
 
+  /** Tekst z pola „gluten, mleko" → lista. Puste wpisy odpadają po drodze. */
+  const setAllergens = (locale: string, value: string) =>
+    setTranslations((current) =>
+      current.map((entry) =>
+        entry.locale === locale ? { ...entry, allergens: splitList(value) } : entry,
+      ),
+    );
+
   const save = async () => {
     setBusy(true);
     setError(null);
@@ -97,7 +111,6 @@ export function ItemEditor({
         priceCents,
         vatPercent: Number(vatPercent),
         prepTimeMinutes: prepTime ? Number(prepTime) : undefined,
-        allergens: splitList(allergens),
         dietaryTags: splitList(dietaryTags),
         // Wysyłamy wyłącznie języki z wypełnioną nazwą; puste zostawiłyby
         // gościowi pustą pozycję zamiast fallbacku na język domyślny.
@@ -107,6 +120,7 @@ export function ItemEditor({
             locale: entry.locale,
             name: entry.name.trim(),
             description: entry.description?.trim() || undefined,
+            allergens: entry.allergens ?? [],
           })),
         modifierGroups: groups,
       };
@@ -168,6 +182,19 @@ export function ItemEditor({
                 placeholder="Opis"
                 className="mt-2 min-h-11 w-full rounded-[var(--radius-control)] border border-[var(--line)] px-3"
               />
+              {/*
+                Alergeny stoją przy języku, a nie raz dla całego dania: to
+                jedyne źródło tej informacji, jakie gość ma w aplikacji, a lista
+                po polsku pokazana Niemcowi wygląda na przeczytaną i nią nie
+                jest. Pusty wiersz znaczy „zapytaj obsługę" i tak brzmi ekran
+                gościa w tym języku.
+              */}
+              <input
+                value={(entry?.allergens ?? []).join(', ')}
+                onChange={(event) => setAllergens(locale, event.target.value)}
+                placeholder="Alergeny po przecinku: gluten, mleko"
+                className="mt-2 min-h-11 w-full rounded-[var(--radius-control)] border border-[var(--line)] px-3"
+              />
             </fieldset>
           );
         })}
@@ -223,15 +250,6 @@ export function ItemEditor({
             />
           </Field>
         )}
-
-        <Field label="Alergeny (po przecinku)">
-          <input
-            value={allergens}
-            onChange={(event) => setAllergens(event.target.value)}
-            placeholder="gluten, mleko"
-            className="min-h-11 w-full rounded-[var(--radius-control)] border border-[var(--line)] px-3"
-          />
-        </Field>
 
         <section className="mt-5">
           <div className="flex items-center justify-between">

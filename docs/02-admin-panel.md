@@ -99,7 +99,8 @@ Najważniejszy ekran konfiguracyjny lokalu — determinuje wygląd aplikacji go�
 
 - **Kategorie** — kolejność (drag & drop), widoczność, dostępność czasowa (np. śniadania 8:00–11:00).
 - **Dania** — nazwa, opis, cena, VAT, zdjęcie (upload z automatycznym kadrowaniem i kompresją), czas przygotowania, kaloryczność.
-- **Alergeny i tagi dietetyczne** — lista zgodna z wymogami UE (14 alergenów), tagi: wegetariańskie, wegańskie, bezglutenowe, ostre, nowość, polecane.
+- **Alergeny** — pole po przecinku **przy każdym języku karty osobno**, obok nazwy i opisu. Puste znaczy „zapytaj obsługę" i tak brzmi ekran gościa, a nie „danie bez alergenów".
+- **Tagi dietetyczne** — wegetariańskie, wegańskie, bezglutenowe, ostre, nowość, polecane.
 - **Modyfikatory** — grupy opcji (np. "Wybierz sos" min 1 max 1, "Dodatki" min 0 max 5) z dopłatami; przypisywane do dań lub współdzielone.
 - **Dostępność** — szybki przełącznik "niedostępne dziś" (tzw. 86), dostępny również dla kelnera i kuchni; danie znika z menu gościa natychmiast.
 - **Zestawy/menu dnia** — kompozycje dań w stałej cenie (faza 2).

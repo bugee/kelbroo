@@ -51,14 +51,22 @@ export class MenuService {
    * Brak tłumaczenia dla wybranego języka → fallback na język domyślny
    * restauracji, nigdy pusty ekran (docs/architecture.md §5).
    */
+  private pick<T extends Translation>(
+    translations: T[],
+    locale: string,
+    defaultLocale: string,
+  ): T | undefined {
+    const exact = translations.find((t) => t.locale === locale);
+    const fallback = translations.find((t) => t.locale === defaultLocale);
+    return exact ?? fallback ?? translations[0];
+  }
+
   private translate(
     translations: Translation[],
     locale: string,
     defaultLocale: string,
   ): LocalizedText {
-    const exact = translations.find((t) => t.locale === locale);
-    const fallback = translations.find((t) => t.locale === defaultLocale);
-    const chosen = exact ?? fallback ?? translations[0];
+    const chosen = this.pick(translations, locale, defaultLocale);
 
     return {
       name: chosen?.name ?? '',
@@ -109,7 +117,15 @@ export class MenuService {
         // Dania niedostępne zostają w odpowiedzi — gość ma je zobaczyć
         // wyszarzone, a nie zastanawiać się, czemu menu jest krótsze.
         isAvailable: item.isAvailable,
-        allergens: item.allergens,
+        /**
+         * Alergeny z **tego samego tłumaczenia, które dało nazwę**.
+         *
+         * Nie ma tu osobnego fallbacku: gdyby danie po niemiecku nie miało
+         * alergenów, a po polsku miało, niemiecki gość dostałby polską listę
+         * pod niemiecką nazwą — i uznałby, że przeczytał alergeny. Pusta lista
+         * znaczy „zapytaj obsługę" i tak mówi o niej ekran szczegółów.
+         */
+        allergens: this.pick(item.translations, locale, defaultLocale)?.allergens ?? [],
         dietaryTags: item.dietaryTags,
         calories: item.calories,
         prepTimeMinutes: item.prepTimeMinutes,

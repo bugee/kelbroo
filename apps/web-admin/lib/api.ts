@@ -940,6 +940,11 @@ export interface Translation {
   locale: string;
   name: string;
   description?: string | null;
+  /**
+   * Alergeny **w tym języku**. Niosą je wyłącznie tłumaczenia dań — kategorie
+   * i modyfikatory zostawiają pole puste, bo nie mają czego nim opisać.
+   */
+  allergens?: string[];
 }
 
 export interface AdminModifier {
@@ -968,7 +973,6 @@ export interface AdminItem {
   isFeatured: boolean;
   /** Nazwa pliku ze zdjęciem albo `null`. Adres składa `imageSrc`. */
   imageUrl: string | null;
-  allergens: string[];
   dietaryTags: string[];
   prepTimeMinutes: number | null;
   translations: Translation[];
@@ -1041,7 +1045,6 @@ export interface ItemPayload {
   translations: Translation[];
   isAvailable?: boolean;
   isFeatured?: boolean;
-  allergens?: string[];
   dietaryTags?: string[];
   prepTimeMinutes?: number;
   modifierGroups?: AdminModifierGroup[];
